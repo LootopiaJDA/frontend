@@ -1,0 +1,445 @@
+{
+  "users": [
+    {
+      "id": "user_1",
+      "email": "jean.dupont@email.com",
+      "firstName": "Jean",
+      "lastName": "Dupont",
+      "username": "jeandupont",
+      "userType": "player",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Jean",
+      "createdAt": "2024-11-15T10:30:00Z",
+      "stats": {
+        "totalPoints": 1250,
+        "completedHunts": 12,
+        "badges": 8,
+        "distanceTraveled": 45.2
+      },
+      "preferences": {
+        "notifications": true,
+        "newsletter": false
+      }
+    },
+    {
+      "id": "partner_1",
+      "email": "contact@paris.fr",
+      "organizationName": "Ville de Paris",
+      "userType": "partner",
+      "avatar": "https://api.dicebear.com/7.x/initials/svg?seed=VP",
+      "verified": true,
+      "createdAt": "2024-03-01T08:00:00Z",
+      "description": "La Ville de Paris propose des chasses au trésor pour découvrir le patrimoine historique et culturel de la capitale.",
+      "website": "https://paris.fr",
+      "phone": "+33142764040",
+      "stats": {
+        "totalHunts": 8,
+        "totalParticipants": 2450,
+        "averageRating": 4.7,
+        "completionRate": 92
+      }
+    }
+  ],
+  "hunts": [
+    {
+      "id": "hunt_1",
+      "title": "Les Mystères du Quartier Latin",
+      "slug": "mysteres-quartier-latin",
+      "description": "Plongez dans l'histoire médiévale de Paris à travers une aventure interactive unique. Découvrez les secrets cachés des ruelles du Quartier Latin, résolvez des énigmes historiques et collectez des trésors en réalité augmentée.",
+      "partnerId": "partner_1",
+      "partnerName": "Ville de Paris",
+      "coverImage": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34",
+      "category": "tourisme",
+      "difficulty": "moyen",
+      "status": "active",
+      "featured": true,
+      "createdAt": "2024-11-10T14:20:00Z",
+      "updatedAt": "2024-12-15T09:30:00Z",
+      "location": {
+        "city": "Paris",
+        "district": "5e arrondissement",
+        "country": "France",
+        "coordinates": {
+          "lat": 48.8499,
+          "lng": 2.3447
+        }
+      },
+      "stats": {
+        "participants": 245,
+        "completions": 189,
+        "averageRating": 4.8,
+        "totalReviews": 42,
+        "averageTime": 105,
+        "views": 1250
+      },
+      "details": {
+        "distance": 3.2,
+        "estimatedDuration": 120,
+        "totalSteps": 8,
+        "pointsReward": 500,
+        "ageRecommendation": "12+",
+        "accessibility": "Partiellement accessible PMR",
+        "languages": ["fr", "en", "es"]
+      },
+      "tags": ["histoire", "medieval", "culture", "patrimoine", "paris"],
+      "requirements": {
+        "minPlayers": 1,
+        "maxPlayers": 6,
+        "equipment": ["smartphone", "connexion internet"],
+        "recommendations": ["chaussures confortables", "eau"]
+      }
+    },
+    {
+      "id": "hunt_2",
+      "title": "Secrets de Montmartre",
+      "slug": "secrets-montmartre",
+      "description": "Explorez les charmes bohèmes de Montmartre à travers une chasse au trésor artistique. Suivez les traces des grands artistes qui ont fait la renommée de ce quartier mythique.",
+      "partnerId": "partner_1",
+      "partnerName": "Ville de Paris",
+      "coverImage": "https://images.unsplash.com/photo-1511739001486-6bfe10ce785f",
+      "category": "culture",
+      "difficulty": "facile",
+      "status": "active",
+      "featured": true,
+      "createdAt": "2024-10-20T10:00:00Z",
+      "updatedAt": "2024-12-10T15:45:00Z",
+      "location": {
+        "city": "Paris",
+        "district": "18e arrondissement",
+        "country": "France",
+        "coordinates": {
+          "lat": 48.8867,
+          "lng": 2.3431
+        }
+      },
+      "stats": {
+        "participants": 389,
+        "completions": 298,
+        "averageRating": 4.7,
+        "totalReviews": 67,
+        "averageTime": 90,
+        "views": 2100
+      },
+      "details": {
+        "distance": 2.5,
+        "estimatedDuration": 90,
+        "totalSteps": 6,
+        "pointsReward": 350,
+        "ageRecommendation": "8+",
+        "accessibility": "Accessible PMR avec assistance",
+        "languages": ["fr", "en"]
+      },
+      "tags": ["art", "peinture", "montmartre", "boheme", "picasso"],
+      "requirements": {
+        "minPlayers": 1,
+        "maxPlayers": 8,
+        "equipment": ["smartphone"],
+        "recommendations": ["appareil photo", "carnet de notes"]
+      }
+    },
+    {
+      "id": "hunt_3",
+      "title": "Mystères du Louvre",
+      "slug": "mysteres-louvre",
+      "description": "Découvrez les secrets cachés du musée le plus visité au monde. Une aventure captivante qui mêle art, histoire et énigmes dans les galeries mythiques du Louvre.",
+      "partnerId": "partner_1",
+      "partnerName": "Ville de Paris",
+      "coverImage": "https://images.unsplash.com/photo-1499856871958-5b9627545d1a",
+      "category": "culture",
+      "difficulty": "difficile",
+      "status": "active",
+      "featured": false,
+      "createdAt": "2024-09-05T11:30:00Z",
+      "updatedAt": "2024-12-12T08:20:00Z",
+      "location": {
+        "city": "Paris",
+        "district": "1er arrondissement",
+        "country": "France",
+        "coordinates": {
+          "lat": 48.8606,
+          "lng": 2.3376
+        }
+      },
+      "stats": {
+        "participants": 567,
+        "completions": 423,
+        "averageRating": 4.9,
+        "totalReviews": 98,
+        "averageTime": 150,
+        "views": 3200
+      },
+      "details": {
+        "distance": 1.8,
+        "estimatedDuration": 150,
+        "totalSteps": 10,
+        "pointsReward": 750,
+        "ageRecommendation": "14+",
+        "accessibility": "Entièrement accessible PMR",
+        "languages": ["fr", "en", "es", "de", "it"]
+      },
+      "tags": ["musée", "art", "louvre", "histoire", "renaissance"],
+      "requirements": {
+        "minPlayers": 1,
+        "maxPlayers": 4,
+        "equipment": ["smartphone", "billet musée"],
+        "recommendations": ["audioguide", "temps suffisant"]
+      }
+    }
+  ],
+  "steps": [
+    {
+      "id": "step_1_1",
+      "huntId": "hunt_1",
+      "stepNumber": 1,
+      "title": "La Fontaine Saint-Michel",
+      "description": "Votre aventure commence à la célèbre Fontaine Saint-Michel. Observez attentivement les sculptures et trouvez l'inscription cachée.",
+      "hint": "Cherchez le détail dans les ailes de l'archange. L'inscription date de la Renaissance.",
+      "location": {
+        "lat": 48.8534,
+        "lng": 2.3443,
+        "address": "Place Saint-Michel, 75005 Paris"
+      },
+      "type": "geolocation",
+      "radius": 30,
+      "pointsReward": 50,
+      "timeLimit": 15,
+      "arMarker": {
+        "enabled": true,
+        "markerId": "marker_stmichel",
+        "type": "image",
+        "model3d": null
+      },
+      "media": {
+        "images": [
+          "https://images.unsplash.com/photo-1502602898657-3e91760cbb34"
+        ],
+        "audio": null,
+        "video": null
+      },
+      "validation": {
+        "type": "proximity",
+        "answer": null,
+        "autoValidate": true
+      },
+      "completed": false
+    },
+    {
+      "id": "step_1_2",
+      "huntId": "hunt_1",
+      "stepNumber": 2,
+      "title": "La Librairie Shakespeare and Company",
+      "description": "Dirigez-vous vers la mythique librairie anglophone. Son histoire est intimement liée aux écrivains de la génération perdue.",
+      "hint": "Comptez les fenêtres de la façade verte. Le nombre vous donnera un indice.",
+      "location": {
+        "lat": 48.8525,
+        "lng": 2.3470,
+        "address": "37 Rue de la Bûcherie, 75005 Paris"
+      },
+      "type": "geolocation",
+      "radius": 25,
+      "pointsReward": 60,
+      "timeLimit": 10,
+      "arMarker": {
+        "enabled": true,
+        "markerId": "marker_shakespeare",
+        "type": "text",
+        "model3d": null
+      },
+      "media": {
+        "images": [
+          "https://images.unsplash.com/photo-1507842217343-583bb7270b66"
+        ],
+        "audio": "audio_shakespeare.mp3",
+        "video": null
+      },
+      "validation": {
+        "type": "quiz",
+        "answer": "7",
+        "autoValidate": false
+      },
+      "completed": false
+    },
+    {
+      "id": "step_1_3",
+      "huntId": "hunt_1",
+      "stepNumber": 3,
+      "title": "L'Église Saint-Julien-le-Pauvre",
+      "description": "Cette église médiévale cache bien ses secrets. L'une des plus anciennes de Paris vous attend.",
+      "hint": "Observez les colonnes à l'intérieur. Certaines datent de l'époque mérovingienne.",
+      "location": {
+        "lat": 48.8517,
+        "lng": 2.3471,
+        "address": "1 Rue Saint-Julien le Pauvre, 75005 Paris"
+      },
+      "type": "geolocation",
+      "radius": 20,
+      "pointsReward": 70,
+      "timeLimit": 20,
+      "arMarker": {
+        "enabled": true,
+        "markerId": "marker_stjulien",
+        "type": "image",
+        "model3d": "model_church.glb"
+      },
+      "media": {
+        "images": [
+          "https://images.unsplash.com/photo-1548013146-72479768bada"
+        ],
+        "audio": null,
+        "video": null
+      },
+      "validation": {
+        "type": "proximity",
+        "answer": null,
+        "autoValidate": true
+      },
+      "completed": false
+    }
+  ],
+  "reviews": [
+    {
+      "id": "review_1",
+      "huntId": "hunt_1",
+      "userId": "user_1",
+      "userName": "Jean Dupont",
+      "userAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Jean",
+      "rating": 5,
+      "comment": "Excellente chasse ! Très immersive et bien pensée. Les énigmes sont intelligentes et l'intégration AR est bluffante. J'ai découvert des endroits que je ne connaissais pas malgré des années à Paris !",
+      "createdAt": "2024-12-15T14:30:00Z",
+      "helpful": 12,
+      "photos": [
+        "https://images.unsplash.com/photo-1502602898657-3e91760cbb34"
+      ]
+    },
+    {
+      "id": "review_2",
+      "huntId": "hunt_1",
+      "userId": "user_2",
+      "userName": "Marie Dubois",
+      "userAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Marie",
+      "rating": 4,
+      "comment": "Très intéressant, j'ai beaucoup appris sur l'histoire du Quartier Latin. Quelques bugs sur l'AR mais rien de bloquant. Je recommande pour une après-midi culturelle !",
+      "createdAt": "2024-12-13T10:15:00Z",
+      "helpful": 8,
+      "photos": []
+    },
+    {
+      "id": "review_3",
+      "huntId": "hunt_1",
+      "userId": "user_3",
+      "userName": "Thomas Martin",
+      "userAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Thomas",
+      "rating": 5,
+      "comment": "Parfait pour découvrir Paris autrement ! Les enfants ont adoré et nous aussi. Durée parfaite, ni trop long ni trop court. Les énigmes sont bien dosées.",
+      "createdAt": "2024-12-10T16:45:00Z",
+      "helpful": 15,
+      "photos": [
+        "https://images.unsplash.com/photo-1502602898657-3e91760cbb34",
+        "https://images.unsplash.com/photo-1507842217343-583bb7270b66"
+      ]
+    }
+  ],
+  "userProgress": [
+    {
+      "id": "progress_1",
+      "userId": "user_1",
+      "huntId": "hunt_1",
+      "status": "in_progress",
+      "startedAt": "2024-12-17T09:00:00Z",
+      "completedAt": null,
+      "currentStepNumber": 3,
+      "completedSteps": ["step_1_1", "step_1_2"],
+      "totalPoints": 110,
+      "timeSpent": 45,
+      "lastActivity": "2024-12-17T09:45:00Z"
+    }
+  ],
+  "leaderboard": [
+    {
+      "rank": 1,
+      "userId": "user_4",
+      "userName": "Marie D.",
+      "userAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=MarieD",
+      "totalPoints": 2450,
+      "completedHunts": 18,
+      "badges": 12
+    },
+    {
+      "rank": 2,
+      "userId": "user_5",
+      "userName": "Thomas M.",
+      "userAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=ThomasM",
+      "totalPoints": 2200,
+      "completedHunts": 16,
+      "badges": 10
+    },
+    {
+      "rank": 3,
+      "userId": "user_1",
+      "userName": "Jean Dupont",
+      "userAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Jean",
+      "totalPoints": 1250,
+      "completedHunts": 12,
+      "badges": 8
+    }
+  ],
+  "categories": [
+    {
+      "id": "cat_1",
+      "name": "Tourisme",
+      "slug": "tourisme",
+      "description": "Découvrez les sites touristiques majeurs",
+      "icon": "🏛️",
+      "color": "#3B82F6"
+    },
+    {
+      "id": "cat_2",
+      "name": "Culture",
+      "slug": "culture",
+      "description": "Plongez dans l'art et l'histoire",
+      "icon": "🎨",
+      "color": "#8B5CF6"
+    },
+    {
+      "id": "cat_3",
+      "name": "Nature",
+      "slug": "nature",
+      "description": "Explorez les espaces verts et naturels",
+      "icon": "🌳",
+      "color": "#10B981"
+    },
+    {
+      "id": "cat_4",
+      "name": "Gastronomie",
+      "slug": "gastronomie",
+      "description": "Savourez les spécialités locales",
+      "icon": "🍽️",
+      "color": "#F59E0B"
+    }
+  ],
+  "badges": [
+    {
+      "id": "badge_1",
+      "name": "Premier Pas",
+      "description": "Complétez votre première chasse",
+      "icon": "🎯",
+      "rarity": "common",
+      "points": 50
+    },
+    {
+      "id": "badge_2",
+      "name": "Explorateur Parisien",
+      "description": "Complétez 5 chasses à Paris",
+      "icon": "🗼",
+      "rarity": "rare",
+      "points": 200
+    },
+    {
+      "id": "badge_3",
+      "name": "Maître AR",
+      "description": "Trouvez 50 trésors en réalité augmentée",
+      "icon": "👓",
+      "rarity": "epic",
+      "points": 500
+    }
+  ]
+}
