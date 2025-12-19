@@ -68,13 +68,13 @@ export default function ListeChasse() {
     }
 
     const difficultyStyles: Record<string, string> = {
-        facile: 'bg-green-100 text-green-700',
-        moyen: 'bg-yellow-100 text-yellow-700',
-        difficile: 'bg-red-100 text-red-700',
+        facile: 'bg-green-100 text-green-800',
+        moyen: 'bg-yellow-100 text-yellow-800',
+        difficile: 'bg-red-100 text-red-800',
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 py-10">
+        <div className="min-h-screen bg-gray-50 py-12">
             <div className="max-w-7xl mx-auto px-4">
                 {/* Header */}
                 <div className="mb-12 text-center">
@@ -111,7 +111,7 @@ export default function ListeChasse() {
                             {/* Content */}
                             <div className="p-6 flex-1 flex flex-col justify-between">
                                 <div>
-                                    <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center justify-between mb-3">
                                         <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                             {hunt.category}
                                         </span>
@@ -127,7 +127,7 @@ export default function ListeChasse() {
                                 </div>
 
                                 {/* Infos */}
-                                <div className="grid grid-cols-2 gap-4 text-gray-600 text-sm">
+                                <div className="grid grid-cols-3 gap-4 text-gray-600 text-sm mt-4">
                                     <div className="flex items-center gap-1">
                                         <MapPin className="w-4 h-4 text-indigo-500" />
                                         {hunt.location?.city ?? '—'}
