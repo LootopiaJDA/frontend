@@ -46,11 +46,11 @@ export default function Header() {
 
                     {/* Desktop Auth Buttons */}
                     <div className="hidden md:flex items-center gap-3">
-                        <a href="/login" className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-all font-medium">
+                        <a href="/auth/login" className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-all font-medium">
                             <User className="w-4 h-4" />
                             Connexion
                         </a>
-                        <a href="/register" className="relative group">
+                        <a href="/auth/register" className="relative group">
                             <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg blur opacity-50 group-hover:opacity-75 transition-opacity" />
                             <div className="relative bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all">
                                 Inscription
@@ -87,11 +87,11 @@ export default function Header() {
                             À propos
                         </a>
                         <div className="pt-4 border-t border-gray-100 space-y-2">
-                            <a href="/login" className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all font-medium">
+                            <a href="/auth/login" className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all font-medium">
                                 <User className="w-5 h-5" />
                                 Connexion
                             </a>
-                            <a href="/register" className="flex items-center justify-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-3 rounded-lg font-semibold hover:shadow-lg transition-all">
+                            <a href="/auth/register" className="flex items-center justify-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-3 rounded-lg font-semibold hover:shadow-lg transition-all">
                                 Inscription gratuite
                             </a>
                         </div>
