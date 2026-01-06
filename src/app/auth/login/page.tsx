@@ -1,163 +1,204 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, ArrowRight, Eye, EyeOff, AlertCircle } from "lucide-react";
+import Link from "next/link";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, Sparkles } from "lucide-react";
+import { useAuth } from "@/app/providers/AuthProvider";
 
 export default function Login() {
+  const router = useRouter();
+  const { login, isAuthenticated, loading: authLoading } = useAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const router = useRouter();
+  // Redirection si déjà connecté
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, authLoading, router]);
 
-  const handleLogin = async () => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError("");
     setIsLoading(true);
 
     try {
       const res = await fetch("http://localhost:3000/connexion", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "accept": "*/*"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
+      const data = await res.json();
 
-
-        if (data.access_token) {
-          localStorage.setItem("access_token", data.access_token);
-
-
-          const tokenPayload = JSON.parse(atob(data.access_token.split('.')[1]));
-          localStorage.setItem("user", JSON.stringify({
-            id: tokenPayload.sub,
-            username: tokenPayload.username,
-            role: tokenPayload.role
-          }));
-
-          if (tokenPayload.role === "JOUEUR") {
-            router.push("/dashboard/player");
-          } else if (tokenPayload.role === "PARTENAIRE") {
-            router.push("/dashboard/partner");
-          } else {
-            router.push("/dashboard");
-          }
-        }
-      } else {
-        const data = await res.json();
+      if (!res.ok) {
         setError(data.message || "Email ou mot de passe incorrect");
+        setIsLoading(false);
+        return;
       }
+
+      if (!data.access_token) {
+        setError("Erreur de connexion : token manquant");
+        setIsLoading(false);
+        return;
+      }
+
+      // Utilisation de la fonction login du provider
+      login(data.access_token);
+      // La redirection est gérée automatiquement par le provider
+
     } catch (err) {
+      console.error("Erreur de connexion:", err);
       setError("Impossible de se connecter au serveur");
-      console.error(err);
-    } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    handleLogin();
-  };
+  // Afficher rien pendant le chargement initial
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600">
+        <div className="text-white text-lg">Chargement...</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 px-4 py-20">
       <div className="w-full max-w-md relative">
+        {/* Effet de glow */}
         <div className="absolute inset-0 bg-white/20 blur-3xl rounded-3xl" />
 
-        <div className="relative bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 space-y-6">
-          <div className="text-center space-y-2">
-            <h1 className="text-4xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Bon retour 👋
+        <form
+          onSubmit={handleLogin}
+          className="relative bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl p-8 space-y-6"
+        >
+          {/* Logo */}
+          <div className="flex justify-center mb-2">
+            <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <Sparkles className="w-8 h-8 text-white" />
+            </div>
+          </div>
+
+          {/* Header */}
+          <div className="text-center">
+            <h1 className="text-3xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              Bon retour ! 👋
             </h1>
-            <p className="text-gray-600">
+            <p className="text-sm text-gray-600 mt-2">
               Connecte-toi pour continuer l'aventure
             </p>
           </div>
 
+          {/* Error */}
           {error && (
-            <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm animate-in slide-in-from-top">
+              <AlertCircle className="w-5 h-5 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
+          {/* Inputs */}
           <div className="space-y-4">
             <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email
+              </label>
+              <Mail className="absolute left-4 top-[42px] -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="email"
-                placeholder="Email"
+                placeholder="ton.email@exemple.com"
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-                className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:outline-none transition"
-                required
+                disabled={isLoading}
+                className="w-full pl-12 pr-4 py-3 text-sm rounded-xl border border-gray-300
+                focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none
+                disabled:bg-gray-100 disabled:cursor-not-allowed transition-all"
               />
             </div>
 
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Mot de passe
+              </label>
+              <Lock className="absolute left-4 top-[42px] -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="Mot de passe"
+                placeholder="••••••••"
+                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-                className="w-full pl-12 pr-12 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:outline-none transition"
-                required
+                disabled={isLoading}
+                className="w-full pl-12 pr-12 py-3 text-sm rounded-xl border border-gray-300
+                focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none
+                disabled:bg-gray-100 disabled:cursor-not-allowed transition-all"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                disabled={isLoading}
+                className="absolute right-4 top-[42px] -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors disabled:cursor-not-allowed"
               >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
               </button>
             </div>
           </div>
 
-          <div className="flex items-center justify-end">
-            <a
+          {/* Forgot Password */}
+          <div className="text-right">
+            <Link
               href="/auth/forgot-password"
-              className="text-sm text-indigo-600 font-semibold hover:underline"
+              className="text-sm text-indigo-600 hover:text-indigo-700 font-medium hover:underline"
             >
               Mot de passe oublié ?
-            </a>
+            </Link>
           </div>
 
+          {/* Button */}
           <button
-            onClick={handleLogin}
-            disabled={isLoading || !email || !password}
-            className="group w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl font-bold hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            type="submit"
+            disabled={!email || !password || isLoading}
+            className="w-full flex items-center justify-center gap-2
+            bg-gradient-to-r from-indigo-600 to-purple-600
+            text-white py-3.5 text-sm rounded-xl font-bold
+            hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]
+            disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
+            transition-all duration-200"
           >
             {isLoading ? (
-              <span>Connexion en cours...</span>
+              <>
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Connexion en cours...
+              </>
             ) : (
               <>
                 Se connecter
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="w-5 h-5" />
               </>
             )}
           </button>
 
-          <p className="text-center text-sm text-gray-600">
-            Pas encore de compte ?{" "}
-            <a
-              href="/auth/register"
-              className="text-indigo-600 font-semibold hover:underline"
-            >
-              S'inscrire
-            </a>
-          </p>
-        </div>
+          {/* Register Link */}
+          <Link
+            href="/auth/register"
+            className="block w-full text-center py-3.5 text-sm rounded-xl font-bold
+            border-2 border-indigo-600 text-indigo-600
+            hover:bg-indigo-50 transition-all duration-200"
+          >
+            Créer un compte gratuitement
+          </Link>
+        </form>
       </div>
     </div>
   );
