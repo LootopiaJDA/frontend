@@ -1,6 +1,7 @@
-import Footer from "@/components/Footer";
-import Header from "@/components/Header";
+import Footer from "./components/Footer";
+import Header from "./components/Header";
 import "./globals.css";
+import { AuthProvider } from "./providers/AuthProvider";
 
 export default function RootLayout({
   children,
@@ -9,10 +10,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr">
-      <body className="min-h-screen flex flex-col bg-gray-50 text-gray-900">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+      <body className="min-h-screen flex flex-col">
+        <AuthProvider>
+          <Header />
+          <main className="flex-1 w-full max-w-7xl mx-auto pt-20">
+            {children}
+          </main>
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );
