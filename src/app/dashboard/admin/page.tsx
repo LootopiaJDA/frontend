@@ -123,8 +123,8 @@ function TabButton({
         <button
             onClick={onClick}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all ${active
-                    ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md"
-                    : "text-gray-600 hover:bg-gray-100"
+                ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md"
+                : "text-gray-600 hover:bg-gray-100"
                 }`}
         >
             {icon}
@@ -365,8 +365,8 @@ function UserRow({
             <td className="px-6 py-4">
                 <span
                     className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${status === "active"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-700"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-100 text-gray-700"
                         }`}
                 >
                     {status === "active" ? "Actif" : "Inactif"}
@@ -453,8 +453,8 @@ function HuntCard({
                 </div>
                 <span
                     className={`px-2.5 py-1 rounded-full text-xs font-medium ${status === "active"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-orange-100 text-orange-700"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-orange-100 text-orange-700"
                         }`}
                 >
                     {status === "active" ? "Active" : "En attente"}
@@ -536,8 +536,8 @@ function PartnerCard({
                 </div>
                 <span
                     className={`px-2.5 py-1 rounded-full text-xs font-medium ${status === "verified"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-orange-100 text-orange-700"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-orange-100 text-orange-700"
                         }`}
                 >
                     {status === "verified" ? "Vérifié" : "En attente"}

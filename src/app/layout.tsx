@@ -13,7 +13,7 @@ export default function RootLayout({
       <body className="min-h-screen flex flex-col">
         <AuthProvider>
           <Header />
-          <main className="flex-1 w-full max-w-7xl mx-auto pt-20">
+          <main className="flex-1 w-full max-w-7xl mx-auto pt-15">
             {children}
           </main>
           <Footer />

@@ -10,6 +10,7 @@ import {
     Trophy,
     MapPin,
     Sparkles,
+    Navigation2Icon,
 } from "lucide-react";
 import { useAuth } from "@/app/providers/AuthProvider";
 
@@ -58,6 +59,9 @@ export default function Header() {
                         </NavLink>
                         <NavLink href="/about" icon={<Sparkles className="w-4 h-4" />}>
                             À propos
+                        </NavLink>
+                        <NavLink href="/ar" icon={<Navigation2Icon className="w-4 h-4" />}>
+                            Réalité augmentée
                         </NavLink>
                     </nav>
 
@@ -131,6 +135,9 @@ export default function Header() {
                         <MobileLink href="/about" icon={<Sparkles className="w-5 h-5" />}>
                             À propos
                         </MobileLink>
+                        <MobileLink href="/ar" icon={<Navigation2Icon className="w-5 h-5" />}>
+                            Réalité augmentée
+                        </MobileLink>
 
                         <div className="pt-4 mt-2 border-t border-gray-200 space-y-2">
                             {!isAuthenticated ? (
@@ -175,9 +182,6 @@ export default function Header() {
     );
 }
 
-/* =========================
-   Components
-========================= */
 
 function NavLink({
     href,
