@@ -3,20 +3,20 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, Sparkles } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, Sparkles, CheckCircle } from "lucide-react";
 import { useAuth } from "@/app/providers/AuthProvider";
 
 export default function Login() {
   const router = useRouter();
-  const { login, isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading, refreshUser } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Redirection si déjà connecté
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
       router.push("/");
@@ -26,12 +26,14 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setMessage("");
     setIsLoading(true);
 
     try {
       const res = await fetch("http://localhost:3000/connexion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
@@ -43,15 +45,11 @@ export default function Login() {
         return;
       }
 
-      if (!data.access_token) {
-        setError("Erreur de connexion : token manquant");
-        setIsLoading(false);
-        return;
-      }
+      setMessage("Connexion réussie ! Redirection...");
 
-      // Utilisation de la fonction login du provider
-      login(data.access_token);
-      // La redirection est gérée automatiquement par le provider
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      await refreshUser();
 
     } catch (err) {
       console.error("Erreur de connexion:", err);
@@ -60,11 +58,13 @@ export default function Login() {
     }
   };
 
-  // Afficher rien pendant le chargement initial
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600">
-        <div className="text-white text-lg">Chargement...</div>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+          <div className="text-white text-lg font-medium">Chargement...</div>
+        </div>
       </div>
     );
   }
@@ -96,11 +96,19 @@ export default function Login() {
             </p>
           </div>
 
-          {/* Error */}
+          {/* Error Message */}
           {error && (
             <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm animate-in slide-in-from-top">
               <AlertCircle className="w-5 h-5 shrink-0" />
               <span>{error}</span>
+            </div>
+          )}
+
+          {/* Success Message */}
+          {message && (
+            <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm animate-in slide-in-from-top">
+              <CheckCircle className="w-5 h-5 shrink-0" />
+              <span>{message}</span>
             </div>
           )}
 
@@ -155,7 +163,6 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Forgot Password */}
           <div className="text-right">
             <Link
               href="/auth/forgot-password"
@@ -165,7 +172,6 @@ export default function Login() {
             </Link>
           </div>
 
-          {/* Button */}
           <button
             type="submit"
             disabled={!email || !password || isLoading}

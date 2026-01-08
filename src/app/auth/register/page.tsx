@@ -11,6 +11,7 @@ import {
   EyeOff,
   AlertCircle,
   CheckCircle2,
+  CheckCheckIcon,
 } from "lucide-react";
 
 export default function Register() {
@@ -26,6 +27,7 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("")
 
   const [passwordStrength, setPasswordStrength] = useState({
     length: false,
@@ -69,11 +71,15 @@ export default function Register() {
       });
 
       if (res.ok) {
-        router.push("/auth/login");
+        setMessage("Inscription réussie, vous allez être redirigé vers la page de connexion");
+        setTimeout(() => {
+          router.push("/auth/login");
+        }, 1500);
       } else {
         const data = await res.json();
         setError(data.message || "Erreur lors de l'inscription");
       }
+
     } catch {
       setError("Impossible de se connecter au serveur");
     } finally {
@@ -92,18 +98,22 @@ export default function Register() {
           onSubmit={handleRegister}
           className="relative bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl p-5 sm:p-6 space-y-5"
         >
-          {/* Header */}
           <div className="text-center">
             <h1 className="text-2xl sm:text-3xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
               Rejoins Lootopia 🚀
             </h1>
           </div>
 
-          {/* Error */}
           {error && (
             <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-xs">
               <AlertCircle className="w-4 h-4" />
               <span>{error}</span>
+            </div>
+          )}
+          {message && (
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm animate-in slide-in-from-top">
+              <CheckCheckIcon className="w-5 h-5 shrink-0" />
+              <span>{message}</span>
             </div>
           )}
 

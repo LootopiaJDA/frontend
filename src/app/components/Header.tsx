@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
     Menu,
@@ -18,6 +18,9 @@ export default function Header() {
     const { user, isAuthenticated, logout, loading } = useAuth();
     const [open, setOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+    const menuRef = useRef<HTMLDivElement | null>(null);
+
+    console.log(user)
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 10);
@@ -25,7 +28,28 @@ export default function Header() {
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
 
+
+    useEffect(() => {
+        if (!open) return;
+
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [open]);
+
     if (loading) return null;
+
+    const dashboardUrl =
+        user?.role === "ADMIN"
+            ? "/dashboard/admin"
+            : user?.role === "PARTENAIRE"
+                ? "/dashboard/partner"
+                : "/dashboard/player";
 
     return (
         <header
@@ -39,6 +63,7 @@ export default function Header() {
                     {/* Logo */}
                     <Link
                         href="/"
+                        onClick={() => setOpen(false)}
                         className="flex items-center gap-2 group"
                     >
                         <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center transform group-hover:scale-105 transition-transform shadow-md">
@@ -85,11 +110,7 @@ export default function Header() {
                         ) : (
                             <>
                                 <Link
-                                    href={
-                                        user?.role === "JOUEUR"
-                                            ? "/dashboard/player"
-                                            : "/dashboard/partner"
-                                    }
+                                    href={dashboardUrl}
                                     className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 transition-all"
                                 >
                                     <User className="w-4 h-4" />
@@ -97,17 +118,20 @@ export default function Header() {
                                 </Link>
 
                                 <button
-                                    onClick={logout}
+                                    onClick={async () => {
+                                        await logout();
+                                        setOpen(false);
+                                    }}
                                     className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-red-600 hover:bg-red-50 transition-all"
                                 >
-                                    <LogOut className="w-4 h-4" />
+                                    <LogOut className="w-5 h-5" />
                                     Déconnexion
                                 </button>
                             </>
                         )}
                     </div>
 
-                    {/* Mobile Button */}
+                    {/* Mobile button */}
                     <button
                         onClick={() => setOpen(!open)}
                         className="md:hidden p-2 rounded-lg hover:bg-indigo-50 transition-colors"
@@ -122,31 +146,33 @@ export default function Header() {
 
                 {/* Mobile Menu */}
                 {open && (
-                    <div className="md:hidden pb-4 space-y-2 animate-in slide-in-from-top">
-                        <MobileLink href="/hunts" icon={<MapPin className="w-5 h-5" />}>
+                    <div ref={menuRef} className="md:hidden pb-4 space-y-2">
+                        <MobileLink href="/hunts" onClick={() => setOpen(false)} icon={<MapPin className="w-5 h-5" />}>
                             Chasses
                         </MobileLink>
-                        <MobileLink
-                            href="/leaderboard"
-                            icon={<Trophy className="w-5 h-5" />}
-                        >
+                        <MobileLink href="/leaderboard" onClick={() => setOpen(false)} icon={<Trophy className="w-5 h-5" />}>
                             Classement
                         </MobileLink>
-                        <MobileLink href="/about" icon={<Sparkles className="w-5 h-5" />}>
+                        <MobileLink href="/about" onClick={() => setOpen(false)} icon={<Sparkles className="w-5 h-5" />}>
                             À propos
                         </MobileLink>
-                        <MobileLink href="/ar" icon={<Navigation2Icon className="w-5 h-5" />}>
+                        <MobileLink href="/ar" onClick={() => setOpen(false)} icon={<Navigation2Icon className="w-5 h-5" />}>
                             Réalité augmentée
                         </MobileLink>
 
                         <div className="pt-4 mt-2 border-t border-gray-200 space-y-2">
                             {!isAuthenticated ? (
                                 <>
-                                    <MobileLink href="/auth/login" icon={<User className="w-5 h-5" />}>
+                                    <MobileLink
+                                        href="/auth/login"
+                                        onClick={() => setOpen(false)}
+                                        icon={<User className="w-5 h-5" />}
+                                    >
                                         Connexion
                                     </MobileLink>
                                     <Link
                                         href="/auth/register"
+                                        onClick={() => setOpen(false)}
                                         className="flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
                                     >
                                         <Sparkles className="w-5 h-5" />
@@ -156,17 +182,17 @@ export default function Header() {
                             ) : (
                                 <>
                                     <MobileLink
-                                        href={
-                                            user?.role === "JOUEUR"
-                                                ? "/dashboard/player"
-                                                : "/dashboard/partner"
-                                        }
+                                        href={dashboardUrl}
+                                        onClick={() => setOpen(false)}
                                         icon={<User className="w-5 h-5" />}
                                     >
                                         Dashboard
                                     </MobileLink>
                                     <button
-                                        onClick={logout}
+                                        onClick={async () => {
+                                            await logout();
+                                            setOpen(false);
+                                        }}
                                         className="w-full flex items-center gap-2 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 font-medium transition-all"
                                     >
                                         <LogOut className="w-5 h-5" />
@@ -182,6 +208,9 @@ export default function Header() {
     );
 }
 
+/* ======================
+   Components
+====================== */
 
 function NavLink({
     href,
@@ -207,14 +236,17 @@ function MobileLink({
     href,
     children,
     icon,
+    onClick,
 }: {
     href: string;
     children: React.ReactNode;
     icon: React.ReactNode;
+    onClick: () => void;
 }) {
     return (
         <Link
             href={href}
+            onClick={onClick}
             className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium hover:bg-indigo-50 hover:text-indigo-600 transition-all"
         >
             {icon}

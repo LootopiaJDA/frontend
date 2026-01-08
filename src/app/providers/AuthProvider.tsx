@@ -1,149 +1,131 @@
 "use client";
 
-import {
-    createContext,
-    useContext,
-    useEffect,
-    useState,
-} from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { createContext, useContext, useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 
 interface User {
-    id: string;
+    id_user: number;
     username: string;
-    role: "JOUEUR" | "PARTENAIRE" | "ADMIN";
+    email: string;
+    role: "ADMIN" | "PARTENAIRE" | "JOUEUR";
+    partenerId: number | null;
 }
 
 interface AuthContextType {
     user: User | null;
-    token: string | null;
-    login: (token: string) => void;
-    logout: () => void;
     loading: boolean;
     isAuthenticated: boolean;
+    refreshUser: () => Promise<void>;
+    logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
+
     const [user, setUser] = useState<User | null>(null);
-    const [token, setToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const decodeToken = (token: string): User => {
+    const refreshUser = async () => {
         try {
-            const payload = JSON.parse(atob(token.split(".")[1]));
-            return {
-                id: payload.sub,
-                username: payload.username,
-                role: payload.role,
-            };
+            const res = await fetch(`${API_URL}/user/personnalData`, {
+                credentials: "include",
+            });
+
+            if (!res.ok) {
+                setUser(null);
+                return;
+            }
+
+            const data = await res.json();
+            setUser(data);
         } catch (error) {
-            console.error("Erreur lors du décodage du token:", error);
-            throw new Error("Token invalide");
+            console.error("Erreur lors de la récupération de l'utilisateur:", error);
+            setUser(null);
         }
     };
 
-    // Protection des routes au chargement
     useEffect(() => {
-        const storedToken = localStorage.getItem("access_token");
+        refreshUser().finally(() => setLoading(false));
+    }, []);
 
-        if (storedToken) {
-            try {
-                const decodedUser = decodeToken(storedToken);
-                setToken(storedToken);
-                setUser(decodedUser);
-
-                // Redirection selon le rôle si l'utilisateur est sur une page d'auth
-                if (pathname?.startsWith("/auth")) {
-                    if (decodedUser.role === "ADMIN") {
-                        router.push("/dashboard/admin");
-                    } else if (decodedUser.role === "PARTENAIRE") {
-                        router.push("/dashboard/partner");
-                    } else {
-                        router.push("/dashboard/player");
-                    }
-                }
-            } catch (error) {
-                // Token invalide, on le supprime
-                localStorage.removeItem("access_token");
-            }
-        }
-
-        setLoading(false);
-    }, [pathname, router]);
-
-    // Protection des routes dashboard
     useEffect(() => {
         if (loading) return;
 
-        const protectedRoutes = {
+        const isDashboard = pathname.startsWith("/dashboard");
+        const isAuthPage = pathname.startsWith("/auth");
+
+        const roleRoutes: Record<string, User["role"]> = {
             "/dashboard/admin": "ADMIN",
             "/dashboard/partner": "PARTENAIRE",
             "/dashboard/player": "JOUEUR",
         };
 
-        for (const [route, requiredRole] of Object.entries(protectedRoutes)) {
-            if (pathname?.startsWith(route)) {
+        if (isDashboard && !user) {
+            router.replace("/auth/login");
+            return;
+        }
+
+        if (user && isAuthPage) {
+            const targetRoute =
+                user.role === "ADMIN"
+                    ? "/dashboard/admin"
+                    : user.role === "PARTENAIRE"
+                        ? "/dashboard/partner"
+                        : "/dashboard/player";
+
+            router.replace(targetRoute);
+            return;
+        }
+
+        for (const [route, requiredRole] of Object.entries(roleRoutes)) {
+            if (pathname.startsWith(route)) {
                 if (!user) {
-                    router.push("/auth/login");
+                    router.replace("/auth/login");
                     return;
                 }
+
                 if (user.role !== requiredRole) {
-                    // Redirection vers le bon dashboard
-                    if (user.role === "ADMIN") {
-                        router.push("/dashboard/admin");
-                    } else if (user.role === "PARTENAIRE") {
-                        router.push("/dashboard/partner");
-                    } else {
-                        router.push("/dashboard/player");
-                    }
+                    const correctRoute =
+                        user.role === "ADMIN"
+                            ? "/dashboard/admin"
+                            : user.role === "PARTENAIRE"
+                                ? "/dashboard/partner"
+                                : "/dashboard/player";
+
+                    router.replace(correctRoute);
+                    return;
                 }
             }
         }
     }, [user, pathname, loading, router]);
 
-    const login = (accessToken: string) => {
+    const logout = async () => {
         try {
-            localStorage.setItem("access_token", accessToken);
-            setToken(accessToken);
-            const decodedUser = decodeToken(accessToken);
-            setUser(decodedUser);
-
-            // Redirection selon le rôle
-            setTimeout(() => {
-                if (decodedUser.role === "ADMIN") {
-                    router.push("/dashboard/admin");
-                } else if (decodedUser.role === "PARTENAIRE") {
-                    router.push("/dashboard/partner");
-                } else {
-                    router.push("/dashboard/player");
-                }
-            }, 100);
+            await fetch(`${API_URL}/connexion/logout`, {
+                method: "POST",
+                credentials: "include",
+            });
         } catch (error) {
-            console.error("Erreur lors de la connexion:", error);
-            throw error;
+            console.error("Erreur lors de la déconnexion:", error);
+        } finally {
+            setUser(null);
+            router.replace("/auth/login");
         }
-    };
-
-    const logout = () => {
-        localStorage.removeItem("access_token");
-        setUser(null);
-        setToken(null);
-        router.push("/auth/login");
     };
 
     return (
         <AuthContext.Provider
             value={{
                 user,
-                token,
-                login,
-                logout,
                 loading,
                 isAuthenticated: !!user,
+                refreshUser,
+                logout,
             }}
         >
             {children}

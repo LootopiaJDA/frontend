@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 
 export default function AdminDashboard() {
-    const { user, token, loading } = useAuth();
+    const { user, loading } = useAuth();
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<"overview" | "users" | "hunts" | "partners">("overview");
     const [stats, setStats] = useState({
@@ -32,13 +32,12 @@ export default function AdminDashboard() {
         activeHunts: 0,
     });
 
-    useEffect(() => {
-        if (!loading && (!user || user.role !== "ADMIN")) {
-            router.push("/");
-        }
-    }, [user, loading, router]);
+    if (loading) return null;
 
-    if (loading || !user) return null;
+    if (!user || user.role !== "ADMIN") {
+        return null;
+    }
+
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -97,9 +96,6 @@ export default function AdminDashboard() {
 
                 {/* Content */}
                 {activeTab === "overview" && <OverviewTab stats={stats} />}
-                {activeTab === "users" && <UsersTab token={token} />}
-                {activeTab === "hunts" && <HuntsTab token={token} />}
-                {activeTab === "partners" && <PartnersTab token={token} />}
             </div>
         </div>
     );
@@ -262,7 +258,7 @@ function ActivityItem({
 /* =========================
    USERS TAB
 ========================= */
-function UsersTab({ token }: { token: string | null }) {
+function UsersTab() {
     const [searchTerm, setSearchTerm] = useState("");
 
     return (
@@ -393,7 +389,7 @@ function UserRow({
 /* =========================
    HUNTS TAB
 ========================= */
-function HuntsTab({ token }: { token: string | null }) {
+function HuntsTab() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -487,7 +483,7 @@ function HuntCard({
 /* =========================
    PARTNERS TAB
 ========================= */
-function PartnersTab({ token }: { token: string | null }) {
+function PartnersTab() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
