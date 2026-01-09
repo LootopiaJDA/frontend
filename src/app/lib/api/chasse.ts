@@ -3,10 +3,10 @@ import { Chasse } from "@/types/chasse.types";
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function getChassesByPartenaire(
-    partenaireId: number
+    idPartenaire: number
 ): Promise<Chasse[]> {
     const res = await fetch(
-        `${API_URL}/chasse/partenaire/${partenaireId}`,
+        `${API_URL}/chasse/getAll?partenaire=${idPartenaire}`,
         {
             credentials: "include",
         }
@@ -17,8 +17,11 @@ export async function getChassesByPartenaire(
     }
 
     const data = await res.json();
-    return data.chasse;
+
+
+    return data.chasseByPart ?? [];
 }
+
 
 export async function getChasse(id: number): Promise<Chasse> {
     const res = await fetch(`${API_URL}/chasse/${id}`, { credentials: "include" });
@@ -44,12 +47,21 @@ export async function createChasse(formData: FormData) {
 }
 
 export async function updateChasse(id: number, payload: Partial<Chasse>) {
+
+    console.log("updateChasse - ID:", id, "Payload:", payload);
+
     const res = await fetch(`${API_URL}/chasse/update/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error("Erreur modification");
+
+    if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Erreur API:", res.status, errorText);
+        throw new Error(`Erreur modification: ${res.status}`);
+    }
+
     return res.json();
 }

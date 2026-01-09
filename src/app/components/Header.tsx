@@ -20,8 +20,6 @@ export default function Header() {
     const [scrolled, setScrolled] = useState(false);
     const menuRef = useRef<HTMLDivElement | null>(null);
 
-    console.log(user)
-
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 10);
         window.addEventListener("scroll", onScroll);

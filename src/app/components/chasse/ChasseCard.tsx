@@ -93,10 +93,8 @@ export function ChasseCard({ chasse, onDelete }: ChasseCardProps) {
                     </span>
                 </div>
 
-                {/* Séparateur */}
                 <div className="border-t border-gray-200" />
 
-                {/* Actions */}
                 <div className="flex gap-2">
                     <button
                         onClick={handleEdit}
@@ -119,7 +117,6 @@ export function ChasseCard({ chasse, onDelete }: ChasseCardProps) {
                 </div>
             </div>
 
-            {/* Loader overlay pendant suppression */}
             {deleting && (
                 <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center rounded-2xl">
                     <div className="text-center">

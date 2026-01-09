@@ -19,7 +19,7 @@ export function CreateChasseModal({
     onCreated,
 }: {
     onClose: () => void;
-    onCreated: (chasse: Chasse) => void;
+    onCreated: () => void;
 }) {
     const [name, setName] = useState("");
     const [localisation, setLocalisation] = useState("");
@@ -67,7 +67,7 @@ export function CreateChasseModal({
             setSuccess("Chasse créée avec succès !");
             await new Promise((resolve) => setTimeout(resolve, 1000));
 
-            onCreated(data);
+            await onCreated();
             onClose();
         } catch {
             setError("Erreur lors de la création de la chasse");
@@ -77,8 +77,12 @@ export function CreateChasseModal({
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm 
+                flex items-end md:items-center justify-center 
+                z-50 p-0 md:p-4">
+            <div className="bg-white rounded-t-3xl md:rounded-2xl 
+                w-full max-w-2xl shadow-2xl 
+                animate-in slide-in-from-bottom md:zoom-in-95">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
                     <div>
@@ -162,8 +166,8 @@ export function CreateChasseModal({
                                 onClick={() => setEtat("PENDING")}
                                 disabled={loading}
                                 className={`p-4 rounded-xl border-2 font-bold transition-all ${etat === "PENDING"
-                                        ? "border-amber-500 bg-amber-50 text-amber-700"
-                                        : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                                    ? "border-amber-500 bg-amber-50 text-amber-700"
+                                    : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
                                     } disabled:opacity-50`}
                             >
                                 <span className="block text-sm mb-1">⏳</span>
@@ -174,8 +178,8 @@ export function CreateChasseModal({
                                 onClick={() => setEtat("ACTIVE")}
                                 disabled={loading}
                                 className={`p-4 rounded-xl border-2 font-bold transition-all ${etat === "ACTIVE"
-                                        ? "border-green-500 bg-green-50 text-green-700"
-                                        : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                                    ? "border-green-500 bg-green-50 text-green-700"
+                                    : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
                                     } disabled:opacity-50`}
                             >
                                 <span className="block text-sm mb-1">✅</span>

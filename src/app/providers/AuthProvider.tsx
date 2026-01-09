@@ -8,7 +8,7 @@ interface User {
     username: string;
     email: string;
     role: "ADMIN" | "PARTENAIRE" | "JOUEUR";
-    partenerId: number | null;
+    idPartenaire: number | null;
 }
 
 interface AuthContextType {
@@ -59,12 +59,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const isDashboard = pathname.startsWith("/dashboard");
         const isAuthPage = pathname.startsWith("/auth");
 
-        const roleRoutes: Record<string, User["role"]> = {
-            "/dashboard/admin": "ADMIN",
-            "/dashboard/partner": "PARTENAIRE",
-            "/dashboard/player": "JOUEUR",
-        };
-
         if (isDashboard && !user) {
             router.replace("/auth/login");
             return;
@@ -82,27 +76,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
-        for (const [route, requiredRole] of Object.entries(roleRoutes)) {
-            if (pathname.startsWith(route)) {
-                if (!user) {
-                    router.replace("/auth/login");
-                    return;
-                }
+        if (pathname.startsWith("/dashboard/admin") && user?.role !== "ADMIN") {
+            router.replace("/dashboard");
+        }
 
-                if (user.role !== requiredRole) {
-                    const correctRoute =
-                        user.role === "ADMIN"
-                            ? "/dashboard/admin"
-                            : user.role === "PARTENAIRE"
-                                ? "/dashboard/partner"
-                                : "/dashboard/player";
+        if (pathname.startsWith("/dashboard/partner") && user?.role !== "PARTENAIRE") {
+            router.replace("/dashboard");
+        }
 
-                    router.replace(correctRoute);
-                    return;
-                }
-            }
+        if (pathname.startsWith("/dashboard/player") && user?.role !== "JOUEUR") {
+            router.replace("/dashboard");
         }
     }, [user, pathname, loading, router]);
+
 
     const logout = async () => {
         try {
