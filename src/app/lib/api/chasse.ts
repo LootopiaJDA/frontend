@@ -48,8 +48,6 @@ export async function createChasse(formData: FormData) {
 
 export async function updateChasse(id: number, payload: Partial<Chasse>) {
 
-    console.log("updateChasse - ID:", id, "Payload:", payload);
-
     const res = await fetch(`${API_URL}/chasse/update/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
