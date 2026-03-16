@@ -1,0 +1,58 @@
+{
+  "expo": {
+    "name": "Lootopia",
+    "slug": "lootopia",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/logo.png",
+    "userInterfaceStyle": "dark",
+    "scheme": "lootopia",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#080810"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.lootopia.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Lootopia utilise votre position pour les chasses au trésor.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Lootopia utilise votre position pour la navigation.",
+        "NSPhotoLibraryUsageDescription": "Lootopia accède à vos photos pour personnaliser les chasses."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#080810"
+      },
+      "package": "com.lootopia.app",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Lootopia utilise votre position pour les chasses."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Lootopia accède à vos photos pour personnaliser les chasses."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
