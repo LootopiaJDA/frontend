@@ -26,8 +26,8 @@ export interface User {
 
 export interface Occurence {
   id_occurence: number;
-  date_start: string;   // ISO string depuis l'API
-  date_end: string;     // ISO string depuis l'API
+  date_start: string;
+  date_end: string;
   limit_user: number;
   created_at: string;
   chasse_id: number;
@@ -41,7 +41,7 @@ export interface Chasse {
   etat: StatutChasse;
   created_at: string;
   idPartenaire: number;
-  occurence?: Occurence[];   // tableau — une chasse peut avoir plusieurs occurrences
+  occurence?: Occurence[];
   etape?: Etape[];
 }
 

@@ -114,7 +114,9 @@ export const chasseService = {
 
 // ─── ETAPE ──────────────────────────────────────────────────────────────────
 export const etapeService = {
-  getAll: (chasseId: number): Promise<Etape[]> => req(EP.ETAPES(chasseId)),
+  // Récupère toutes les étapes d'une chasse via query param idChasse
+  getAll: (chasseId: number): Promise<Etape[]> =>
+      req(`/etape?idChasse=${chasseId}`),
 
   create: async (chasseId: number, formData: FormData): Promise<void> => {
     const res = await fetch(`${API_URL}${EP.ETAPE_CREATE(chasseId)}`, {

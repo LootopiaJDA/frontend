@@ -51,17 +51,10 @@ export default function PartnerLayout() {
                 tabBarShowLabel: false,
             }}
         >
-            {/* Tabs visibles */}
             <Tabs.Screen
                 name="dashboard"
                 options={{
                     tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'grid' : 'grid-outline'} focused={focused} />,
-                }}
-            />
-            <Tabs.Screen
-                name="create-chasse"
-                options={{
-                    tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'add-circle' : 'add-circle-outline'} focused={focused} />,
                 }}
             />
             <Tabs.Screen

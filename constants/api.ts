@@ -1,15 +1,12 @@
-export const API_URL = 'http://10.111.0.78:3000';
+export const API_URL = 'http://10.111.0.160:3000';
 
 export const EP = {
-  // Auth
   LOGIN: '/connexion',
   LOGOUT: '/connexion/logout',
-  // User
   ME: '/user/personnalData',
   REGISTER: '/user',
   REGISTER_PARTNER: '/user/partenaire',
   USERS: '/user',
-  // Chasse
   CHASSES: '/chasse/getAll',
   CHASSE: (id: number) => `/chasse/${id}`,
   CHASSE_CREATE: '/chasse',

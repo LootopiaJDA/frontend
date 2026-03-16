@@ -35,7 +35,9 @@ export default function AdminChasses() {
         try {
             const data = await chasseService.getAll();
             setChasses(data.allChasse ?? []);
-        } catch { /* silencieux */ }
+        } catch {
+
+        }
         finally { setLoading(false); setRefreshing(false); }
     }, []);
 

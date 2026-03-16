@@ -6,6 +6,7 @@ import {
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import Input from '../../components/Input';
 import Btn from '../../components/Btn';
 import { Colors, Sp, R } from '../../constants/theme';
@@ -24,6 +25,9 @@ export default function CreateChasse() {
   const [image, setImage] = useState<{ uri: string; name: string; type: string } | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [showStart, setShowStart] = useState(false);
+  const [showEnd, setShowEnd] = useState(false);
+
   const s = (k: string) => (v: string) => setForm(f => ({ ...f, [k]: v }));
 
   // Reset complet à chaque fois qu'on arrive sur la page
@@ -82,6 +86,16 @@ export default function CreateChasse() {
     }
   };
 
+  const onChangeStart = (_: any, selectedDate?: Date) => {
+    setShowStart(Platform.OS === 'ios');
+    if (selectedDate) setForm(f => ({ ...f, date_start: selectedDate.toISOString().split('T')[0] }));
+  };
+
+  const onChangeEnd = (_: any, selectedDate?: Date) => {
+    setShowEnd(Platform.OS === 'ios');
+    if (selectedDate) setForm(f => ({ ...f, date_end: selectedDate.toISOString().split('T')[0] }));
+  };
+
   return (
       <View style={styles.bg}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
@@ -131,13 +145,53 @@ export default function CreateChasse() {
               <Text style={styles.sectionLabel}>Occurrence</Text>
               <View style={styles.row2}>
                 <View style={{ flex: 1 }}>
-                  <Input label="Date de début" placeholder="2026-05-01" value={form.date_start} onChangeText={s('date_start')} icon="calendar-outline" />
+                  <Text style={styles.fieldLabel}>Date de début</Text>
+                  <TouchableOpacity
+                      style={styles.dateInput}
+                      onPress={() => setShowStart(true)}
+                  >
+                    <Text style={{ color: form.date_start ? Colors.textPrimary : Colors.textMuted }}>
+                      {form.date_start || 'Sélectionnez la date'}
+                    </Text>
+                    <Ionicons name="calendar-outline" size={20} color={Colors.gold} />
+                  </TouchableOpacity>
+                  {showStart && (
+                      <DateTimePicker
+                          value={form.date_start ? new Date(form.date_start) : new Date()}
+                          mode="date"
+                          display="calendar"
+                          onChange={(e, d) => {
+                            setShowStart(Platform.OS === 'ios');
+                            if (d) setForm(f => ({ ...f, date_start: d.toISOString().split('T')[0] }));
+                          }}
+                      />
+                  )}
                 </View>
+
                 <View style={{ flex: 1 }}>
-                  <Input label="Date de fin" placeholder="2026-05-31" value={form.date_end} onChangeText={s('date_end')} icon="calendar-outline" />
+                  <Text style={styles.fieldLabel}>Date de fin</Text>
+                  <TouchableOpacity
+                      style={styles.dateInput}
+                      onPress={() => setShowEnd(true)}
+                  >
+                    <Text style={{ color: form.date_end ? Colors.textPrimary : Colors.textMuted }}>
+                      {form.date_end || 'Sélectionnez la date'}
+                    </Text>
+                    <Ionicons name="calendar-outline" size={20} color={Colors.gold} />
+                  </TouchableOpacity>
+                  {showEnd && (
+                      <DateTimePicker
+                          value={form.date_end ? new Date(form.date_end) : new Date()}
+                          mode="date"
+                          display="calendar"
+                          onChange={(e, d) => {
+                            setShowEnd(Platform.OS === 'ios');
+                            if (d) setForm(f => ({ ...f, date_end: d.toISOString().split('T')[0] }));
+                          }}
+                      />
+                  )}
                 </View>
               </View>
-              <Input label="Limite de joueurs" placeholder="30" value={form.limit_user} onChangeText={s('limit_user')} icon="people-outline" keyboard="numeric" />
 
               {/* Statut */}
               <Text style={styles.sectionLabel}>Statut initial</Text>
@@ -205,4 +259,14 @@ const styles = StyleSheet.create({
   etatDesc: { color: Colors.textMuted, fontSize: 11, textAlign: 'center' },
   infoBox: { flexDirection: 'row', gap: Sp.sm, backgroundColor: Colors.goldGlow, borderRadius: R.md, borderWidth: 1, borderColor: Colors.gold + '30', padding: Sp.md, marginBottom: Sp.lg, alignItems: 'flex-start' },
   infoText: { color: Colors.textSecondary, fontSize: 13, flex: 1, lineHeight: 20 },
+  dateInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: R.md,
+    padding: Sp.sm,
+    height: 44,
+  },
 });
