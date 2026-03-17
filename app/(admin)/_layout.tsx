@@ -51,8 +51,6 @@ export default function AdminLayout() {
                 name="profil"
                 options={{ tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'person' : 'person-outline'} focused={focused} /> }}
             />
-            {/* Écrans cachés */}
-            <Tabs.Screen name="chasse-detail" options={{ href: null }} />
         </Tabs>
     );
 }

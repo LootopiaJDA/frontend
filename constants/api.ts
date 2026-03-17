@@ -1,4 +1,17 @@
-export const API_URL = 'http://10.111.0.160:3000';
+import Constants from 'expo-constants';
+
+const getBaseUrl = () => {
+  const hostUri = Constants.expoConfig?.hostUri;
+
+  if (!hostUri) {
+    return 'http://localhost:3000';
+  }
+
+  const ip = hostUri.split(':')[0];
+  return `http://${ip}:3000`;
+};
+
+export const API_URL = getBaseUrl();
 
 export const EP = {
   LOGIN: '/connexion',
