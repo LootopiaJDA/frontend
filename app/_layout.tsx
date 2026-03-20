@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { Stack } from 'expo-router';
 import { useAuth, AuthProvider } from '../context/AuthContext';
+import { Colors, Sp } from "@/constants/theme";
 
 function RootStack() {
     const { loading } = useAuth();
@@ -9,7 +10,7 @@ function RootStack() {
     if (loading) {
         return (
             <View style={styles.splash}>
-                <ActivityIndicator size="large" color="#FFD700" />
+                <ActivityIndicator size="large" color={Colors.gold} />
                 <Text style={styles.splashText}>Chargement...</Text>
             </View>
         );
@@ -17,12 +18,10 @@ function RootStack() {
 
     return (
         <Stack screenOptions={{ headerShown: false }}>
-                <>
-                    <Stack.Screen name="welcome" />
-                    <Stack.Screen name="login" options={{ animation: 'slide_from_right' }} />
-                    <Stack.Screen name="register" options={{ animation: 'slide_from_right' }} />
-                    <Stack.Screen name="register-partner" options={{ animation: 'slide_from_right' }} />
-                </>
+            <Stack.Screen name="welcome" />
+            <Stack.Screen name="login" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="register" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="register-partner" options={{ animation: 'slide_from_right' }} />
         </Stack>
     );
 }
@@ -40,11 +39,11 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#111', // ou Colors.bg
+        backgroundColor: Colors.bg || '#111',
     },
     splashText: {
         marginTop: 12,
-        color: '#FFD700',
+        color: Colors.gold || '#FFD700',
         fontWeight: '600',
         fontSize: 16,
     },

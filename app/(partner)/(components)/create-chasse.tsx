@@ -7,10 +7,10 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import Input from '../../components/Input';
-import Btn from '../../components/Btn';
-import { Colors, Sp, R } from '../../constants/theme';
-import { chasseService } from '../../services/api';
+import Input from '../../../components/Input';
+import Btn from '../../../components/Btn';
+import { Colors, Sp, R } from '../../../constants/theme';
+import { chasseService } from '../../../services/api';
 
 type Etat = 'PENDING' | 'ACTIVE';
 

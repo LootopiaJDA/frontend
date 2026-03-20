@@ -19,44 +19,67 @@ export interface User {
   email: string;
   role: Role;
   partenerId?: number | null;
-  partenaire?: Partenaire | null;
+  partener?: Partenaire | null;
   created_at: string;
   updated_at: string;
 }
 
 export interface Occurence {
-  id_occurence: number;
+  id_occurence?: number;
   date_start: string;
   date_end: string;
   limit_user: number;
-  created_at: string;
-  chasse_id: number;
+  created_at?: string;
+  chasse_id?: number;
+}
+
+export interface Etape {
+  id_etape: number;
+  name: string;
+  lat: string;
+  long: string;
+  address?: string | null;
+  description?: string | null;
+  rayon?: number | null;
+  rank?: number | null;
+  image?: string | null;
+  chasse_id?: number;
+  created_at?: string;
+}
+
+// Réponse brute de GET /chasse/{id}
+export interface ChasseDetail {
+  name: string;
+  localisation?: string | null;
+  etat: string;
+  image?: string | null;
+  occurence: Occurence[];
+  etape: Array<{
+    id: number;       // l'API retourne "id"
+    name: string;
+    lat: string;
+    long: string;
+    address?: string | null;
+    description?: string | null;
+    rayon?: number | null;
+    rank?: number | null;
+    image?: string | null;
+  }>;
 }
 
 export interface Chasse {
   id_chasse: number;
   name: string;
-  image: string;
-  localisation: string;
+  description?: string | null;
+  image?: string | null;
+  localisation?: string | null;
   etat: StatutChasse;
   created_at: string;
+  updated_at?: string;
   idPartenaire: number;
+  partener?: Partenaire | null;
   occurence?: Occurence[];
-  etape?: Etape[];
-}
-
-export interface Etape {
-  id: number;
-  name: string;
-  lat: string;
-  long: string;
-  address: string;
-  description: string;
-  rayon: number;
-  rank: number;
-  image: string;
-  chasse_id: number;
-  created_at: string;
+  etapes?: Etape[];
 }
 
 export interface UserChasse {

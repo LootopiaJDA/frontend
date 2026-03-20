@@ -38,21 +38,20 @@ export default function PartnerProfil() {
           <Text style={styles.email}>{user.email}</Text>
           <View style={styles.badgeRow}>
             <StatusBadge status={user.role} />
-            {user.partenaire && <StatusBadge status={user.partenaire.statut} />}
+            {user.partener && <StatusBadge status={user.partener.statut} />}
           </View>
         </View>
 
-        {/* Partner details */}
-        {user.partenaire && (
+        {user.partener && (
           <View style={styles.partnerCard}>
             <View style={styles.partnerCardHeader}>
               <Ionicons name="business-outline" size={18} color={Colors.gold} />
               <Text style={styles.partnerCardTitle}>Informations entreprise</Text>
             </View>
             {[
-              { label: 'Société', value: user.partenaire.company_name },
-              { label: 'SIRET', value: user.partenaire.siret },
-              { label: 'Statut', value: user.partenaire.statut === 'ACTIVE' ? 'Actif' : 'En vérification' },
+              { label: 'Société', value: user.partener.company_name },
+              { label: 'SIRET', value: user.partener.siret },
+              { label: 'Statut', value: user.partener.statut === 'ACTIVE' ? 'Actif' : 'En vérification' },
             ].map(row => (
               <View key={row.label} style={styles.infoRow}>
                 <Text style={styles.infoLabel}>{row.label}</Text>
