@@ -61,7 +61,7 @@ app.enableCors({
 /(partner)/            ← Zone partenaire (tab bar : Dashboard / Créer / Étape / Profil)
   dashboard.tsx        ← Stats + liste chasses + edit/delete + modal étapes
   create-chasse.tsx    ← Formulaire création avec image picker Cloudinary
-  add-etape.tsx        ← Formulaire étape + carte interactive + géocodage inverse
+  edit-etape.tsx        ← Formulaire étape + carte interactive + géocodage inverse
   profil.tsx           ← Profil partenaire + infos entreprise
 ```
 
