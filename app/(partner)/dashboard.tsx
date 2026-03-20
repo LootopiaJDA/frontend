@@ -21,6 +21,13 @@ const EMPTY_FORM = {
   date_start: '', date_end: '', limit_user: '30',
 };
 
+const ETAT_COLOR: Record<string, string> = {
+  PENDING: Colors.gold,
+  ACTIVE: '#4caf50',
+  COMPLETED: Colors.textMuted,
+};
+
+// ─── Modal création ───────────────────────────────────────────────────────────
 function CreateChasseModal({ visible, onClose, onCreated }: {
   visible: boolean;
   onClose: () => void;
@@ -32,7 +39,6 @@ function CreateChasseModal({ visible, onClose, onCreated }: {
   const [loading, setLoading] = useState(false);
   const [showStart, setShowStart] = useState(false);
   const [showEnd, setShowEnd] = useState(false);
-
 
   const s = (k: string) => (v: string) => setForm(f => ({ ...f, [k]: v }));
 
@@ -60,7 +66,7 @@ function CreateChasseModal({ visible, onClose, onCreated }: {
     if (!form.localisation.trim()) e.localisation = 'Localisation requise';
     if (!image) e.image = 'Image requise';
     setErrors(e);
-    return Object.keys(e).filter(k => e[k]).length === 0;
+    return Object.keys(e).every(k => !e[k]);
   };
 
   const handleCreate = async () => {
@@ -78,7 +84,7 @@ function CreateChasseModal({ visible, onClose, onCreated }: {
       }));
       fd.append('image', { uri: image!.uri, name: image!.name, type: image!.type } as any);
       await chasseService.create(fd);
-      onCreated();
+      onCreated(); // reload la liste
       onClose();
     } catch (err: any) {
       Alert.alert('Erreur', err.message ?? 'Création échouée');
@@ -90,7 +96,6 @@ function CreateChasseModal({ visible, onClose, onCreated }: {
   return (
       <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
         <SafeAreaView style={cm.safe}>
-          {/* Header */}
           <View style={cm.header}>
             <TouchableOpacity onPress={onClose} style={cm.closeBtn}>
               <Ionicons name="close" size={22} color={Colors.textSecondary} />
@@ -104,7 +109,6 @@ function CreateChasseModal({ visible, onClose, onCreated }: {
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
             <ScrollView contentContainerStyle={cm.scroll} keyboardShouldPersistTaps="handled">
 
-              {/* Image */}
               <Text style={cm.label}>Image de couverture *</Text>
               <TouchableOpacity style={[cm.imagePicker, !!errors.image && cm.imagePickerErr]} onPress={pickImage}>
                 {image ? (
@@ -121,7 +125,6 @@ function CreateChasseModal({ visible, onClose, onCreated }: {
               <Input label="Nom de la chasse" placeholder="La Quête du Dragon..." value={form.name} onChangeText={s('name')} error={errors.name} icon="bookmark-outline" autoCapitalize="sentences" />
               <Input label="Localisation" placeholder="Paris, Musée du Louvre..." value={form.localisation} onChangeText={s('localisation')} error={errors.localisation} icon="location-outline" autoCapitalize="sentences" />
 
-              {/* Dates */}
               <Text style={cm.sectionLabel}>Occurrence</Text>
               <View style={cm.row2}>
                 <View style={{ flex: 1 }}>
@@ -164,18 +167,16 @@ function CreateChasseModal({ visible, onClose, onCreated }: {
                 </View>
               </View>
 
-              {/* Statut */}
               <Text style={cm.sectionLabel}>Statut initial</Text>
               <View style={cm.etatRow}>
-                {([
-                  { key: 'PENDING' as Etat, icon: 'time-outline', label: 'En attente' },
-                  { key: 'ACTIVE' as Etat, icon: 'checkmark-circle-outline', label: 'Active' },
-                ] as const).map(opt => {
-                  const on = form.etat === opt.key;
+                {(['PENDING', 'ACTIVE'] as Etat[]).map(key => {
+                  const on = form.etat === key;
+                  const icon = key === 'PENDING' ? 'time-outline' : 'checkmark-circle-outline';
+                  const label = key === 'PENDING' ? 'En attente' : 'Active';
                   return (
-                      <TouchableOpacity key={opt.key} style={[cm.etatBtn, on && cm.etatBtnActive]} onPress={() => setForm(f => ({ ...f, etat: opt.key }))}>
-                        <Ionicons name={opt.icon} size={18} color={on ? Colors.gold : Colors.textMuted} />
-                        <Text style={[cm.etatLabel, on && cm.etatLabelActive]}>{opt.label}</Text>
+                      <TouchableOpacity key={key} style={[cm.etatBtn, on && cm.etatBtnActive]} onPress={() => setForm(f => ({ ...f, etat: key }))}>
+                        <Ionicons name={icon as any} size={18} color={on ? Colors.gold : Colors.textMuted} />
+                        <Text style={[cm.etatLabel, on && cm.etatLabelActive]}>{label}</Text>
                       </TouchableOpacity>
                   );
                 })}
@@ -187,6 +188,7 @@ function CreateChasseModal({ visible, onClose, onCreated }: {
   );
 }
 
+// ─── Modal modification ───────────────────────────────────────────────────────
 function EditChasseModal({ visible, chasse, onClose, onUpdated }: {
   visible: boolean;
   chasse: Chasse | null;
@@ -270,7 +272,6 @@ function EditChasseModal({ visible, chasse, onClose, onUpdated }: {
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
             <ScrollView contentContainerStyle={cm.scroll} keyboardShouldPersistTaps="handled">
 
-              {/* Image actuelle + picker */}
               <Text style={cm.label}>Image de couverture</Text>
               <TouchableOpacity style={cm.imagePicker} onPress={pickImage}>
                 {image ? (
@@ -336,20 +337,18 @@ function EditChasseModal({ visible, chasse, onClose, onUpdated }: {
                 </View>
               </View>
 
-              <Text style={cm.label}>Limite participants</Text>
-              <Input label="" placeholder="30" value={form.limit_user} onChangeText={s('limit_user')} keyboardType="numeric" icon="people-outline" />
+              <Input label="Limite participants" placeholder="30" value={form.limit_user} onChangeText={s('limit_user')} keyboardType="numeric" icon="people-outline" />
 
               <Text style={cm.sectionLabel}>Statut</Text>
               <View style={cm.etatRow}>
-                {([
-                  { key: 'PENDING' as Etat, icon: 'time-outline', label: 'En attente' },
-                  { key: 'ACTIVE' as Etat, icon: 'checkmark-circle-outline', label: 'Active' },
-                ] as const).map(opt => {
-                  const on = form.etat === opt.key;
+                {(['PENDING', 'ACTIVE'] as Etat[]).map(key => {
+                  const on = form.etat === key;
+                  const icon = key === 'PENDING' ? 'time-outline' : 'checkmark-circle-outline';
+                  const label = key === 'PENDING' ? 'En attente' : 'Active';
                   return (
-                      <TouchableOpacity key={opt.key} style={[cm.etatBtn, on && cm.etatBtnActive]} onPress={() => setForm(f => ({ ...f, etat: opt.key }))}>
-                        <Ionicons name={opt.icon} size={18} color={on ? Colors.gold : Colors.textMuted} />
-                        <Text style={[cm.etatLabel, on && cm.etatLabelActive]}>{opt.label}</Text>
+                      <TouchableOpacity key={key} style={[cm.etatBtn, on && cm.etatBtnActive]} onPress={() => setForm(f => ({ ...f, etat: key }))}>
+                        <Ionicons name={icon as any} size={18} color={on ? Colors.gold : Colors.textMuted} />
+                        <Text style={[cm.etatLabel, on && cm.etatLabelActive]}>{label}</Text>
                       </TouchableOpacity>
                   );
                 })}
@@ -361,12 +360,7 @@ function EditChasseModal({ visible, chasse, onClose, onUpdated }: {
   );
 }
 
-const ETAT_COLOR: Record<string, string> = {
-  PENDING: Colors.gold,
-  ACTIVE: '#4caf50',
-  COMPLETED: Colors.textMuted,
-};
-
+// ─── Card chasse ──────────────────────────────────────────────────────────────
 function ChasseCard({ chasse, onPress, onEdit, onDelete }: {
   chasse: Chasse;
   onPress: () => void;
@@ -376,13 +370,13 @@ function ChasseCard({ chasse, onPress, onEdit, onDelete }: {
   const occ = chasse.occurence?.[0];
   const fmt = (d?: string) => d ? new Date(d).toLocaleDateString('fr-FR') : '—';
   const etatColor = ETAT_COLOR[chasse.etat] ?? Colors.textMuted;
-  console.log(chasse.id_chasse)
 
   return (
       <TouchableOpacity style={card.wrap} activeOpacity={0.88} onPress={onPress}>
-        {chasse.image && <Image source={{ uri: chasse.image }} style={card.img} resizeMode="cover" />}
+        {chasse.image
+            ? <Image source={{ uri: chasse.image }} style={card.img} resizeMode="cover" />
+            : null}
         <View style={card.body}>
-          {/* Titre + badge */}
           <View style={card.row}>
             <Text style={card.name} numberOfLines={1}>{chasse.name}</Text>
             <View style={[card.badge, { borderColor: etatColor }]}>
@@ -390,23 +384,22 @@ function ChasseCard({ chasse, onPress, onEdit, onDelete }: {
             </View>
           </View>
 
-          {chasse.localisation && (
+          {chasse.localisation ? (
               <View style={card.row}>
                 <Ionicons name="location-outline" size={13} color={Colors.textMuted} />
                 <Text style={card.meta}>{chasse.localisation}</Text>
               </View>
-          )}
+          ) : null}
 
-          {occ && (
+          {occ ? (
               <View style={card.row}>
                 <Ionicons name="calendar-outline" size={13} color={Colors.textMuted} />
                 <Text style={card.meta}>{fmt(occ.date_start)} → {fmt(occ.date_end)}</Text>
                 <Ionicons name="people-outline" size={13} color={Colors.textMuted} style={{ marginLeft: 6 }} />
                 <Text style={card.meta}>{occ.limit_user} places</Text>
               </View>
-          )}
+          ) : null}
 
-          {/* Actions */}
           <View style={[card.row, { marginTop: Sp.sm, gap: Sp.sm }]}>
             <TouchableOpacity style={card.btnEdit} onPress={onEdit}>
               <Ionicons name="pencil-outline" size={14} color={Colors.gold} />
@@ -422,7 +415,7 @@ function ChasseCard({ chasse, onPress, onEdit, onDelete }: {
   );
 }
 
-// ─── Dashboard principal ──────────────────────────────────────────────────────
+// ─── Dashboard ────────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const { user } = useAuth();
   const router = useRouter();
@@ -446,12 +439,13 @@ export default function Dashboard() {
     }
   }, [user]);
 
+
   useFocusEffect(useCallback(() => { loadChasses(); }, [loadChasses]));
 
   const handleDelete = (chasse: Chasse) => {
     Alert.alert(
         'Supprimer la chasse',
-        `Voulez-vous vraiment supprimer "${chasse.name}" ?`,
+        `Voulez-vous supprimer "${chasse.name}" ?`,
         [
           { text: 'Annuler', style: 'cancel' },
           {
@@ -459,10 +453,9 @@ export default function Dashboard() {
             onPress: async () => {
               try {
                 await chasseService.delete(chasse.id_chasse);
-                console.log(chasse.id_chasse)
-                setChasses(prev => prev.filter(c => c.id_chasse !== chasse.id_chasse));
+                await loadChasses();
               } catch (e: any) {
-                Alert.alert('Erreur', e.message ?? 'Suppression échouée');
+                Alert.alert('Erreur suppression', e.message ?? 'Échec');
               }
             },
           },
@@ -473,54 +466,74 @@ export default function Dashboard() {
   if (!user) return null;
 
   return (
-      <View style={styles.container}>
+      <View style={st.container}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={st.header}>
           <View>
-            <Text style={styles.company}>{user.partener?.company_name}</Text>
-            <Text style={styles.title}>Bienvenue, {user.username}</Text>
+            <Text style={st.company}>{user.partener?.company_name}</Text>
+            <Text style={st.title}>Bienvenue, {user.username}</Text>
           </View>
-          <TouchableOpacity style={styles.addBtn} onPress={() => setCreateVisible(true)}>
+          <TouchableOpacity style={st.addBtn} onPress={() => setCreateVisible(true)}>
             <Ionicons name="add" size={24} color={Colors.black} />
           </TouchableOpacity>
         </View>
 
         {loading ? (
-            <View style={styles.center}>
+            <View style={st.center}>
               <ActivityIndicator size="large" color={Colors.gold} />
             </View>
         ) : (
             <FlatList
                 data={chasses}
-                keyExtractor={item => String(item.id_chasse)}
-                contentContainerStyle={[styles.list, chasses.length === 0 && { flex: 1, justifyContent: 'center' }]}
+                // key robuste : id_chasse est toujours un number depuis l'API
+                keyExtractor={item => `chasse-${item.id_chasse}`}
+                contentContainerStyle={[
+                  st.list,
+                  chasses.length === 0 && { flex: 1, justifyContent: 'center' },
+                ]}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
-                  <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadChasses(); }} tintColor={Colors.gold} />
+                  <RefreshControl
+                      refreshing={refreshing}
+                      onRefresh={() => { setRefreshing(true); loadChasses(); }}
+                      tintColor={Colors.gold}
+                  />
                 }
                 renderItem={({ item }) => (
                     <ChasseCard
                         chasse={item}
-                        onPress={() => router.push({ pathname: '/(partner)/(components)/chasse-detail', params: { id: item.id_chasse } })}
+                        onPress={() => router.push({
+                          pathname: '/(partner)/(components)/chasse-detail',
+                          params: { id: item.id_chasse },
+                        })}
                         onEdit={() => setEditTarget(item)}
                         onDelete={() => handleDelete(item)}
                     />
                 )}
                 ListEmptyComponent={
-                  <View style={styles.empty}>
+                  <View style={st.empty}>
                     <Ionicons name="map-outline" size={60} color={Colors.textMuted} />
-                    <Text style={styles.emptyTitle}>Aucune chasse créée</Text>
-                    <Text style={styles.emptySub}>Commencez votre première aventure</Text>
-                    <TouchableOpacity style={styles.createBtn} onPress={() => setCreateVisible(true)}>
-                      <Text style={styles.createText}>Créer une chasse</Text>
+                    <Text style={st.emptyTitle}>Aucune chasse créée</Text>
+                    <Text style={st.emptySub}>Commencez votre première aventure</Text>
+                    <TouchableOpacity style={st.createBtn} onPress={() => setCreateVisible(true)}>
+                      <Text style={st.createText}>Créer une chasse</Text>
                     </TouchableOpacity>
                   </View>
                 }
             />
         )}
 
-        <CreateChasseModal visible={createVisible} onClose={() => setCreateVisible(false)} onCreated={loadChasses} />
-        <EditChasseModal visible={!!editTarget} chasse={editTarget} onClose={() => setEditTarget(null)} onUpdated={loadChasses} />
+        <CreateChasseModal
+            visible={createVisible}
+            onClose={() => setCreateVisible(false)}
+            onCreated={loadChasses}
+        />
+        <EditChasseModal
+            visible={!!editTarget}
+            chasse={editTarget}
+            onClose={() => setEditTarget(null)}
+            onUpdated={loadChasses}
+        />
       </View>
   );
 }
@@ -528,33 +541,58 @@ export default function Dashboard() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const cm = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Sp.lg, paddingVertical: Sp.md, borderBottomWidth: 1, borderBottomColor: Colors.border },
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: Sp.lg, paddingVertical: Sp.md,
+    borderBottomWidth: 1, borderBottomColor: Colors.border,
+  },
   closeBtn: { padding: 4 },
   title: { fontSize: 17, fontWeight: '700', color: Colors.textPrimary },
   saveBtn: { backgroundColor: Colors.gold, borderRadius: R.sm, paddingHorizontal: Sp.md, paddingVertical: 7 },
   saveBtnText: { color: Colors.black, fontWeight: '700', fontSize: 14 },
   scroll: { padding: Sp.lg, paddingBottom: 60, gap: Sp.sm },
   label: { fontSize: 12, fontWeight: '600', color: Colors.textSecondary, marginBottom: 4, marginTop: Sp.sm },
-  sectionLabel: { fontSize: 10, fontWeight: '700', color: Colors.gold, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: Sp.lg, marginBottom: Sp.sm },
-  imagePicker: { borderWidth: 2, borderColor: Colors.border, borderStyle: 'dashed', borderRadius: R.lg, height: 160, overflow: 'hidden', marginBottom: Sp.sm },
+  sectionLabel: {
+    fontSize: 10, fontWeight: '700', color: Colors.gold,
+    letterSpacing: 1.5, textTransform: 'uppercase', marginTop: Sp.lg, marginBottom: Sp.sm,
+  },
+  imagePicker: {
+    borderWidth: 2, borderColor: Colors.border, borderStyle: 'dashed',
+    borderRadius: R.lg, height: 160, overflow: 'hidden', marginBottom: Sp.sm,
+  },
   imagePickerErr: { borderColor: Colors.error },
   imagePreview: { width: '100%', height: '100%' },
-  imageOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  imageOverlay: {
+    ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center', justifyContent: 'center', gap: 6,
+  },
   imageOverlayText: { color: '#fff', fontSize: 13, fontWeight: '600' },
   imagePlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
   imagePlaceholderText: { color: Colors.textMuted, fontSize: 14 },
   errText: { color: Colors.error, fontSize: 12, marginBottom: Sp.sm },
   row2: { flexDirection: 'row', gap: Sp.sm },
-  dateInput: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: Colors.border, borderRadius: R.md, paddingHorizontal: Sp.md, paddingVertical: Sp.sm, height: 44, backgroundColor: Colors.bgCard },
+  dateInput: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    borderWidth: 1, borderColor: Colors.border, borderRadius: R.md,
+    paddingHorizontal: Sp.md, paddingVertical: Sp.sm, height: 44,
+    backgroundColor: Colors.bgCard,
+  },
   etatRow: { flexDirection: 'row', gap: Sp.md, marginBottom: Sp.lg },
-  etatBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.bgElevated, borderRadius: R.md, borderWidth: 1, borderColor: Colors.border, padding: Sp.md },
+  etatBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, backgroundColor: Colors.bgElevated, borderRadius: R.md,
+    borderWidth: 1, borderColor: Colors.border, padding: Sp.md,
+  },
   etatBtnActive: { backgroundColor: Colors.goldGlow, borderColor: Colors.gold },
   etatLabel: { color: Colors.textMuted, fontSize: 14, fontWeight: '600' },
   etatLabelActive: { color: Colors.gold },
 });
 
 const card = StyleSheet.create({
-  wrap: { backgroundColor: Colors.bgCard, borderRadius: R.lg, overflow: 'hidden', borderWidth: 1, borderColor: Colors.border, marginBottom: Sp.md },
+  wrap: {
+    backgroundColor: Colors.bgCard, borderRadius: R.lg,
+    overflow: 'hidden', borderWidth: 1, borderColor: Colors.border, marginBottom: Sp.md,
+  },
   img: { width: '100%', height: 160 },
   body: { padding: Sp.md, gap: 6 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
@@ -562,23 +600,40 @@ const card = StyleSheet.create({
   meta: { fontSize: 12, color: Colors.textMuted },
   badge: { borderWidth: 1, borderRadius: R.sm, paddingHorizontal: 6, paddingVertical: 2 },
   badgeTxt: { fontSize: 11, fontWeight: '700' },
-  btnEdit: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, borderRadius: R.md, borderWidth: 1, borderColor: Colors.gold + '55', backgroundColor: Colors.goldGlow, paddingVertical: 8 },
+  btnEdit: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 5, borderRadius: R.md, borderWidth: 1,
+    borderColor: Colors.gold + '55', backgroundColor: Colors.goldGlow, paddingVertical: 8,
+  },
   btnEditTxt: { color: Colors.gold, fontSize: 13, fontWeight: '700' },
-  btnDel: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, borderRadius: R.md, borderWidth: 1, borderColor: Colors.error + '55', backgroundColor: Colors.errorBg, paddingVertical: 8 },
+  btnDel: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 5, borderRadius: R.md, borderWidth: 1,
+    borderColor: Colors.error + '55', backgroundColor: Colors.errorBg, paddingVertical: 8,
+  },
   btnDelTxt: { color: Colors.error, fontSize: 13, fontWeight: '700' },
 });
 
-const styles = StyleSheet.create({
+const st = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg, paddingHorizontal: Sp.lg, paddingTop: Sp.lg },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Sp.lg, paddingVertical: Sp.md },
+  header: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: Sp.lg, paddingVertical: Sp.md,
+  },
   company: { fontSize: 12, color: Colors.gold, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
   title: { fontSize: 24, fontWeight: '800', color: Colors.textPrimary },
-  addBtn: { width: 44, height: 44, borderRadius: R.full, backgroundColor: Colors.gold, alignItems: 'center', justifyContent: 'center' },
+  addBtn: {
+    width: 44, height: 44, borderRadius: R.full,
+    backgroundColor: Colors.gold, alignItems: 'center', justifyContent: 'center',
+  },
   list: { paddingBottom: 100 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   empty: { alignItems: 'center', gap: 10 },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: Colors.textSecondary },
   emptySub: { fontSize: 14, color: Colors.textMuted },
-  createBtn: { marginTop: 15, backgroundColor: Colors.gold, paddingHorizontal: 20, paddingVertical: 10, borderRadius: R.md },
+  createBtn: {
+    marginTop: 15, backgroundColor: Colors.gold,
+    paddingHorizontal: 20, paddingVertical: 10, borderRadius: R.md,
+  },
   createText: { fontWeight: '700', color: Colors.black },
 });

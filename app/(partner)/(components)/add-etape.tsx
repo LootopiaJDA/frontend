@@ -95,7 +95,7 @@ export default function AddEtape() {
         return Object.keys(e).every(k => !e[k]);
     };
 
-    // ── Soumission ─────────────────────────────────────────────────────────────
+
     const handleCreate = async () => {
         if (!validate()) return;
         if (!chasseId) { Alert.alert('Erreur', 'ID chasse manquant'); return; }
@@ -131,7 +131,7 @@ export default function AddEtape() {
 
     const hasPos = !!(form.lat && form.lng);
 
-    // ── Map fullscreen (remplace l'écran) ──────────────────────────────────────
+
     if (mapOpen) {
         return (
             <EtapeMapPicker
@@ -144,7 +144,7 @@ export default function AddEtape() {
         );
     }
 
-    // ── Formulaire principal ───────────────────────────────────────────────────
+
     return (
         <View style={st.bg}>
             <KeyboardAvoidingView

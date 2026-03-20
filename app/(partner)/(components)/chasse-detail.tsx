@@ -3,7 +3,7 @@ import {
     View, Text, StyleSheet, ScrollView, Image,
     ActivityIndicator, SafeAreaView, TouchableOpacity, Alert,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { chasseService, etapeService } from '../../../services/api';
 import { Chasse, Etape } from '../../../constants/types';
@@ -17,8 +17,18 @@ const ETAT_COLOR: Record<string, string> = {
     COMPLETED: Colors.textMuted,
 };
 
-// ─── Sous-composant étape — clé portée par le parent ─────────────────────────
-// (on ne retourne PAS de fragment ni de tableau ici, juste un View)
+/**
+ * L'API GET /etape?idChasse=X peut retourner "id" ou "id_etape" selon l'endpoint.
+ * On normalise ici pour être sûr d'avoir toujours id_etape.
+ */
+function normalizeEtape(raw: any): Etape {
+    return {
+        ...raw,
+        id_etape: raw.id_etape ?? raw.id ?? Math.random(), // fallback random évite les clés undefined
+    };
+}
+
+// ─── Sous-composant ligne étape ───────────────────────────────────────────────
 interface EtapeRowProps {
     etape: Etape;
     onEdit: () => void;
@@ -28,12 +38,10 @@ interface EtapeRowProps {
 function EtapeRow({ etape, onEdit, onDelete }: EtapeRowProps) {
     return (
         <View style={s.etapeCard}>
-            {/* Badge rang — toujours rendu, pas conditionnel au niveau liste */}
             <View style={s.rankBadge}>
                 <Text style={s.rankTxt}>{etape.rank ?? '?'}</Text>
             </View>
 
-            {/* Image — rendu conditionnel à l'intérieur du View, pas en enfant direct du ScrollView */}
             {etape.image ? (
                 <Image source={{ uri: etape.image }} style={s.etapeImg} resizeMode="cover" />
             ) : (
@@ -90,11 +98,18 @@ export default function ChasseDetail() {
     const [loading, setLoading] = useState(true);
 
     const load = useCallback(async () => {
+        setLoading(true);
         try {
+            // getById retourne ChasseDetail — on le cast en Chasse
             const raw = await chasseService.getById(chasseId);
             setChasse(raw as unknown as Chasse);
-            const e = await etapeService.getAll(chasseId);
-            setEtapes([...e].sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0)));
+
+            // Charger les étapes séparément et normaliser les ids
+            const rawEtapes = await etapeService.getAll(chasseId);
+            const normalized = rawEtapes
+                .map(normalizeEtape)
+                .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
+            setEtapes(normalized);
         } catch (err) {
             console.log('Erreur chargement chasse:', err);
         } finally {
@@ -102,22 +117,27 @@ export default function ChasseDetail() {
         }
     }, [chasseId]);
 
-    useEffect(() => { load(); }, [load]);
+    // useFocusEffect → reload quand on revient de add-etape ou edit-etape
+    useFocusEffect(useCallback(() => {
+        load();
+    }, [load]));
 
     const handleDeleteEtape = (etape: Etape) => {
         Alert.alert(
-            'Supprimer l\'étape',
-            `Voulez-vous supprimer "${etape.name}" ?`,
+            '🗑 Supprimer l\'étape',
+            `Voulez-vous vraiment supprimer "${etape.name}" ?\nCette action est irréversible.`,
             [
                 { text: 'Annuler', style: 'cancel' },
                 {
-                    text: 'Supprimer', style: 'destructive',
+                    text: 'Supprimer',
+                    style: 'destructive',
                     onPress: async () => {
+                        setEtapes(prev => prev.filter(e => e.id_etape !== etape.id_etape));
                         try {
                             await etapeService.delete(chasseId, etape.id_etape);
-                            setEtapes(prev => prev.filter(e => e.id_etape !== etape.id_etape));
                         } catch (err: any) {
                             Alert.alert('Erreur', err.message ?? 'Suppression échouée');
+                            load();
                         }
                     },
                 },
@@ -125,7 +145,7 @@ export default function ChasseDetail() {
         );
     };
 
-    // ── États de chargement ────────────────────────────────────────────────────
+    // ── Loading ────────────────────────────────────────────────────────────────
     if (loading) {
         return (
             <View style={s.center}>
@@ -147,16 +167,14 @@ export default function ChasseDetail() {
     const fmt = (d?: string) => d ? new Date(d).toLocaleDateString('fr-FR') : '—';
     const etatColor = ETAT_COLOR[chasse.etat] ?? Colors.textMuted;
 
-    // ── Render ─────────────────────────────────────────────────────────────────
-    // IMPORTANT : ScrollView n'a qu'un seul enfant direct (le <View> wrapper).
-    // Tous les éléments conditionnels sont à l'intérieur de ce View.
     return (
         <SafeAreaView style={s.container}>
-            <ScrollView
-                contentContainerStyle={s.scroll}
-                showsVerticalScrollIndicator={false}
-            >
-                {/* ── Unique enfant direct du ScrollView ── */}
+            {/*
+        ScrollView avec UN SEUL enfant direct (<View style={s.inner}>).
+        Tous les éléments conditionnels sont DANS ce View.
+        C'est la seule façon d'éviter l'erreur "key prop" sur les enfants du ScrollView.
+      */}
+            <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
                 <View style={s.inner}>
 
                     {/* Back */}
@@ -164,7 +182,7 @@ export default function ChasseDetail() {
                         <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
                     </TouchableOpacity>
 
-                    {/* Hero image */}
+                    {/* Hero */}
                     {chasse.image ? (
                         <View style={s.heroWrap}>
                             <Image source={{ uri: chasse.image }} style={s.hero} resizeMode="cover" />
@@ -197,11 +215,11 @@ export default function ChasseDetail() {
                         ) : null}
                     </View>
 
-                    {/* Carte du parcours */}
+                    {/* Carte */}
                     <Text style={s.sectionLabel}>Carte du parcours</Text>
                     <ChasseMapView etapes={etapes} height={280} />
 
-                    {/* CTA ajout étape */}
+                    {/* Ajouter étape */}
                     <Btn
                         label="+ Ajouter une étape"
                         onPress={() => router.push({
@@ -211,7 +229,7 @@ export default function ChasseDetail() {
                         style={{ marginTop: Sp.lg }}
                     />
 
-                    {/* Section étapes */}
+                    {/* Liste étapes */}
                     <Text style={[s.sectionLabel, { marginTop: Sp.xl }]}>
                         {`Étapes (${etapes.length})`}
                     </Text>
@@ -222,10 +240,10 @@ export default function ChasseDetail() {
                             <Text style={s.emptyTxt}>Aucune étape pour l'instant</Text>
                         </View>
                     ) : (
-                        // Le key est sur EtapeRow directement — pas sur un fragment
-                        etapes.map((etape) => (
+                        etapes.map((etape, index) => (
+                            // On utilise index en fallback si id_etape est encore undefined
                             <EtapeRow
-                                key={String(etape.id_etape)}
+                                key={`etape-${etape.id_etape ?? index}`}
                                 etape={etape}
                                 onEdit={() => router.push({
                                     pathname: '/(partner)/(components)/edit-etape',
@@ -237,18 +255,14 @@ export default function ChasseDetail() {
                     )}
 
                 </View>
-                {/* ── Fin unique enfant ── */}
             </ScrollView>
         </SafeAreaView>
     );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.bg },
-    // contentContainerStyle — pas de flex:1 ici pour que le scroll fonctionne
     scroll: { paddingBottom: 60 },
-    // Le vrai wrapper avec le padding
     inner: { padding: Sp.lg },
 
     center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 10 },
@@ -278,11 +292,9 @@ const s = StyleSheet.create({
     emptyEtapes: { alignItems: 'center', gap: 8, paddingVertical: Sp.xl },
     emptyTxt: { fontSize: 14, color: Colors.textMuted },
 
-    // Étape card
     etapeCard: {
         backgroundColor: Colors.bgCard, borderRadius: R.lg,
-        overflow: 'hidden', borderWidth: 1, borderColor: Colors.border,
-        marginBottom: Sp.md,
+        overflow: 'hidden', borderWidth: 1, borderColor: Colors.border, marginBottom: Sp.md,
     },
     rankBadge: {
         position: 'absolute', top: Sp.sm, left: Sp.sm, zIndex: 10,
@@ -292,8 +304,7 @@ const s = StyleSheet.create({
     rankTxt: { fontSize: 12, fontWeight: '800', color: Colors.black },
     etapeImg: { width: '100%', height: 150 },
     etapeImgPlaceholder: {
-        width: '100%', height: 80,
-        backgroundColor: Colors.bgElevated,
+        width: '100%', height: 80, backgroundColor: Colors.bgElevated,
         alignItems: 'center', justifyContent: 'center',
     },
     etapeBody: { padding: Sp.md, gap: 5 },
