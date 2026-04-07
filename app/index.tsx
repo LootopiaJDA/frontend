@@ -17,5 +17,5 @@ export default function Index() {
   if (!user) return <Redirect href="/(auth)/welcome" />;
   if (user.role === 'PARTENAIRE') return <Redirect href="/(partner)/dashboard" />;
   if (user.role === 'ADMIN') return <Redirect href="/(admin)/dashboard" />;
-  return <Redirect href="/(app)/chasses" />;
+  return <Redirect href="/(app)/dashboard" />;
 }

@@ -54,9 +54,9 @@ app.enableCors({
   register-partner.tsx ← Inscription partenaire (avec SIRET)
 
 /(app)/                ← Zone joueur (tab bar : Chasses / Carte / Profil)
-  chasses/index.tsx    ← Liste chasses + filtres + modal détail + étapes
-  map/index.tsx        ← Carte interactive GPS + détection proximité + creuser
-  profil/index.tsx     ← Profil joueur / CTA connexion si invité
+  chasses/chasses.tsx    ← Liste chasses + filtres + modal détail + étapes
+  map/chasses.tsx        ← Carte interactive GPS + détection proximité + creuser
+  profil/chasses.tsx     ← Profil joueur / CTA connexion si invité
 
 /(partner)/            ← Zone partenaire (tab bar : Dashboard / Créer / Étape / Profil)
   dashboard.tsx        ← Stats + liste chasses + edit/delete + modal étapes
