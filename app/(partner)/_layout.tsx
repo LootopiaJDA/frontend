@@ -3,7 +3,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useAuth } from '../../context/AuthContext';
-import {Colors, Sp} from '../../constants/theme';
+import { Colors } from '../../constants/theme';
 
 export default function PartnerLayout() {
     const { user, loading } = useAuth();
@@ -35,6 +35,7 @@ export default function PartnerLayout() {
                 },
             }}
         >
+            {/* ── 2 onglets visibles ── */}
             <Tabs.Screen
                 name="dashboard"
                 options={{
@@ -44,7 +45,6 @@ export default function PartnerLayout() {
                     ),
                 }}
             />
-
             <Tabs.Screen
                 name="profil"
                 options={{
@@ -53,6 +53,23 @@ export default function PartnerLayout() {
                         <Ionicons name="person-outline" size={size} color={color} />
                     ),
                 }}
+            />
+
+            <Tabs.Screen
+                name="(components)/add-etape"
+                options={{ href: null }}
+            />
+            <Tabs.Screen
+                name="(components)/chasse-detail"
+                options={{ href: null }}
+            />
+            <Tabs.Screen
+                name="(components)/create-chasse"
+                options={{ href: null }}
+            />
+            <Tabs.Screen
+                name="(components)/edit-etape"
+                options={{ href: null }}
             />
         </Tabs>
     );

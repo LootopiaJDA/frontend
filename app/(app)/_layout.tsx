@@ -1,52 +1,73 @@
 import { Tabs, Redirect } from 'expo-router';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
-import { Colors, Sp, R } from '../../constants/theme';
-
-function TabIcon({ name, focused }: { name: any; focused: boolean }) {
-    return (
-        <View style={[styles.iconWrap, focused && styles.active]}>
-            <Ionicons name={name} size={22} color={focused ? Colors.gold : Colors.textMuted} />
-        </View>
-    );
-}
+import { Colors } from '../../constants/theme';
 
 export default function AppLayout() {
     const { user, loading } = useAuth();
 
-    if (loading) return (
-        <View style={{ flex: 1, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' }}>
-            <ActivityIndicator color={Colors.gold} size="large" />
-        </View>
-    );
+    if (loading) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.bg }}>
+                <ActivityIndicator size="large" color={Colors.gold} />
+            </View>
+        );
+    }
 
     if (!user) return <Redirect href="/(auth)/login" />;
-    if (user.role === 'ADMIN') return <Redirect href="/(admin)/dashboard" />;
     if (user.role === 'PARTENAIRE') return <Redirect href="/(partner)/dashboard" />;
+    if (user.role === 'ADMIN') return <Redirect href="/(admin)/dashboard" />;
 
     return (
-        <Tabs screenOptions={{ headerShown: false, tabBarStyle: styles.tabBar, tabBarShowLabel: false }}>
+        <Tabs
+            screenOptions={{
+                headerShown: false,
+                tabBarActiveTintColor: Colors.gold,
+                tabBarInactiveTintColor: Colors.textMuted,
+                tabBarStyle: {
+                    backgroundColor: Colors.bgCard,
+                    borderTopColor: Colors.border,
+                    height: 90,
+                },
+            }}
+        >
+            <Tabs.Screen
+                name="dashboard"
+                options={{
+                    title: 'Accueil',
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="home-outline" size={size} color={color} />
+                    ),
+                }}
+            />
             <Tabs.Screen
                 name="chasses"
-                options={{ tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'map' : 'map-outline'} focused={focused} /> }}
+                options={{
+                    title: 'Chasses',
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="map-outline" size={size} color={color} />
+                    ),
+                }}
             />
             <Tabs.Screen
                 name="map"
-                options={{ tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'navigate' : 'navigate-outline'} focused={focused} /> }}
+                options={{
+                    title: 'Carte',
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="location-outline" size={size} color={color} />
+                    ),
+                }}
             />
             <Tabs.Screen
                 name="profil"
-                options={{ tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'person' : 'person-outline'} focused={focused} /> }}
+                options={{
+                    title: 'Profil',
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="person-outline" size={size} color={color} />
+                    ),
+                }}
             />
-            {/* Écrans cachés */}
-            <Tabs.Screen name="chasse-detail" options={{ href: null }} />
         </Tabs>
     );
 }
-
-const styles = StyleSheet.create({
-    tabBar: { backgroundColor: Colors.bgCard, borderTopWidth: 1, borderTopColor: Colors.border, height: 72, paddingBottom: 10, paddingTop: 6 },
-    iconWrap: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: R.md },
-    active: { backgroundColor: Colors.goldGlow },
-});
