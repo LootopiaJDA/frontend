@@ -31,7 +31,6 @@ export default function UsersScreen() {
 
     useFocusEffect(useCallback(() => { load(); }, [load]));
 
-    // Valider / rejeter un partenaire en attente
     const handleValidatePartner = (user: User) => {
         if (!user.partener) return;
         Alert.alert(

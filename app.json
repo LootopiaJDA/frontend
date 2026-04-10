@@ -17,7 +17,8 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Lootopia utilise votre position pour les chasses au trésor.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Lootopia utilise votre position pour la navigation.",
-        "NSPhotoLibraryUsageDescription": "Lootopia accède à vos photos pour personnaliser les chasses."
+        "NSPhotoLibraryUsageDescription": "Lootopia accède à vos photos pour personnaliser les chasses.",
+        "NSCameraUsageDescription": "Lootopia utilise la caméra pour la réalité augmentée."
       }
     },
     "android": {
@@ -29,7 +30,8 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "WRITE_EXTERNAL_STORAGE",
+        "CAMERA"
       ]
     },
     "web": {
@@ -38,6 +40,12 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Lootopia utilise la caméra pour la réalité augmentée."
+        }
+      ],
       [
         "expo-location",
         {

@@ -5,78 +5,34 @@ import {
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Input from '../../../components/Input';
 import Btn from '../../../components/Btn';
 import { Colors, Sp, R } from '../../../constants/theme';
 import { chasseService } from '../../../services/api';
-
-type Etat = 'PENDING' | 'ACTIVE';
-
-const EMPTY_FORM = {
-  name: '', localisation: '', etat: 'PENDING' as Etat,
-  date_start: '', date_end: '', limit_user: '30',
-};
+import { useChasseForm, ChasseEtat } from '../../../hooks/useChasseForm';
+import { useImagePicker } from '../../../hooks/useImagePicker';
 
 export default function CreateChasse() {
   const router = useRouter();
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [image, setImage] = useState<{ uri: string; name: string; type: string } | null>(null);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const { form, setForm, setField, errors, setErrors, resetForCreate, validate, buildCreateFormData } = useChasseForm();
+  const { image, pick: pickImage, reset: resetImage } = useImagePicker();
   const [loading, setLoading] = useState(false);
   const [showStart, setShowStart] = useState(false);
   const [showEnd, setShowEnd] = useState(false);
 
-  const s = (k: string) => (v: string) => setForm(f => ({ ...f, [k]: v }));
-
-  // Reset complet à chaque fois qu'on arrive sur la page
   useFocusEffect(useCallback(() => {
-    setForm(EMPTY_FORM);
-    setImage(null);
-    setErrors({});
+    resetForCreate();
+    resetImage();
     setLoading(false);
   }, []));
 
-  const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') { Alert.alert('Permission requise', 'Accès à la galerie nécessaire'); return; }
-    const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true, aspect: [16, 9], quality: 0.85,
-    });
-    if (!res.canceled && res.assets[0]) {
-      const a = res.assets[0];
-      setImage({ uri: a.uri, name: a.fileName || `chasse_${Date.now()}.jpg`, type: a.mimeType || 'image/jpeg' });
-      setErrors(e => ({ ...e, image: '' }));
-    }
-  };
-
-  const validate = () => {
-    const e: Record<string, string> = {};
-    if (!form.name.trim()) e.name = 'Nom requis';
-    if (!form.localisation.trim()) e.localisation = 'Localisation requise';
-    if (!image) e.image = 'Image de couverture requise';
-    setErrors(e);
-    return !Object.keys(e).filter(k => e[k]).length;
-  };
-
   const handleCreate = async () => {
-    if (!validate()) return;
+    if (!validate({ requireImage: true, image })) return;
     setLoading(true);
     try {
-      const fd = new FormData();
-      fd.append('name', form.name.trim());
-      fd.append('localisation', form.localisation.trim());
-      fd.append('etat', form.etat);
-      fd.append('occurrence', JSON.stringify({
-        date_start: form.date_start,
-        date_end: form.date_end,
-        limit_user: Number(form.limit_user) || 30,
-      }));
-      fd.append('image', { uri: image!.uri, name: image!.name, type: image!.type } as any);
-      await chasseService.create(fd);
-      Alert.alert('Chasse créée ! 🎉', 'Vous pouvez maintenant y ajouter des étapes depuis le tableau de bord.', [
+      await chasseService.create(buildCreateFormData(image!));
+      Alert.alert('Chasse créée !', 'Vous pouvez maintenant y ajouter des étapes depuis le tableau de bord.', [
         { text: 'Voir le dashboard', onPress: () => router.replace('/(partner)/dashboard') },
       ]);
     } catch (err: any) {
@@ -84,16 +40,6 @@ export default function CreateChasse() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const onChangeStart = (_: any, selectedDate?: Date) => {
-    setShowStart(Platform.OS === 'ios');
-    if (selectedDate) setForm(f => ({ ...f, date_start: selectedDate.toISOString().split('T')[0] }));
-  };
-
-  const onChangeEnd = (_: any, selectedDate?: Date) => {
-    setShowEnd(Platform.OS === 'ios');
-    if (selectedDate) setForm(f => ({ ...f, date_end: selectedDate.toISOString().split('T')[0] }));
   };
 
   return (
@@ -138,8 +84,8 @@ export default function CreateChasse() {
 
               {/* Infos */}
               <Text style={styles.sectionLabel}>Informations</Text>
-              <Input label="Nom de la chasse" placeholder="La Quête du Dragon Doré..." value={form.name} onChangeText={s('name')} error={errors.name} icon="bookmark-outline" autoCapitalize="sentences" />
-              <Input label="Localisation" placeholder="Paris, Musée du Louvre..." value={form.localisation} onChangeText={s('localisation')} error={errors.localisation} icon="location-outline" autoCapitalize="sentences" />
+              <Input label="Nom de la chasse" placeholder="La Quête du Dragon Doré..." value={form.name} onChangeText={setField('name')} error={errors.name} icon="bookmark-outline" autoCapitalize="sentences" />
+              <Input label="Localisation" placeholder="Paris, Musée du Louvre..." value={form.localisation} onChangeText={setField('localisation')} error={errors.localisation} icon="location-outline" autoCapitalize="sentences" />
 
               {/* Occurrence */}
               <Text style={styles.sectionLabel}>Occurrence</Text>
@@ -160,7 +106,7 @@ export default function CreateChasse() {
                           value={form.date_start ? new Date(form.date_start) : new Date()}
                           mode="date"
                           display="calendar"
-                          onChange={(e, d) => {
+                          onChange={(_, d) => {
                             setShowStart(Platform.OS === 'ios');
                             if (d) setForm(f => ({ ...f, date_start: d.toISOString().split('T')[0] }));
                           }}
@@ -184,7 +130,7 @@ export default function CreateChasse() {
                           value={form.date_end ? new Date(form.date_end) : new Date()}
                           mode="date"
                           display="calendar"
-                          onChange={(e, d) => {
+                          onChange={(_, d) => {
                             setShowEnd(Platform.OS === 'ios');
                             if (d) setForm(f => ({ ...f, date_end: d.toISOString().split('T')[0] }));
                           }}
@@ -197,8 +143,8 @@ export default function CreateChasse() {
               <Text style={styles.sectionLabel}>Statut initial</Text>
               <View style={styles.etatGrid}>
                 {[
-                  { key: 'PENDING' as Etat, icon: 'time-outline', title: 'En attente', desc: 'Invisible pour les joueurs' },
-                  { key: 'ACTIVE' as Etat, icon: 'checkmark-circle-outline', title: 'Active', desc: 'Jouable immédiatement' },
+                  { key: 'PENDING' as ChasseEtat, icon: 'time-outline', title: 'En attente', desc: 'Invisible pour les joueurs' },
+                  { key: 'ACTIVE' as ChasseEtat, icon: 'checkmark-circle-outline', title: 'Active', desc: 'Jouable immédiatement' },
                 ].map(opt => {
                   const on = form.etat === opt.key;
                   return (

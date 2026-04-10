@@ -219,15 +219,29 @@ export default function ChasseDetail() {
                     <Text style={s.sectionLabel}>Carte du parcours</Text>
                     <ChasseMapView etapes={etapes} height={280} />
 
-                    {/* Ajouter étape */}
-                    <Btn
-                        label="+ Ajouter une étape"
-                        onPress={() => router.push({
-                            pathname: '/(partner)/(components)/add-etape',
-                            params: { chasseId },
-                        })}
-                        style={{ marginTop: Sp.lg }}
-                    />
+                    {/* Actions chasse */}
+                    <View style={s.actionsBlock}>
+                        <Btn
+                            label="+ Ajouter une étape"
+                            onPress={() => router.push({
+                                pathname: '/(partner)/(components)/add-etape',
+                                params: { chasseId },
+                            })}
+                        />
+                        {etapes.length > 0 && (
+                            <TouchableOpacity
+                                style={s.testBtn}
+                                onPress={() => router.push({
+                                    pathname: '/(app)/map',
+                                    params: { chasseId },
+                                })}
+                                activeOpacity={0.85}
+                            >
+                                <Ionicons name="play-circle-outline" size={20} color={Colors.gold} />
+                                <Text style={s.testBtnText}>Tester ma chasse</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
 
                     {/* Liste étapes */}
                     <Text style={[s.sectionLabel, { marginTop: Sp.xl }]}>
@@ -313,6 +327,13 @@ const s = StyleSheet.create({
     etapeDesc: { fontSize: 13, color: Colors.textSecondary, lineHeight: 18 },
     etapeMeta: { fontSize: 11, color: Colors.textMuted, flex: 1 },
 
+    actionsBlock: { gap: Sp.md, marginTop: Sp.lg },
+    testBtn: {
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+        borderWidth: 1, borderColor: Colors.gold + '55',
+        backgroundColor: Colors.goldGlow, borderRadius: R.md, paddingVertical: 14,
+    },
+    testBtnText: { fontSize: 14, fontWeight: '700', color: Colors.gold },
     actionsRow: { flexDirection: 'row', gap: Sp.sm, marginTop: Sp.sm },
     btnEdit: {
         flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',

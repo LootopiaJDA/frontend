@@ -176,7 +176,6 @@ export default function AddEtape() {
                             <View style={{ flex: 1 }}>
                                 <Input
                                     label="Rang"
-                                    placeholder="1"
                                     value={form.rank}
                                     onChangeText={s('rank')}
                                     keyboardType="numeric"
@@ -187,7 +186,6 @@ export default function AddEtape() {
                             <View style={{ flex: 1 }}>
                                 <Input
                                     label="Rayon (m)"
-                                    placeholder="50"
                                     value={form.rayon}
                                     onChangeText={s('rayon')}
                                     keyboardType="numeric"
@@ -287,7 +285,7 @@ export default function AddEtape() {
                         <View style={st.infoBox}>
                             <Ionicons name="bulb-outline" size={15} color={Colors.gold} />
                             <Text style={st.infoTxt}>
-                                La zone de détection (rayon) définit la distance à laquelle le joueur doit se trouver pour valider l'étape.
+                                La zone de détection (rayon) définit la distance à laquelle le joueur doit se trouver pour voir l'étape.
                             </Text>
                         </View>
 

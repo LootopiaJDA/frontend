@@ -189,7 +189,6 @@ export default function EditEtape() {
                             <View style={{ flex: 1 }}>
                                 <Input
                                     label="Rang"
-                                    placeholder="1"
                                     value={rank}
                                     onChangeText={setRank}
                                     keyboardType="numeric"
@@ -200,7 +199,6 @@ export default function EditEtape() {
                             <View style={{ flex: 1 }}>
                                 <Input
                                     label="Rayon (m)"
-                                    placeholder="50"
                                     value={rayon}
                                     onChangeText={setRayon}
                                     keyboardType="numeric"

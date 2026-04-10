@@ -1,5 +1,11 @@
 import { API_URL, EP } from '../constants/api';
-import { Chasse, ChasseDetail, Etape, User } from '../constants/types';
+import { Chasse, ChasseDetail, Etape, StatutChasse, User, UserChasse } from '../constants/types';
+
+interface ChasseUpdatePayload {
+  name?: string;
+  localisation?: string;
+  etat?: StatutChasse;
+}
 
 const req = async (path: string, options: RequestInit = {}) => {
   const url = `${API_URL}${path}`;
@@ -17,7 +23,7 @@ const req = async (path: string, options: RequestInit = {}) => {
 export const authService = {
   login: (email: string, password: string) =>
       req(EP.LOGIN, { method: 'POST', body: JSON.stringify({ email, password }) }),
-  logout: () => fetch(`${API_URL}${EP.LOGOUT}`, { credentials: 'include' }),
+  logout: () => req(EP.LOGOUT, { method: 'GET' }),
   me: (): Promise<User> => req(EP.ME),
 };
 
@@ -31,21 +37,14 @@ export const userService = {
   getAll: (): Promise<User[]> => req(EP.USERS),
   getById: (id: number): Promise<User> => req(`${EP.USERS}/${id}`),
   update: (id: number, data: Partial<User>) =>
-      req(`${EP.USERS}/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+      req(`${EP.USERS}/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id: number) => req(`${EP.USERS}/${id}`, { method: 'DELETE' }),
-};
-
-export const partenaireService = {
-  getAll: () => req('/partenaire'),
-  updateStatut: (id: number, statut: 'ACTIVE' | 'INACTIVE' | 'VERIFICATION') =>
-      req(`/partenaire/${id}`, { method: 'PATCH', body: JSON.stringify({ statut }) }),
 };
 
 export const chasseService = {
   getAll: (): Promise<{ allChasse: Chasse[] }> => req(EP.CHASSES),
   getByPartenaire: (id: number): Promise<{ chasseByPart: Chasse[] }> =>
       req(`${EP.CHASSES}?partenaire=${id}`),
-  // Retourne la forme exacte de l'API
   getById: (id: number): Promise<ChasseDetail> => req(EP.CHASSE(id)),
   create: async (formData: FormData): Promise<void> => {
     const res = await fetch(`${API_URL}${EP.CHASSE_CREATE}`, {
@@ -54,17 +53,30 @@ export const chasseService = {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.message || 'Erreur création');
   },
-  update: (id: number, data: any) =>
+  update: (id: number, data: ChasseUpdatePayload) =>
       req(EP.CHASSE_UPDATE(id), { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: number) => req(EP.CHASSE_DELETE(id), { method: 'DELETE' }),
-  join: (chasseId: number) => req(`/chasse/${chasseId}/join`, { method: 'POST' }),
-  myChasses: (): Promise<any[]> => req('/chasse/my'),
-  reachEtape: (chasseId: number, etapeId: number) =>
-      req(`/chasse/${chasseId}/etape/${etapeId}/reach`, { method: 'POST' }),
+  // Rejoindre une chasse (joueur)
+  join: (chasseId: number) => req(`/chasse/inscription/${chasseId}`, { method: 'POST' }),
+  // Joueurs inscrits à une chasse (admin/partenaire)
+  getPlayers: (chasseId: number) => req(`/chasse/getPlayerChasses/${chasseId}`),
+};
+
+export const partenaireService = {
+  getAll: (): Promise<any[]> => req('/partenaire'),
+  updateStatut: (id: number, statut: 'ACTIVE' | 'INACTIVE' | 'VERIFICATION') =>
+      req(`/partenaire/${id}`, { method: 'PATCH', body: JSON.stringify({ statut }) }),
 };
 
 export const etapeService = {
-  getAll: (chasseId: number): Promise<Etape[]> => req(`/etape?idChasse=${chasseId}`),
+  // L'API retourne "id" (nom Prisma), on normalise vers "id_etape" ici
+  getAll: async (chasseId: number): Promise<Etape[]> => {
+    const data = await req(`/etape?idChasse=${chasseId}`);
+    return (Array.isArray(data) ? data : []).map((e: any) => ({
+      ...e,
+      id_etape: e.id_etape ?? e.id,
+    }));
+  },
   create: async (chasseId: number, formData: FormData): Promise<void> => {
     const res = await fetch(`${API_URL}${EP.ETAPE_CREATE(chasseId)}`, {
       method: 'POST', credentials: 'include', body: formData,

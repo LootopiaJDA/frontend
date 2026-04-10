@@ -1,1 +1,2 @@
-get all modifier , ca reprends simplement les chasses de l'utilisateur en question, pour l'admin ou le joueur ils ne peuvent pas voir les chasses
+-get all modifier , ca reprends simplement les chasses de l'utilisateur en question, pour l'admin ou le joueur ils ne peuvent pas voir les chasses
+-valider les paternaires par l'admin

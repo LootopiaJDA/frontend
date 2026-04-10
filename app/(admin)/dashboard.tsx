@@ -5,9 +5,8 @@ import {
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { userService, chasseService, partenaireService } from '../../services/api';
+import { userService, chasseService } from '../../services/api';
 import { Colors, Sp, R } from '../../constants/theme';
-// ← composants partagés réutilisés
 import PageHeader from '../../components/PageHeader';
 import StatusBadge from '../../components/StatusBadge';
 import { useAuth } from '../../context/AuthContext';
@@ -25,15 +24,14 @@ export default function AdminDashboard() {
 
     const load = useCallback(async () => {
         try {
-            const [users, chasses, partenaires] = await Promise.all([
+            const [users, chasses] = await Promise.all([
                 userService.getAll(),
                 chasseService.getAll(),
-                partenaireService.getAll(),
             ]);
             setStats({
-                totalUsers:            users.length,
-                totalChasses:          chasses.allChasse?.length ?? 0,
-                partenairesEnAttente:  partenaires.filter((p: any) => p.statut === 'VERIFICATION').length,
+                totalUsers:           users.length,
+                totalChasses:         chasses.allChasse?.length ?? 0,
+                partenairesEnAttente: 0,
             });
         } catch (err) {
             console.log('Erreur stats admin:', err);

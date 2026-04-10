@@ -65,7 +65,7 @@ export default function ChassesScreen() {
                         chasse={item}
                         onPress={() =>
                             router.push({
-                                pathname: '/(app)/chasses/[id]',
+                                pathname: '/(app)/chasse/[id]',
                                 params: { id: item.id_chasse },
                             })
                         }
