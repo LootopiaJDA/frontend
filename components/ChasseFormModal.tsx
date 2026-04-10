@@ -130,7 +130,6 @@ export default function ChasseFormModal({ visible, mode, chasse, onClose, onSave
               autoCapitalize="sentences"
             />
 
-            {!isCreate && (
               <Input
                 label="Limite participants"
                 placeholder="30"
@@ -139,49 +138,52 @@ export default function ChasseFormModal({ visible, mode, chasse, onClose, onSave
                 keyboardType="numeric"
                 icon="people-outline"
               />
-            )}
 
-            <Text style={s.sectionLabel}>Occurrence</Text>
-            <View style={s.row2}>
-              <View style={{ flex: 1 }}>
-                <Text style={s.label}>Date début</Text>
-                <TouchableOpacity style={s.dateInput} onPress={() => setShowStart(true)}>
-                  <Text style={{ color: form.date_start ? Colors.textPrimary : Colors.textMuted }}>
-                    {form.date_start || 'Choisir'}
-                  </Text>
-                  <Ionicons name="calendar-outline" size={18} color={Colors.gold} />
-                </TouchableOpacity>
-                {showStart && (
-                  <DateTimePicker
-                    value={form.date_start ? new Date(form.date_start) : new Date()}
-                    mode="date" display="calendar"
-                    onChange={(_, d) => {
-                      setShowStart(Platform.OS === 'ios');
-                      if (d) setForm(f => ({ ...f, date_start: d.toISOString().split('T')[0] }));
-                    }}
-                  />
-                )}
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={s.label}>Date fin</Text>
-                <TouchableOpacity style={s.dateInput} onPress={() => setShowEnd(true)}>
-                  <Text style={{ color: form.date_end ? Colors.textPrimary : Colors.textMuted }}>
-                    {form.date_end || 'Choisir'}
-                  </Text>
-                  <Ionicons name="calendar-outline" size={18} color={Colors.gold} />
-                </TouchableOpacity>
-                {showEnd && (
-                  <DateTimePicker
-                    value={form.date_end ? new Date(form.date_end) : new Date()}
-                    mode="date" display="calendar"
-                    onChange={(_, d) => {
-                      setShowEnd(Platform.OS === 'ios');
-                      if (d) setForm(f => ({ ...f, date_end: d.toISOString().split('T')[0] }));
-                    }}
-                  />
-                )}
-              </View>
-            </View>
+            {isCreate && (
+              <>
+                <Text style={s.sectionLabel}>Occurrence</Text>
+                <View style={s.row2}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.label}>Date début</Text>
+                    <TouchableOpacity style={s.dateInput} onPress={() => setShowStart(true)}>
+                      <Text style={{ color: form.date_start ? Colors.textPrimary : Colors.textMuted }}>
+                        {form.date_start || 'Choisir'}
+                      </Text>
+                      <Ionicons name="calendar-outline" size={18} color={Colors.gold} />
+                    </TouchableOpacity>
+                    {showStart && (
+                      <DateTimePicker
+                        value={form.date_start ? new Date(form.date_start) : new Date()}
+                        mode="date" display="calendar"
+                        onChange={(_, d) => {
+                          setShowStart(Platform.OS === 'ios');
+                          if (d) setForm(f => ({ ...f, date_start: d.toISOString().split('T')[0] }));
+                        }}
+                      />
+                    )}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.label}>Date fin</Text>
+                    <TouchableOpacity style={s.dateInput} onPress={() => setShowEnd(true)}>
+                      <Text style={{ color: form.date_end ? Colors.textPrimary : Colors.textMuted }}>
+                        {form.date_end || 'Choisir'}
+                      </Text>
+                      <Ionicons name="calendar-outline" size={18} color={Colors.gold} />
+                    </TouchableOpacity>
+                    {showEnd && (
+                      <DateTimePicker
+                        value={form.date_end ? new Date(form.date_end) : new Date()}
+                        mode="date" display="calendar"
+                        onChange={(_, d) => {
+                          setShowEnd(Platform.OS === 'ios');
+                          if (d) setForm(f => ({ ...f, date_end: d.toISOString().split('T')[0] }));
+                        }}
+                      />
+                    )}
+                  </View>
+                </View>
+              </>
+            )}
 
             <Text style={s.sectionLabel}>Statut</Text>
             <View style={s.etatRow}>

@@ -15,7 +15,7 @@ export interface ChasseForm {
 
 const EMPTY_FORM: ChasseForm = {
   name: '', localisation: '', etat: 'PENDING',
-  date_start: '', date_end: '', limit_user: '30',
+  date_start: '', date_end: '', limit_user: '',
 };
 
 function fromChasse(chasse: Chasse): ChasseForm {
@@ -74,11 +74,6 @@ export function useChasseForm() {
     name: form.name.trim(),
     localisation: form.localisation.trim(),
     etat: form.etat as StatutChasse,
-    occurrence: {
-      date_start: form.date_start,
-      date_end: form.date_end,
-      limit_user: Number(form.limit_user) || 30,
-    },
   });
 
   return {

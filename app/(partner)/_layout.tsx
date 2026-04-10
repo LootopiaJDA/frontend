@@ -53,10 +53,6 @@ export default function PartnerLayout() {
                 options={{ href: null }}
             />
             <Tabs.Screen
-                name="(components)/create-chasse"
-                options={{ href: null }}
-            />
-            <Tabs.Screen
                 name="(components)/edit-etape"
                 options={{ href: null }}
             />
