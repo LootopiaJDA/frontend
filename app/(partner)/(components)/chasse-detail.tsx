@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
     View, Text, StyleSheet, ScrollView, Image,
-    ActivityIndicator, SafeAreaView, TouchableOpacity, Alert,
+    ActivityIndicator, TouchableOpacity, Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { chasseService, etapeService } from '../../../services/api';
@@ -10,6 +11,7 @@ import { Chasse, Etape } from '../../../constants/types';
 import { Colors, Sp, R } from '../../../constants/theme';
 import Btn from '../../../components/Btn';
 import ChasseMapView from '../../../components/ChasseMapView';
+import EtapeFormModal from '../../../components/EtapeFormModal';
 
 const ETAT_COLOR: Record<string, string> = {
     PENDING: Colors.gold,
@@ -96,6 +98,12 @@ export default function ChasseDetail() {
     const [chasse, setChasse] = useState<Chasse | null>(null);
     const [etapes, setEtapes] = useState<Etape[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const [etapeModal, setEtapeModal] = useState<{
+        visible: boolean;
+        mode: 'create' | 'edit';
+        etape: Etape | null;
+    }>({ visible: false, mode: 'create', etape: null });
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -219,15 +227,26 @@ export default function ChasseDetail() {
                     <Text style={s.sectionLabel}>Carte du parcours</Text>
                     <ChasseMapView etapes={etapes} height={280} />
 
-                    {/* Ajouter étape */}
-                    <Btn
-                        label="+ Ajouter une étape"
-                        onPress={() => router.push({
-                            pathname: '/(partner)/(components)/add-etape',
-                            params: { chasseId },
-                        })}
-                        style={{ marginTop: Sp.lg }}
-                    />
+                    {/* Actions chasse */}
+                    <View style={s.actionsBlock}>
+                        <Btn
+                            label="+ Ajouter une étape"
+                            onPress={() => setEtapeModal({ visible: true, mode: 'create', etape: null })}
+                        />
+                        {etapes.length > 0 && (
+                            <TouchableOpacity
+                                style={s.testBtn}
+                                onPress={() => router.push({
+                                    pathname: '/(app)/map',
+                                    params: { chasseId },
+                                })}
+                                activeOpacity={0.85}
+                            >
+                                <Ionicons name="play-circle-outline" size={20} color={Colors.gold} />
+                                <Text style={s.testBtnText}>Tester ma chasse</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
 
                     {/* Liste étapes */}
                     <Text style={[s.sectionLabel, { marginTop: Sp.xl }]}>
@@ -237,7 +256,7 @@ export default function ChasseDetail() {
                     {etapes.length === 0 ? (
                         <View style={s.emptyEtapes}>
                             <Ionicons name="flag-outline" size={36} color={Colors.textMuted} />
-                            <Text style={s.emptyTxt}>Aucune étape pour l'instant</Text>
+                            <Text style={s.emptyTxt}>{"Aucune étape pour l'instant"}</Text>
                         </View>
                     ) : (
                         etapes.map((etape, index) => (
@@ -245,17 +264,24 @@ export default function ChasseDetail() {
                             <EtapeRow
                                 key={`etape-${etape.id_etape ?? index}`}
                                 etape={etape}
-                                onEdit={() => router.push({
-                                    pathname: '/(partner)/(components)/edit-etape',
-                                    params: { chasseId, etapeId: etape.id_etape },
-                                })}
+                                onEdit={() => setEtapeModal({ visible: true, mode: 'edit', etape })}
                                 onDelete={() => handleDeleteEtape(etape)}
                             />
                         ))
-                    )}
-
+                    )
+                    }
                 </View>
             </ScrollView>
+
+            <EtapeFormModal
+                visible={etapeModal.visible}
+                mode={etapeModal.mode}
+                chasseId={chasseId}
+                etape={etapeModal.etape}
+                nextRank={etapes.length + 1}
+                onClose={() => setEtapeModal(m => ({ ...m, visible: false }))}
+                onSaved={load}
+            />
         </SafeAreaView>
     );
 }
@@ -313,6 +339,13 @@ const s = StyleSheet.create({
     etapeDesc: { fontSize: 13, color: Colors.textSecondary, lineHeight: 18 },
     etapeMeta: { fontSize: 11, color: Colors.textMuted, flex: 1 },
 
+    actionsBlock: { gap: Sp.md, marginTop: Sp.lg },
+    testBtn: {
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+        borderWidth: 1, borderColor: Colors.gold + '55',
+        backgroundColor: Colors.goldGlow, borderRadius: R.md, paddingVertical: 14,
+    },
+    testBtnText: { fontSize: 14, fontWeight: '700', color: Colors.gold },
     actionsRow: { flexDirection: 'row', gap: Sp.sm, marginTop: Sp.sm },
     btnEdit: {
         flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',

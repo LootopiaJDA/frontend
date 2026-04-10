@@ -1,26 +1,15 @@
 import { Tabs, Redirect } from 'expo-router';
-import { ActivityIndicator, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
-import { useAuth } from '../../context/AuthContext';
 import { Colors } from '../../constants/theme';
+import LoadingScreen from '../../components/LoadingScreen';
+import { useRoleGuard } from '../../hooks/useRoleGuard';
 
 export default function PartnerLayout() {
-    const { user, loading } = useAuth();
+    const { status, user } = useRoleGuard();
 
-    if (loading) {
-        return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.bg }}>
-                <ActivityIndicator size="large" color={Colors.gold} />
-            </View>
-        );
-    }
-
-    if (!user) return <Redirect href="/(auth)/login" />;
-
-    if (user.role !== 'PARTENAIRE') {
-        return <Redirect href="/(app)/chasses" />;
-    }
+    if (status === 'loading') return <LoadingScreen />;
+    if (status === 'unauthenticated') return <Redirect href="/(auth)/login" />;
+    if (user!.role !== 'PARTENAIRE') return <Redirect href="/(app)/chasses" />;
 
     return (
         <Tabs
@@ -61,10 +50,6 @@ export default function PartnerLayout() {
             />
             <Tabs.Screen
                 name="(components)/chasse-detail"
-                options={{ href: null }}
-            />
-            <Tabs.Screen
-                name="(components)/create-chasse"
                 options={{ href: null }}
             />
             <Tabs.Screen

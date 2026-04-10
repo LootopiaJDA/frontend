@@ -16,14 +16,7 @@ function RootStack() {
         );
     }
 
-    return (
-        <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="welcome" />
-            <Stack.Screen name="login" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="register" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="register-partner" options={{ animation: 'slide_from_right' }} />
-        </Stack>
-    );
+    return <Stack screenOptions={{ headerShown: false }} />;
 }
 
 export default function RootLayout() {
