@@ -14,10 +14,10 @@ import { Colors, Sp, R } from '../../constants/theme';
 export default function Login() {
   const router = useRouter();
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(false);
+  const [errors, setErrors]     = useState<Record<string, string>>({});
+  const [loading, setLoading]   = useState(false);
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -42,27 +42,30 @@ export default function Login() {
   };
 
   return (
-    <View style={styles.bg}>
-      <View style={styles.glow} />
+    <View style={s.bg}>
+      <View style={s.glowTop} />
+      <View style={s.glowBottom} />
+
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
           <SafeAreaView>
-            {/* Back */}
-            <TouchableOpacity style={styles.back} onPress={() => router.back()}>
+
+            {/* Bouton retour */}
+            <TouchableOpacity style={s.back} onPress={() => router.back()}>
               <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
             </TouchableOpacity>
 
             {/* Header */}
-            <View style={styles.header}>
-              <View style={styles.iconWrap}>
-                <Ionicons name="key-outline" size={26} color={Colors.gold} />
+            <View style={s.header}>
+              <View style={s.iconWrap}>
+                <Ionicons name="compass" size={28} color={Colors.gold} />
               </View>
-              <Text style={styles.title}>Connexion</Text>
-              <Text style={styles.sub}>Bienvenue de retour, explorateur</Text>
+              <Text style={s.title}>Connexion</Text>
+              <Text style={s.sub}>Bienvenue de retour, explorateur</Text>
             </View>
 
-            {/* Form */}
-            <View style={styles.form}>
+            {/* Formulaire */}
+            <View style={s.form}>
               <Input
                 label="Adresse email"
                 placeholder="vous@example.com"
@@ -71,6 +74,7 @@ export default function Login() {
                 error={errors.email}
                 keyboard="email-address"
                 icon="mail-outline"
+                autoCapitalize="none"
               />
               <Input
                 label="Mot de passe"
@@ -81,34 +85,34 @@ export default function Login() {
                 secure
                 icon="lock-closed-outline"
               />
-
               <Btn
                 label="Se connecter"
                 onPress={handleLogin}
                 loading={loading}
-                style={{ marginTop: Sp.sm }}
+                style={{ marginTop: Sp.md }}
               />
             </View>
 
             {/* Séparateur */}
-            <View style={styles.separator}>
-              <View style={styles.sepLine} />
-              <Text style={styles.sepText}>ou</Text>
-              <View style={styles.sepLine} />
+            <View style={s.sep}>
+              <View style={s.sepLine} />
+              <Text style={s.sepText}>ou</Text>
+              <View style={s.sepLine} />
             </View>
 
-            {/* Links */}
-            <View style={styles.links}>
-              <Text style={styles.linkText}>Pas encore de compte ? </Text>
+            {/* Liens */}
+            <View style={s.links}>
+              <Text style={s.linkText}>Pas encore de compte ?</Text>
               <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-                <Text style={styles.linkAccent}>S'inscrire</Text>
+                <Text style={s.linkAccent}> S'inscrire</Text>
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.partnerLink} onPress={() => router.push('/(auth)/register-partner')}>
+            <TouchableOpacity style={s.partnerLink} onPress={() => router.push('/(auth)/register-partner')}>
               <Ionicons name="business-outline" size={14} color={Colors.textMuted} />
-              <Text style={styles.partnerLinkText}>Rejoindre en tant que partenaire</Text>
+              <Text style={s.partnerLinkText}>Rejoindre en tant que partenaire</Text>
             </TouchableOpacity>
+
           </SafeAreaView>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -116,57 +120,45 @@ export default function Login() {
   );
 }
 
-const styles = StyleSheet.create({
-  bg: { flex: 1, backgroundColor: Colors.bg },
-  glow: {
-    position: 'absolute',
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: Colors.gold,
-    opacity: 0.04,
-    top: -100,
-    right: -80,
-  },
+const s = StyleSheet.create({
+  bg:         { flex: 1, backgroundColor: Colors.bg },
+  glowTop:    { position: 'absolute', width: 300, height: 300, borderRadius: 150, backgroundColor: Colors.gold, opacity: 0.04, top: -100, right: -60 },
+  glowBottom: { position: 'absolute', width: 200, height: 200, borderRadius: 100, backgroundColor: Colors.accent, opacity: 0.04, bottom: 0, left: -60 },
+
   scroll: { flexGrow: 1, padding: Sp.lg, paddingTop: Sp.xl },
+
   back: {
-    width: 38,
-    height: 38,
-    borderRadius: R.sm,
+    width: 40, height: 40, borderRadius: R.md,
     backgroundColor: Colors.bgElevated,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1, borderColor: Colors.border,
+    alignItems: 'center', justifyContent: 'center',
     marginBottom: Sp.xl,
   },
-  header: { marginBottom: Sp.xl },
+
+  header: { marginBottom: Sp.xl, gap: Sp.sm },
   iconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: R.lg,
-    backgroundColor: Colors.goldGlow,
-    borderWidth: 1,
-    borderColor: Colors.gold + '30',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Sp.md,
+    width: 60, height: 60, borderRadius: R.xl,
+    backgroundColor: Colors.bgCard,
+    borderWidth: 1, borderColor: Colors.gold + '33',
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: Sp.sm,
   },
-  title: { color: Colors.textPrimary, fontSize: 30, fontWeight: '800', letterSpacing: -0.5, marginBottom: 6 },
-  sub: { color: Colors.textSecondary, fontSize: 15 },
-  form: {},
-  separator: { flexDirection: 'row', alignItems: 'center', gap: Sp.md, marginVertical: Sp.lg },
+  title: { fontSize: 32, fontWeight: '800', color: Colors.textPrimary, letterSpacing: -0.5 },
+  sub:   { fontSize: 15, color: Colors.textSecondary },
+
+  form: { gap: Sp.xs },
+
+  sep:     { flexDirection: 'row', alignItems: 'center', gap: Sp.md, marginVertical: Sp.lg },
   sepLine: { flex: 1, height: 1, backgroundColor: Colors.border },
   sepText: { color: Colors.textMuted, fontSize: 12 },
-  links: { flexDirection: 'row', justifyContent: 'center', marginBottom: Sp.md },
-  linkText: { color: Colors.textSecondary, fontSize: 14 },
-  linkAccent: { color: Colors.gold, fontSize: 14, fontWeight: '600' },
+
+  links:      { flexDirection: 'row', justifyContent: 'center', marginBottom: Sp.md },
+  linkText:   { color: Colors.textSecondary, fontSize: 14 },
+  linkAccent: { color: Colors.gold, fontSize: 14, fontWeight: '700' },
+
   partnerLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Sp.xs,
-    paddingVertical: Sp.sm,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: Sp.xs, paddingVertical: Sp.sm,
   },
   partnerLinkText: { color: Colors.textMuted, fontSize: 13 },
 });

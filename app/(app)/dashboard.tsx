@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
     View, Text, StyleSheet, ScrollView, TouchableOpacity,
-    SafeAreaView, ActivityIndicator, RefreshControl,
+    SafeAreaView, ActivityIndicator, RefreshControl, Image,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,16 +10,29 @@ import { chasseService } from '@/services/api';
 import { Chasse } from '@/constants/types';
 import { Colors, Sp, R } from '@/constants/theme';
 
-// ─── Composant chasse disponible (ligne compacte) ─────────────────────────────
+function getGreeting(): string {
+    const h = new Date().getHours();
+    if (h < 6)  return 'Bonne nuit';
+    if (h < 12) return 'Bonjour';
+    if (h < 18) return 'Bon après-midi';
+    return 'Bonsoir';
+}
+
 function HuntRow({ chasse, onPress }: { chasse: Chasse; onPress: () => void }) {
     return (
         <TouchableOpacity style={hr.wrap} onPress={onPress} activeOpacity={0.75}>
-            <View style={hr.icon}>
-                <Ionicons name="map-outline" size={20} color={Colors.gold} />
-            </View>
+            {chasse.image ? (
+                <Image source={{ uri: chasse.image }} style={hr.thumb} />
+            ) : (
+                <View style={[hr.thumb, hr.thumbFallback]}>
+                    <Ionicons name="map-outline" size={18} color={Colors.gold} />
+                </View>
+            )}
             <View style={hr.info}>
                 <Text style={hr.name} numberOfLines={1}>{chasse.name}</Text>
-                {chasse.localisation ? <Text style={hr.meta}>{chasse.localisation}</Text> : null}
+                {chasse.localisation
+                    ? <Text style={hr.meta} numberOfLines={1}>{chasse.localisation}</Text>
+                    : null}
             </View>
             <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
         </TouchableOpacity>
@@ -27,18 +40,31 @@ function HuntRow({ chasse, onPress }: { chasse: Chasse; onPress: () => void }) {
 }
 
 const hr = StyleSheet.create({
-    wrap:     { backgroundColor: Colors.bgCard, borderRadius: R.lg, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: Colors.border },
-    icon:     { width: 44, height: 44, borderRadius: 12, backgroundColor: Colors.goldGlow, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-    info:     { flex: 1, minWidth: 0 },
-    name:     { fontSize: 13, fontWeight: '700', color: Colors.textPrimary },
-    meta:     { fontSize: 11, color: Colors.textMuted, marginTop: 3 },
+    wrap: {
+        backgroundColor: Colors.bgCard,
+        borderRadius: R.lg,
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: Colors.border,
+        overflow: 'hidden',
+        gap: Sp.md,
+        paddingRight: Sp.md,
+    },
+    thumb: { width: 56, height: 56 },
+    thumbFallback: {
+        backgroundColor: Colors.bgElevated,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    info:  { flex: 1, paddingVertical: Sp.sm },
+    name:  { fontSize: 14, fontWeight: '700', color: Colors.textPrimary },
+    meta:  { fontSize: 11, color: Colors.textMuted, marginTop: 3 },
 });
 
-// ─── Screen principal ─────────────────────────────────────────────────────────
 export default function DashboardJoueurScreen() {
     const { user } = useAuth();
     const router = useRouter();
-
     const [allChasses, setAllChasses] = useState<Chasse[]>([]);
     const [loading, setLoading]       = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -59,7 +85,7 @@ export default function DashboardJoueurScreen() {
 
     if (!user) return null;
 
-    const initials = user.username.slice(0, 2).toUpperCase();
+    const initials      = user.username.slice(0, 2).toUpperCase();
     const chassesActives = allChasses.filter(c => c.etat === 'ACTIVE');
 
     return (
@@ -75,44 +101,81 @@ export default function DashboardJoueurScreen() {
                     />
                 }
             >
-                {/* Header */}
+                {/* ── Header ── */}
                 <View style={st.header}>
                     <View>
-                        <Text style={st.greeting}>Espace joueur</Text>
+                        <Text style={st.greeting}>{getGreeting()},</Text>
                         <Text style={st.name}>
-                            Salut, <Text style={{ color: Colors.gold }}>{user.username}</Text>
+                            <Text style={st.nameAccent}>{user.username}</Text> 👋
                         </Text>
                     </View>
-                    <View style={st.avatar}>
+                    <TouchableOpacity
+                        style={st.avatar}
+                        onPress={() => router.push('/(app)/profil')}
+                        activeOpacity={0.8}
+                    >
                         <Text style={st.avatarText}>{initials}</Text>
                         <View style={st.avatarDot} />
+                    </TouchableOpacity>
+                </View>
+
+                {/* ── Bannière hero ── */}
+                <View style={st.heroBanner}>
+                    <View style={st.heroLeft}>
+                        <Text style={st.heroTitle}>Prêt pour{'\n'}l'aventure ?</Text>
+                        <Text style={st.heroSub}>
+                            {chassesActives.length} chasse{chassesActives.length !== 1 ? 's' : ''} disponible{chassesActives.length !== 1 ? 's' : ''}
+                        </Text>
+                    </View>
+                    <View style={st.heroIcon}>
+                        <Ionicons name="compass" size={48} color={Colors.gold} style={{ opacity: 0.9 }} />
                     </View>
                 </View>
 
-                {/* Stat unique */}
-                <View style={st.statCard}>
-                    <Ionicons name="map-outline" size={22} color={Colors.gold} />
-                    <Text style={st.statVal}>{chassesActives.length}</Text>
-                    <Text style={st.statLabel}>Chasses disponibles</Text>
+                {/* ── Actions rapides ── */}
+                <View style={st.quickRow}>
+                    <TouchableOpacity
+                        style={[st.quickCard, { borderColor: Colors.gold + '44' }]}
+                        onPress={() => router.push('/(app)/chasses')}
+                        activeOpacity={0.75}
+                    >
+                        <View style={[st.quickIcon, { backgroundColor: Colors.goldGlow }]}>
+                            <Ionicons name="search-outline" size={22} color={Colors.gold} />
+                        </View>
+                        <Text style={st.quickLabel}>Explorer</Text>
+                        <Text style={st.quickSub}>Toutes les chasses</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[st.quickCard, { borderColor: '#4FC3F744' }]}
+                        onPress={() => router.push('/(app)/map')}
+                        activeOpacity={0.75}
+                    >
+                        <View style={[st.quickIcon, { backgroundColor: 'rgba(79,195,247,0.12)' }]}>
+                            <Ionicons name="navigate-outline" size={22} color="#4FC3F7" />
+                        </View>
+                        <Text style={st.quickLabel}>Ma carte</Text>
+                        <Text style={st.quickSub}>Chasse en cours</Text>
+                    </TouchableOpacity>
                 </View>
 
-                {/* Liste des chasses */}
+                {/* ── Liste des chasses ── */}
                 {loading ? (
                     <ActivityIndicator color={Colors.gold} style={{ marginTop: 40 }} />
                 ) : chassesActives.length === 0 ? (
                     <View style={st.empty}>
-                        <Ionicons name="map-outline" size={40} color={Colors.textMuted} />
-                        <Text style={st.emptyText}>Aucune chasse disponible pour l'instant</Text>
+                        <Ionicons name="map-outline" size={44} color={Colors.textMuted} />
+                        <Text style={st.emptyTitle}>Aucune chasse disponible</Text>
+                        <Text style={st.emptySub}>Revenez bientôt pour de nouvelles aventures</Text>
                     </View>
                 ) : (
                     <>
                         <View style={st.sectionHd}>
-                            <Text style={st.sectionTitle}>Chasses disponibles</Text>
+                            <Text style={st.sectionTitle}>Disponibles maintenant</Text>
                             <TouchableOpacity onPress={() => router.push('/(app)/chasses')}>
                                 <Text style={st.sectionAction}>Voir tout →</Text>
                             </TouchableOpacity>
                         </View>
-
                         <View style={st.huntList}>
                             {chassesActives.slice(0, 5).map(c => (
                                 <HuntRow
@@ -133,27 +196,75 @@ export default function DashboardJoueurScreen() {
 }
 
 const st = StyleSheet.create({
-    safe:          { flex: 1, backgroundColor: Colors.bg },
-    scroll:        { paddingBottom: 40 },
+    safe:   { flex: 1, backgroundColor: Colors.bg },
+    scroll: { paddingBottom: 60 },
 
-    header:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Sp.lg, paddingBottom: Sp.md },
-    greeting:      { fontSize: 12, color: Colors.textMuted, letterSpacing: 0.5 },
-    name:          { fontSize: 20, fontWeight: '800', color: Colors.textPrimary, marginTop: 2 },
+    // Header
+    header:     {
+        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+        paddingHorizontal: Sp.lg, paddingTop: Sp.md, paddingBottom: Sp.sm,
+    },
+    greeting:   { fontSize: 13, color: Colors.textMuted, letterSpacing: 0.3 },
+    name:       { fontSize: 22, fontWeight: '800', color: Colors.textPrimary, marginTop: 2 },
+    nameAccent: { color: Colors.gold },
 
-    avatar:        { width: 44, height: 44, borderRadius: 14, backgroundColor: '#4c1d95', alignItems: 'center', justifyContent: 'center', position: 'relative' },
-    avatarText:    { fontSize: 15, fontWeight: '800', color: '#fff' },
-    avatarDot:     { position: 'absolute', top: -3, right: -3, width: 11, height: 11, borderRadius: 6, backgroundColor: '#4ecb8a', borderWidth: 2, borderColor: Colors.bg },
+    avatar: {
+        width: 46, height: 46, borderRadius: 15,
+        backgroundColor: Colors.bgElevated,
+        borderWidth: 2, borderColor: Colors.gold + '33',
+        alignItems: 'center', justifyContent: 'center',
+    },
+    avatarText: { fontSize: 15, fontWeight: '800', color: Colors.gold },
+    avatarDot:  {
+        position: 'absolute', top: -2, right: -2,
+        width: 12, height: 12, borderRadius: 6,
+        backgroundColor: '#4ecb8a', borderWidth: 2, borderColor: Colors.bg,
+    },
 
-    statCard:      { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: Sp.lg, marginBottom: Sp.lg, backgroundColor: Colors.bgCard, borderRadius: R.lg, padding: 16, borderWidth: 1, borderColor: Colors.border },
-    statVal:       { fontSize: 24, fontWeight: '800', color: Colors.textPrimary },
-    statLabel:     { fontSize: 12, color: Colors.textMuted, flex: 1 },
+    // Hero banner
+    heroBanner: {
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+        marginHorizontal: Sp.lg, marginVertical: Sp.md,
+        backgroundColor: Colors.bgCard,
+        borderRadius: R.xl, borderWidth: 1, borderColor: Colors.gold + '33',
+        padding: Sp.lg,
+        overflow: 'hidden',
+    },
+    heroLeft:  { flex: 1, gap: 6 },
+    heroTitle: { fontSize: 22, fontWeight: '800', color: Colors.textPrimary, lineHeight: 28 },
+    heroSub:   { fontSize: 13, color: Colors.gold, fontWeight: '600' },
+    heroIcon:  { opacity: 0.85 },
 
-    sectionHd:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Sp.lg, marginBottom: 12 },
-    sectionTitle:  { fontSize: 15, fontWeight: '700', color: Colors.textPrimary },
-    sectionAction: { fontSize: 12, color: Colors.gold, fontWeight: '500' },
+    // Quick actions
+    quickRow: {
+        flexDirection: 'row', gap: Sp.md,
+        paddingHorizontal: Sp.lg, marginBottom: Sp.lg,
+    },
+    quickCard: {
+        flex: 1, backgroundColor: Colors.bgCard,
+        borderRadius: R.xl, borderWidth: 1,
+        padding: Sp.md, gap: 6,
+    },
+    quickIcon:  {
+        width: 44, height: 44, borderRadius: R.md,
+        alignItems: 'center', justifyContent: 'center',
+        marginBottom: 4,
+    },
+    quickLabel: { fontSize: 14, fontWeight: '800', color: Colors.textPrimary },
+    quickSub:   { fontSize: 11, color: Colors.textMuted },
 
-    huntList:      { paddingHorizontal: Sp.lg, gap: 10 },
+    // Section
+    sectionHd:     {
+        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+        paddingHorizontal: Sp.lg, marginBottom: Sp.sm,
+    },
+    sectionTitle:  { fontSize: 14, fontWeight: '700', color: Colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.8 },
+    sectionAction: { fontSize: 12, color: Colors.gold, fontWeight: '600' },
 
-    empty:         { alignItems: 'center', gap: 10, paddingVertical: 40 },
-    emptyText:     { fontSize: 14, color: Colors.textMuted },
+    huntList: { paddingHorizontal: Sp.lg, gap: Sp.sm },
+
+    // Empty
+    empty:      { alignItems: 'center', gap: Sp.sm, paddingVertical: Sp.xl, paddingHorizontal: Sp.xl },
+    emptyTitle: { fontSize: 16, fontWeight: '700', color: Colors.textSecondary },
+    emptySub:   { fontSize: 13, color: Colors.textMuted, textAlign: 'center', lineHeight: 20 },
 });

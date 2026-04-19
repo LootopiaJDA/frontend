@@ -162,7 +162,7 @@ export default function EtapeFormModal({
                     label="Rang"
                     value={form.rank}
                     onChangeText={setField('rank')}
-                    keyboardType="numeric"
+                    keyboardType={"numeric"}
                     error={errors.rank}
                     icon="layers-outline"
                   />
@@ -172,7 +172,7 @@ export default function EtapeFormModal({
                     label="Rayon (m)"
                     value={form.rayon}
                     onChangeText={setField('rayon')}
-                    keyboardType="numeric"
+                    keyboard={"numeric"}
                     error={errors.rayon}
                     icon="radio-outline"
                   />

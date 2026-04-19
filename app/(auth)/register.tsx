@@ -48,7 +48,9 @@ export default function Register() {
 
   return (
     <View style={styles.bg}>
-      <View style={styles.glow} />
+      <View style={styles.glowTop} />
+      <View style={styles.glowBottom} />
+
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <SafeAreaView>
@@ -58,7 +60,7 @@ export default function Register() {
 
             <View style={styles.header}>
               <View style={styles.iconWrap}>
-                <Ionicons name="person-add-outline" size={26} color={Colors.gold} />
+                <Ionicons name="person-add-outline" size={28} color={Colors.gold} />
               </View>
               <Text style={styles.title}>Créer un compte</Text>
               <Text style={styles.sub}>Rejoignez l'aventure Lootopia</Text>
@@ -70,17 +72,24 @@ export default function Register() {
               <Text style={styles.roleText}>Compte Joueur</Text>
             </View>
 
-            <Input label="Pseudo" placeholder="explorateur_42" value={form.username} onChangeText={s('username')} error={errors.username} icon="at-outline" autoCapitalize="none" />
-            <Input label="Email" placeholder="vous@example.com" value={form.email} onChangeText={s('email')} error={errors.email} keyboard="email-address" icon="mail-outline" />
-            <Input label="Mot de passe" placeholder="••••••••" value={form.password} onChangeText={s('password')} error={errors.password} secure icon="lock-closed-outline" />
-            <Input label="Confirmer le mot de passe" placeholder="••••••••" value={form.confirm} onChangeText={s('confirm')} error={errors.confirm} secure icon="lock-closed-outline" />
+            <View style={styles.form}>
+              <Input label="Pseudo" placeholder="explorateur_42" value={form.username} onChangeText={s('username')} error={errors.username} icon="at-outline" autoCapitalize="none" />
+              <Input label="Email" placeholder="vous@example.com" value={form.email} onChangeText={s('email')} error={errors.email} keyboard="email-address" icon="mail-outline" autoCapitalize="none" />
+              <Input label="Mot de passe" placeholder="••••••••" value={form.password} onChangeText={s('password')} error={errors.password} secure icon="lock-closed-outline" />
+              <Input label="Confirmer le mot de passe" placeholder="••••••••" value={form.confirm} onChangeText={s('confirm')} error={errors.confirm} secure icon="lock-closed-outline" />
+              <Btn label="Créer mon compte" onPress={handleRegister} loading={loading} style={{ marginTop: Sp.sm }} />
+            </View>
 
-            <Btn label="Créer mon compte" onPress={handleRegister} loading={loading} style={{ marginTop: Sp.sm }} />
+            <View style={styles.sep}>
+              <View style={styles.sepLine} />
+              <Text style={styles.sepText}>ou</Text>
+              <View style={styles.sepLine} />
+            </View>
 
             <View style={styles.links}>
-              <Text style={styles.linkText}>Déjà un compte ? </Text>
+              <Text style={styles.linkText}>Déjà un compte ?</Text>
               <TouchableOpacity onPress={() => router.replace('/(auth)/login')}>
-                <Text style={styles.linkAccent}>Se connecter</Text>
+                <Text style={styles.linkAccent}> Se connecter</Text>
               </TouchableOpacity>
             </View>
           </SafeAreaView>
@@ -91,17 +100,46 @@ export default function Register() {
 }
 
 const styles = StyleSheet.create({
-  bg: { flex: 1, backgroundColor: Colors.bg },
-  glow: { position: 'absolute', width: 280, height: 280, borderRadius: 140, backgroundColor: Colors.accent, opacity: 0.04, top: -60, right: -60 },
+  bg:         { flex: 1, backgroundColor: Colors.bg },
+  glowTop:    { position: 'absolute', width: 280, height: 280, borderRadius: 140, backgroundColor: Colors.accent, opacity: 0.04, top: -60, right: -60 },
+  glowBottom: { position: 'absolute', width: 200, height: 200, borderRadius: 100, backgroundColor: Colors.gold, opacity: 0.04, bottom: 0, left: -60 },
+
   scroll: { flexGrow: 1, padding: Sp.lg, paddingTop: Sp.xl },
-  back: { width: 38, height: 38, borderRadius: R.sm, backgroundColor: Colors.bgElevated, borderWidth: 1, borderColor: Colors.border, alignItems: 'center', justifyContent: 'center', marginBottom: Sp.xl },
-  header: { marginBottom: Sp.lg },
-  iconWrap: { width: 56, height: 56, borderRadius: R.lg, backgroundColor: Colors.goldGlow, borderWidth: 1, borderColor: Colors.gold + '30', alignItems: 'center', justifyContent: 'center', marginBottom: Sp.md },
-  title: { color: Colors.textPrimary, fontSize: 30, fontWeight: '800', letterSpacing: -0.5, marginBottom: 6 },
-  sub: { color: Colors.textSecondary, fontSize: 15 },
-  roleBadge: { flexDirection: 'row', alignItems: 'center', gap: Sp.xs, backgroundColor: '#5B4BDB18', borderWidth: 1, borderColor: '#5B4BDB44', borderRadius: R.full, paddingHorizontal: Sp.md, paddingVertical: 6, alignSelf: 'flex-start', marginBottom: Sp.lg },
+
+  back: {
+    width: 40, height: 40, borderRadius: R.md,
+    backgroundColor: Colors.bgElevated,
+    borderWidth: 1, borderColor: Colors.border,
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: Sp.xl,
+  },
+
+  header:  { marginBottom: Sp.lg, gap: Sp.sm },
+  iconWrap: {
+    width: 60, height: 60, borderRadius: R.xl,
+    backgroundColor: Colors.bgCard,
+    borderWidth: 1, borderColor: Colors.gold + '33',
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: Sp.sm,
+  },
+  title: { fontSize: 32, fontWeight: '800', color: Colors.textPrimary, letterSpacing: -0.5 },
+  sub:   { fontSize: 15, color: Colors.textSecondary },
+
+  roleBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: Sp.xs,
+    backgroundColor: '#5B4BDB18', borderWidth: 1, borderColor: '#5B4BDB44',
+    borderRadius: R.full, paddingHorizontal: Sp.md, paddingVertical: 6,
+    alignSelf: 'flex-start', marginBottom: Sp.lg,
+  },
   roleText: { color: Colors.accentLight, fontSize: 12, fontWeight: '700' },
-  links: { flexDirection: 'row', justifyContent: 'center', marginTop: Sp.lg, paddingBottom: Sp.xl },
-  linkText: { color: Colors.textSecondary, fontSize: 14 },
-  linkAccent: { color: Colors.gold, fontSize: 14, fontWeight: '600' },
+
+  form: { gap: Sp.xs },
+
+  sep:     { flexDirection: 'row', alignItems: 'center', gap: Sp.md, marginVertical: Sp.lg },
+  sepLine: { flex: 1, height: 1, backgroundColor: Colors.border },
+  sepText: { color: Colors.textMuted, fontSize: 12 },
+
+  links:      { flexDirection: 'row', justifyContent: 'center', marginBottom: Sp.xl },
+  linkText:   { color: Colors.textSecondary, fontSize: 14 },
+  linkAccent: { color: Colors.gold, fontSize: 14, fontWeight: '700' },
 });

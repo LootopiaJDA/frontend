@@ -60,6 +60,9 @@ export default function RegisterPartner() {
 
   return (
     <View style={styles.bg}>
+      <View style={styles.glowTop} />
+      <View style={styles.glowBottom} />
+
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <SafeAreaView>
@@ -69,7 +72,7 @@ export default function RegisterPartner() {
 
             <View style={styles.header}>
               <View style={styles.iconWrap}>
-                <Ionicons name="business-outline" size={26} color={Colors.gold} />
+                <Ionicons name="business-outline" size={28} color={Colors.gold} />
               </View>
               <Text style={styles.title}>Compte Partenaire</Text>
               <Text style={styles.sub}>Créez et gérez vos chasses au trésor</Text>
@@ -82,20 +85,24 @@ export default function RegisterPartner() {
 
             {/* Section compte */}
             <Text style={styles.section}>Informations de compte</Text>
-            <Input label="Nom / Prénom" placeholder="Jean Dupont" value={form.username} onChangeText={s('username')} error={errors.username} icon="person-outline" autoCapitalize="words" />
-            <Input label="Email professionnel" placeholder="contact@societe.fr" value={form.email} onChangeText={s('email')} error={errors.email} keyboard="email-address" icon="mail-outline" />
-            <Input label="Mot de passe" placeholder="••••••••" value={form.password} onChangeText={s('password')} error={errors.password} secure icon="lock-closed-outline" />
-            <Input label="Confirmer le mot de passe" placeholder="••••••••" value={form.confirm} onChangeText={s('confirm')} error={errors.confirm} secure icon="lock-closed-outline" />
+            <View style={styles.form}>
+              <Input label="Nom / Prénom" placeholder="Jean Dupont" value={form.username} onChangeText={s('username')} error={errors.username} icon="person-outline" autoCapitalize="words" />
+              <Input label="Email professionnel" placeholder="contact@societe.fr" value={form.email} onChangeText={s('email')} error={errors.email} keyboard="email-address" icon="mail-outline" autoCapitalize="none" />
+              <Input label="Mot de passe" placeholder="••••••••" value={form.password} onChangeText={s('password')} error={errors.password} secure icon="lock-closed-outline" />
+              <Input label="Confirmer le mot de passe" placeholder="••••••••" value={form.confirm} onChangeText={s('confirm')} error={errors.confirm} secure icon="lock-closed-outline" />
+            </View>
 
             {/* Section entreprise */}
             <Text style={styles.section}>Informations entreprise</Text>
-            <Input label="Nom de la société" placeholder="Musée National, Mairie de..." value={form.company_name} onChangeText={s('company_name')} error={errors.company_name} icon="briefcase-outline" autoCapitalize="words" />
-            <Input label="Numéro SIRET" placeholder="123 456 789 01234" value={form.siret} onChangeText={s('siret')} error={errors.siret} keyboard="numeric" icon="card-outline" />
-            <Input label="Adresse (optionnel)" placeholder="1 rue de la Paix, 75001 Paris" value={form.adresse} onChangeText={s('adresse')} icon="location-outline" autoCapitalize="sentences" />
+            <View style={styles.form}>
+              <Input label="Nom de la société" placeholder="Musée National, Mairie de..." value={form.company_name} onChangeText={s('company_name')} error={errors.company_name} icon="briefcase-outline" autoCapitalize="words" />
+              <Input label="Numéro SIRET" placeholder="123 456 789 01234" value={form.siret} onChangeText={s('siret')} error={errors.siret} keyboard="numeric" icon="card-outline" />
+              <Input label="Adresse (optionnel)" placeholder="1 rue de la Paix, 75001 Paris" value={form.adresse} onChangeText={s('adresse')} icon="location-outline" autoCapitalize="sentences" />
+            </View>
 
             {/* Info box */}
             <View style={styles.infoBox}>
-              <Ionicons name="information-circle-outline" size={18} color={Colors.textSecondary} />
+              <Ionicons name="time-outline" size={16} color={Colors.warning} />
               <Text style={styles.infoText}>
                 Votre compte sera examiné par notre équipe avant activation. Ce processus prend généralement 24 à 48h ouvrées.
               </Text>
@@ -103,10 +110,16 @@ export default function RegisterPartner() {
 
             <Btn label="Envoyer la demande" onPress={handleRegister} loading={loading} style={{ marginTop: Sp.sm }} />
 
+            <View style={styles.sep}>
+              <View style={styles.sepLine} />
+              <Text style={styles.sepText}>ou</Text>
+              <View style={styles.sepLine} />
+            </View>
+
             <View style={styles.links}>
-              <Text style={styles.linkText}>Déjà un compte ? </Text>
+              <Text style={styles.linkText}>Déjà un compte ?</Text>
               <TouchableOpacity onPress={() => router.replace('/(auth)/login')}>
-                <Text style={styles.linkAccent}>Se connecter</Text>
+                <Text style={styles.linkAccent}> Se connecter</Text>
               </TouchableOpacity>
             </View>
           </SafeAreaView>
@@ -117,19 +130,60 @@ export default function RegisterPartner() {
 }
 
 const styles = StyleSheet.create({
-  bg: { flex: 1, backgroundColor: Colors.bg },
+  bg:         { flex: 1, backgroundColor: Colors.bg },
+  glowTop:    { position: 'absolute', width: 300, height: 300, borderRadius: 150, backgroundColor: Colors.gold, opacity: 0.04, top: -100, right: -60 },
+  glowBottom: { position: 'absolute', width: 200, height: 200, borderRadius: 100, backgroundColor: Colors.accent, opacity: 0.04, bottom: 0, left: -60 },
+
   scroll: { flexGrow: 1, padding: Sp.lg, paddingTop: Sp.xl },
-  back: { width: 38, height: 38, borderRadius: R.sm, backgroundColor: Colors.bgElevated, borderWidth: 1, borderColor: Colors.border, alignItems: 'center', justifyContent: 'center', marginBottom: Sp.xl },
-  header: { marginBottom: Sp.lg },
-  iconWrap: { width: 56, height: 56, borderRadius: R.lg, backgroundColor: Colors.goldGlow, borderWidth: 1, borderColor: Colors.gold + '30', alignItems: 'center', justifyContent: 'center', marginBottom: Sp.md },
-  title: { color: Colors.textPrimary, fontSize: 30, fontWeight: '800', letterSpacing: -0.5, marginBottom: 6 },
-  sub: { color: Colors.textSecondary, fontSize: 15 },
-  roleBadge: { flexDirection: 'row', alignItems: 'center', gap: Sp.xs, backgroundColor: Colors.warningBg, borderWidth: 1, borderColor: Colors.warning + '44', borderRadius: R.full, paddingHorizontal: Sp.md, paddingVertical: 6, alignSelf: 'flex-start', marginBottom: Sp.lg },
+
+  back: {
+    width: 40, height: 40, borderRadius: R.md,
+    backgroundColor: Colors.bgElevated,
+    borderWidth: 1, borderColor: Colors.border,
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: Sp.xl,
+  },
+
+  header:  { marginBottom: Sp.lg, gap: Sp.sm },
+  iconWrap: {
+    width: 60, height: 60, borderRadius: R.xl,
+    backgroundColor: Colors.bgCard,
+    borderWidth: 1, borderColor: Colors.gold + '33',
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: Sp.sm,
+  },
+  title: { fontSize: 32, fontWeight: '800', color: Colors.textPrimary, letterSpacing: -0.5 },
+  sub:   { fontSize: 15, color: Colors.textSecondary },
+
+  roleBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: Sp.xs,
+    backgroundColor: Colors.warningBg, borderWidth: 1, borderColor: Colors.warning + '44',
+    borderRadius: R.full, paddingHorizontal: Sp.md, paddingVertical: 6,
+    alignSelf: 'flex-start', marginBottom: Sp.lg,
+  },
   roleText: { color: Colors.warning, fontSize: 12, fontWeight: '700' },
-  section: { color: Colors.gold, fontSize: 11, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: Sp.md, marginTop: Sp.lg },
-  infoBox: { flexDirection: 'row', gap: Sp.sm, backgroundColor: Colors.bgElevated, borderRadius: R.md, borderWidth: 1, borderColor: Colors.border, padding: Sp.md, marginVertical: Sp.md, alignItems: 'flex-start' },
+
+  section: {
+    color: Colors.gold, fontSize: 11, fontWeight: '700',
+    letterSpacing: 1.5, textTransform: 'uppercase',
+    marginBottom: Sp.md, marginTop: Sp.lg,
+  },
+
+  form: { gap: Sp.xs },
+
+  infoBox: {
+    flexDirection: 'row', gap: Sp.sm,
+    backgroundColor: Colors.warningBg, borderRadius: R.md,
+    borderWidth: 1, borderColor: Colors.warning + '33',
+    padding: Sp.md, marginVertical: Sp.lg, alignItems: 'flex-start',
+  },
   infoText: { color: Colors.textSecondary, fontSize: 13, flex: 1, lineHeight: 20 },
-  links: { flexDirection: 'row', justifyContent: 'center', marginTop: Sp.lg, paddingBottom: Sp.xxl },
-  linkText: { color: Colors.textSecondary, fontSize: 14 },
-  linkAccent: { color: Colors.gold, fontSize: 14, fontWeight: '600' },
+
+  sep:     { flexDirection: 'row', alignItems: 'center', gap: Sp.md, marginVertical: Sp.lg },
+  sepLine: { flex: 1, height: 1, backgroundColor: Colors.border },
+  sepText: { color: Colors.textMuted, fontSize: 12 },
+
+  links:      { flexDirection: 'row', justifyContent: 'center', marginBottom: Sp.xl },
+  linkText:   { color: Colors.textSecondary, fontSize: 14 },
+  linkAccent: { color: Colors.gold, fontSize: 14, fontWeight: '700' },
 });
