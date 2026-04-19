@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View, Text, StyleSheet, ScrollView,
     TouchableOpacity, Alert, SafeAreaView,
@@ -9,10 +9,50 @@ import { useAuth } from '@/context/AuthContext';
 import { Colors, Sp, R } from '@/constants/theme';
 import StatusBadge from '@/components/StatusBadge';
 import PageHeader from '@/components/PageHeader';
+import { chasseService } from '@/services/api';
+import { UserChasse } from '@/constants/types';
+
+interface PlayerStats {
+    completed: number;
+    inProgress: number;
+}
 
 export default function ProfilJoueurScreen() {
     const { user, logout } = useAuth();
     const router = useRouter();
+    const [stats, setStats] = useState<PlayerStats>({ completed: 0, inProgress: 0 });
+
+    useEffect(() => {
+        if (!user) return;
+        fetchStats();
+    }, [user]);
+
+    const fetchStats = async () => {
+        try {
+            const { allChasse } = await chasseService.getAll();
+            if (!allChasse?.length) return;
+
+            const results = await Promise.all(
+                allChasse.map(c =>
+                    chasseService.getPlayers(c.id_chasse).catch(() => ({ chasses: [] }))
+                )
+            );
+
+            let completed = 0;
+            let inProgress = 0;
+
+            results.forEach(result => {
+                const list: UserChasse[] = result?.chasses ?? [];
+                const entry = list.find(uc => uc.id_user === user!.id_user);
+                if (entry?.statut === 'COMPLETED') completed++;
+                else if (entry?.statut === 'IN_PROGRESS') inProgress++;
+            });
+
+            setStats({ completed, inProgress });
+        } catch {
+            // Silently fail — stats restent à 0
+        }
+    };
 
     if (!user) return null;
 
@@ -67,16 +107,16 @@ export default function ProfilJoueurScreen() {
                 {/* Stats rapides */}
                 <View style={st.statsRow}>
                     <View style={st.statItem}>
-                        <Text style={st.statVal}>0</Text>
+                        <Text style={st.statVal}>{stats.completed}</Text>
                         <Text style={st.statLabel}>Chasses{'\n'}terminées</Text>
                     </View>
                     <View style={[st.statItem, st.statBorder]}>
-                        <Text style={st.statVal}>0</Text>
+                        <Text style={st.statVal}>{stats.inProgress}</Text>
                         <Text style={st.statLabel}>En{'\n'}cours</Text>
                     </View>
                     <View style={st.statItem}>
-                        <Text style={st.statVal}>0</Text>
-                        <Text style={st.statLabel}>Points{'\n'}gagnés</Text>
+                        <Text style={st.statVal}>{stats.completed + stats.inProgress}</Text>
+                        <Text style={st.statLabel}>Total{'\n'}rejointes</Text>
                     </View>
                 </View>
 
