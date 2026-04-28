@@ -9,6 +9,7 @@ import { Chasse } from '../constants/types';
 import { chasseService } from '../services/api';
 import { Colors, Sp, R } from '../constants/theme';
 import Input from './Input';
+import CityAutocomplete from './CityAutocomplete';
 import { useChasseForm, ChasseEtat } from '../hooks/useChasseForm';
 import { useImagePicker } from '../hooks/useImagePicker';
 
@@ -21,7 +22,7 @@ interface Props {
 }
 
 export default function ChasseFormModal({ visible, mode, chasse, onClose, onSaved }: Props) {
-  const { form, setForm, setField, errors, setErrors, resetForCreate, resetForEdit, validate, buildCreateFormData, buildUpdatePayload } = useChasseForm();
+  const { form, setForm, setField, setLocation, errors, setErrors, resetForCreate, resetForEdit, validate, buildCreateFormData, buildUpdatePayload } = useChasseForm();
   const { image, pickOrShoot: pickImage, reset: resetImage } = useImagePicker('chasse');
   const [loading, setLoading] = useState(false);
   const [showStart, setShowStart] = useState(false);
@@ -120,14 +121,10 @@ export default function ChasseFormModal({ visible, mode, chasse, onClose, onSave
               icon="bookmark-outline"
               autoCapitalize="sentences"
             />
-            <Input
-              label="Localisation"
-              placeholder="Paris, Musée du Louvre..."
+            <CityAutocomplete
               value={form.localisation}
-              onChangeText={setField('localisation')}
+              onSelect={setLocation}
               error={errors.localisation}
-              icon="location-outline"
-              autoCapitalize="sentences"
             />
 
               <Input

@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { userService, partenaireService } from '../../services/api';
+import { userService, partenaireService, adminService } from '../../services/api';
 import { Partenaire } from '../../constants/types';
 import { User } from '../../constants/types';
 import { Colors, Sp, R } from '../../constants/theme';
@@ -58,7 +58,7 @@ export default function UsersScreen() {
                     text: 'Activer',
                     onPress: async () => {
                         try {
-                            await partenaireService.updateStatut(user.partener!.id_partenaire, 'ACTIVE');
+                            await adminService.validatePartenaire(user.partener!.id_partenaire, 'ACTIVE');
                             setSelected(null);
                             await load();
                         } catch (e: any) { Alert.alert('Erreur', e.message); }
@@ -68,27 +68,7 @@ export default function UsersScreen() {
                     text: 'Rejeter', style: 'destructive',
                     onPress: async () => {
                         try {
-                            await partenaireService.updateStatut(user.partener!.id_partenaire, 'INACTIVE');
-                            setSelected(null);
-                            await load();
-                        } catch (e: any) { Alert.alert('Erreur', e.message); }
-                    },
-                },
-            ]
-        );
-    };
-
-    const handleDeleteUser = (user: User) => {
-        Alert.alert(
-            'Supprimer l\'utilisateur',
-            `Supprimer "${user.username}" ? Action irréversible.`,
-            [
-                { text: 'Annuler', style: 'cancel' },
-                {
-                    text: 'Supprimer', style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            await userService.delete(user.id_user);
+                            await adminService.validatePartenaire(user.partener!.id_partenaire, 'INACTIVE');
                             setSelected(null);
                             await load();
                         } catch (e: any) { Alert.alert('Erreur', e.message); }
@@ -252,27 +232,21 @@ export default function UsersScreen() {
                             )}
 
                             {/* Actions */}
-                            <Text style={st.modalSection}>Actions</Text>
-                            <View style={st.actionsCol}>
-                                {selected.partener?.statut === 'VERIFICATION' && (
-                                    <TouchableOpacity
-                                        style={st.btnValidate}
-                                        onPress={() => handleValidatePartner(selected)}
-                                        activeOpacity={0.8}
-                                    >
-                                        <Ionicons name="shield-checkmark-outline" size={18} color="#fff" />
-                                        <Text style={st.btnValidateText}>Valider / Rejeter le partenaire</Text>
-                                    </TouchableOpacity>
-                                )}
-                                <TouchableOpacity
-                                    style={st.btnDelete}
-                                    onPress={() => handleDeleteUser(selected)}
-                                    activeOpacity={0.8}
-                                >
-                                    <Ionicons name="trash-outline" size={18} color={Colors.error} />
-                                    <Text style={st.btnDeleteText}>Supprimer le compte</Text>
-                                </TouchableOpacity>
-                            </View>
+                            {selected.partener?.statut === 'VERIFICATION' && (
+                                <>
+                                    <Text style={st.modalSection}>Actions</Text>
+                                    <View style={st.actionsCol}>
+                                        <TouchableOpacity
+                                            style={st.btnValidate}
+                                            onPress={() => handleValidatePartner(selected)}
+                                            activeOpacity={0.8}
+                                        >
+                                            <Ionicons name="shield-checkmark-outline" size={18} color="#fff" />
+                                            <Text style={st.btnValidateText}>Valider / Rejeter le partenaire</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </>
+                            )}
                         </ScrollView>
                     </SafeAreaView>
                 )}
@@ -389,10 +363,4 @@ const st = StyleSheet.create({
         backgroundColor: Colors.success, borderRadius: R.md, padding: Sp.md,
     },
     btnValidateText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-    btnDelete: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Sp.sm,
-        backgroundColor: Colors.errorBg, borderRadius: R.md, padding: Sp.md,
-        borderWidth: 1, borderColor: Colors.error + '44',
-    },
-    btnDeleteText: { color: Colors.error, fontWeight: '700', fontSize: 14 },
 });

@@ -10,7 +10,6 @@ import { Colors, Sp, R } from '@/constants/theme';
 import StatusBadge from '@/components/StatusBadge';
 import PageHeader from '@/components/PageHeader';
 import { chasseService } from '@/services/api';
-import { UserChasse } from '@/constants/types';
 
 interface PlayerStats {
     completed: number;
@@ -29,25 +28,13 @@ export default function ProfilJoueurScreen() {
 
     const fetchStats = async () => {
         try {
-            const { allChasse } = await chasseService.getAll();
-            if (!allChasse?.length) return;
-
-            const results = await Promise.all(
-                allChasse.map(c =>
-                    chasseService.getPlayers(c.id_chasse).catch(() => ({ chasses: [] }))
-                )
-            );
-
+            const { chasses } = await chasseService.getMe();
             let completed = 0;
             let inProgress = 0;
-
-            results.forEach(result => {
-                const list: UserChasse[] = result?.chasses ?? [];
-                const entry = list.find(uc => uc.id_user === user!.id_user);
-                if (entry?.statut === 'COMPLETED') completed++;
-                else if (entry?.statut === 'IN_PROGRESS') inProgress++;
+            chasses.forEach(uc => {
+                if (uc.statut === 'COMPLETED') completed++;
+                else if (uc.statut === 'IN_PROGRESS') inProgress++;
             });
-
             setStats({ completed, inProgress });
         } catch {
             // Silently fail — stats restent à 0
