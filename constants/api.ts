@@ -28,6 +28,7 @@ export const EP = {
   CHASSE_DELETE: (id: number) => `/chasse/${id}`,
   CHASSE_COMPLETE: (id: number) => `/chasse/${id}/complete`,
   // Etape
-  ETAPE_CREATE: (chasseId: number) => `/etape/${chasseId}`,
-  ETAPE_DELETE: (chasseId: number, etapeId: number) => `/etape/${chasseId}/${etapeId}`,
+  ETAPE_CREATE:    (chasseId: number) => `/etape/${chasseId}`,
+  ETAPE_DELETE:    (chasseId: number, etapeId: number) => `/etape/${chasseId}/${etapeId}`,
+  ETAPE_VALIDATE:  (chasseId: number, etapeId: number) => `/etape/${chasseId}/${etapeId}/validateEtape`,
 };

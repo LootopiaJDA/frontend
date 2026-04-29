@@ -98,4 +98,6 @@ export const etapeService = {
   },
   delete: (chasseId: number, etapeId: number) =>
       req(EP.ETAPE_DELETE(chasseId, etapeId), { method: 'DELETE' }),
+  validate: (chasseId: number, etapeId: number) =>
+      req(EP.ETAPE_VALIDATE(chasseId, etapeId), { method: 'POST' }),
 };

@@ -3,6 +3,8 @@ import * as Location from 'expo-location';
 import { Etape } from '../constants/types';
 import { etapeService } from '../services/api';
 
+const DETECTION_RADIUS = 2;
+
 // ─── Haversine ────────────────────────────────────────────────────────────────
 export function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371000; // rayon Terre en mètres
@@ -36,7 +38,7 @@ export interface HuntTrackerState {
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
-export function useHuntTracker(chasseId: number): HuntTrackerState {
+export function useHuntTracker(chasseId: number, completedEtapeIds: number[] = []): HuntTrackerState {
   const [etapes, setEtapes] = useState<Etape[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [position, setPosition] = useState<GeoPosition | null>(null);
@@ -59,7 +61,14 @@ export function useHuntTracker(chasseId: number): HuntTrackerState {
       try {
         const data = await etapeService.getAll(chasseId);
         const sorted = [...data].sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
-        if (!cancelled) setEtapes(sorted);
+        if (!cancelled) {
+          setEtapes(sorted);
+          // Restaure la progression : premier index non encore validé
+          if (completedEtapeIds.length > 0) {
+            const firstPending = sorted.findIndex(e => !completedEtapeIds.includes(e.id_etape));
+            setCurrentIndex(firstPending === -1 ? sorted.length : firstPending);
+          }
+        }
       } catch (err) {
         console.log('Erreur chargement étapes:', err);
       } finally {
@@ -102,7 +111,7 @@ export function useHuntTracker(chasseId: number): HuntTrackerState {
     );
     const rounded = Math.round(dist);
     setDistance(rounded);
-    setIsInRadius(rounded <= (etape.rayon ?? 30));
+    setIsInRadius(rounded <= DETECTION_RADIUS);
   }, [position, etapes, currentIndex]);
 
   const advanceOnly = useCallback(() => {

@@ -92,6 +92,7 @@ export interface UserChasse {
   completed_at?: string | null;
   statut: StatutUserChasse;
   chasse?: Chasse;
+  UserChasseEtape?: UserChasseEtape[];
 }
 
 export interface UserChasseEtape {
