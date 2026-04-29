@@ -69,12 +69,22 @@ export default function MapScreen() {
   const digPanelY = useRef(new Animated.Value(220)).current;
 
   // ─── Résolution de la chasse active ─────────────────────────────────────────
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     if (params.chasseId) {
       setActiveChasseId(Number(params.chasseId));
+      setLoadingChasse(false);
+      return;
     }
-    setLoadingChasse(false);
-  }, [params.chasseId]);
+    setLoadingChasse(true);
+    chasseService.getMe()
+      .then(data => {
+        const active = (data.chasses ?? []).find(uc => uc.statut === 'IN_PROGRESS');
+        setActiveChasseId(active ? active.id_chasse : null);
+      })
+      .catch(() => setActiveChasseId(null))
+      .finally(() => setLoadingChasse(false));
+  }, [params.chasseId]));
+
 
   const tracker = useHuntTracker(activeChasseId ?? 0);
 

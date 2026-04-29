@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import {
     View, Text, FlatList, StyleSheet,
     ActivityIndicator, RefreshControl,
-    TextInput, TouchableOpacity, Modal, Image,
+    TextInput, TouchableOpacity, Modal, Image, ScrollView,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,16 +14,14 @@ import ChasseCard from '@/components/ChasseCard';
 import PageHeader from '@/components/PageHeader';
 import ScreenBackground from '@/components/ScreenBackground';
 
-const COFFRE = require('../../assets/images/coffre.png');
+const COFFRE = require('../../assets/images/coffre.svg');
 const LOUPE  = require('../../assets/images/loupe.png');
 
-type SortKey = 'date_desc' | 'date_asc' | 'name_asc' | 'name_desc';
+type SortKey = 'date_desc' | 'date_asc';
 
 const SORT_OPTIONS: { key: SortKey; label: string; icon: string }[] = [
     { key: 'date_desc', label: 'Plus récentes en premier',  icon: 'time-outline' },
     { key: 'date_asc',  label: 'Plus anciennes en premier', icon: 'time-outline' },
-    { key: 'name_asc',  label: 'Nom : A → Z',              icon: 'text-outline' },
-    { key: 'name_desc', label: 'Nom : Z → A',              icon: 'text-outline' },
 ];
 
 interface CityResult {
@@ -147,8 +145,6 @@ export default function ChassesScreen() {
             );
         }
         list.sort((a, b) => {
-            if (sort === 'name_asc')  return a.name.localeCompare(b.name);
-            if (sort === 'name_desc') return b.name.localeCompare(a.name);
             const dA = new Date(a.created_at).getTime();
             const dB = new Date(b.created_at).getTime();
             return sort === 'date_asc' ? dA - dB : dB - dA;
@@ -176,7 +172,7 @@ export default function ChassesScreen() {
                     <Ionicons name="search-outline" size={16} color={Colors.textMuted} />
                     <TextInput
                         style={st.searchInput}
-                        placeholder="Rechercher..."
+                        placeholder="Rechercher nom de la chasse..."
                         placeholderTextColor={Colors.textMuted}
                         value={search}
                         onChangeText={setSearch}
@@ -259,7 +255,6 @@ export default function ChassesScreen() {
                 }
             />
 
-            {/* ── Modal tri ── */}
             <Modal visible={filterOpen} transparent animationType="fade" onRequestClose={() => setFilterOpen(false)}>
                 <TouchableOpacity style={st.backdrop} activeOpacity={1} onPress={() => setFilterOpen(false)}>
                     <View style={st.sheet}>
@@ -310,20 +305,22 @@ export default function ChassesScreen() {
                         </View>
 
                         {cityResults.length > 0 ? (
-                            cityResults.map((item, i) => (
-                                <TouchableOpacity
-                                    key={i}
-                                    style={[st.cityOption, i < cityResults.length - 1 && st.cityOptionBorder]}
-                                    onPress={() => selectCity(item.label)}
-                                    activeOpacity={0.7}
-                                >
-                                    <Ionicons name="location-outline" size={14} color={Colors.textMuted} />
-                                    <View style={{ flex: 1 }}>
-                                        <Text style={st.cityOptionName}>{item.label}</Text>
-                                        <Text style={st.cityOptionCtx} numberOfLines={1}>{item.context}</Text>
-                                    </View>
-                                </TouchableOpacity>
-                            ))
+                            <ScrollView style={{ maxHeight: 280 }} keyboardShouldPersistTaps="handled">
+                                {cityResults.map((item, i) => (
+                                    <TouchableOpacity
+                                        key={i}
+                                        style={[st.cityOption, i < cityResults.length - 1 && st.cityOptionBorder]}
+                                        onPress={() => selectCity(item.label)}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Ionicons name="location-outline" size={14} color={Colors.textMuted} />
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={st.cityOptionName}>{item.label}</Text>
+                                            <Text style={st.cityOptionCtx} numberOfLines={1}>{item.context}</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
                         ) : cityQuery.length === 0 ? (
                             <TouchableOpacity style={st.allCitiesBtn} onPress={() => { setCityFilter(null); setCityModalOpen(false); load(null); }}>
                                 <Ionicons name="globe-outline" size={16} color={Colors.gold} />
@@ -372,7 +369,7 @@ const st = StyleSheet.create({
     },
     locPill: {
         flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6,
-        backgroundColor: Colors.bgCard, borderWidth: 1, borderColor: Colors.border,
+        backgroundColor: Colors.bgCard, borderWidth: 1, borderColor: Colors.gold,
         borderRadius: R.full, paddingHorizontal: Sp.md, paddingVertical: 8,
     },
     locText:       { flex: 1, fontSize: 13, color: Colors.textMuted },
@@ -393,7 +390,7 @@ const st = StyleSheet.create({
     },
     sheet: {
         width: '100%', backgroundColor: Colors.bgCard,
-        borderRadius: R.xl, borderWidth: 1, borderColor: Colors.border,
+        borderRadius: R.xl, borderWidth: 1, borderColor: Colors.gold,
         padding: Sp.lg, gap: Sp.sm,
     },
     citySheet: { maxHeight: '80%' },

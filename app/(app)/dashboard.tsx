@@ -13,14 +13,6 @@ import ScreenBackground from '@/components/ScreenBackground';
 
 const BOUSSOLE = require('../../assets/images/boussole.png');
 
-function getGreeting(): string {
-    const h = new Date().getHours();
-    if (h < 6)  return 'Bonne nuit';
-    if (h < 12) return 'Bonjour';
-    if (h < 18) return 'Bon après-midi';
-    return 'Bonsoir';
-}
-
 function HuntRow({ chasse, onPress }: { chasse: Chasse; onPress: () => void }) {
     return (
         <TouchableOpacity style={hr.wrap} onPress={onPress} activeOpacity={0.75}>
@@ -107,7 +99,6 @@ export default function DashboardJoueurScreen() {
                 {/* ── Header ── */}
                 <View style={st.header}>
                     <View>
-                        <Text style={st.greeting}>{getGreeting()},</Text>
                         <Text style={st.name}>
                             <Text style={st.nameAccent}>{user.username}</Text> 👋
                         </Text>
@@ -122,13 +113,9 @@ export default function DashboardJoueurScreen() {
                     </TouchableOpacity>
                 </View>
 
-                {/* ── Bannière hero ── */}
                 <View style={st.heroBanner}>
                     <View style={st.heroLeft}>
                         <Text style={st.heroTitle}>Prêt pour{'\n'}l'aventure ?</Text>
-                        <Text style={st.heroSub}>
-                            {chassesActives.length} chasse{chassesActives.length !== 1 ? 's' : ''} disponible{chassesActives.length !== 1 ? 's' : ''}
-                        </Text>
                     </View>
                     <View style={st.heroIcon}>
                         <Image source={BOUSSOLE} style={st.boussoleImg} resizeMode="cover" />
@@ -174,7 +161,7 @@ export default function DashboardJoueurScreen() {
                 ) : (
                     <>
                         <View style={st.sectionHd}>
-                            <Text style={st.sectionTitle}>Disponibles maintenant</Text>
+                            <Text style={st.sectionTitle}> {chassesActives.length}  Disponibles maintenant</Text>
                             <TouchableOpacity onPress={() => router.push('/(app)/chasses')}>
                                 <Text style={st.sectionAction}>Voir tout →</Text>
                             </TouchableOpacity>

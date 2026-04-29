@@ -1,12 +1,11 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image, ImageBackground } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Chasse } from "../constants/types";
 import { Colors, Fonts, Sp, R } from "../constants/theme";
 
 const CROIX   = require("../assets/images/croix.png");
 const COFFRE  = require("../assets/images/coffre.png");
-const SCROLL  = require("../assets/images/parchemin-tresor.png");
 
 type Props = { chasse: Chasse; onPress?: () => void };
 
@@ -22,7 +21,6 @@ export default function ChasseCard({ chasse, onPress }: Props) {
 
   return (
     <TouchableOpacity style={s.card} activeOpacity={0.85} onPress={onPress}>
-      <ImageBackground source={SCROLL} style={s.scroll} resizeMode="cover">
         <View style={s.photoWrap}>
           {chasse.image ? (
             <Image source={{ uri: chasse.image }} style={StyleSheet.absoluteFill} resizeMode="cover" />
@@ -47,7 +45,6 @@ export default function ChasseCard({ chasse, onPress }: Props) {
 
         {/* ── FOOTER sur le parchemin ── */}
         <View style={s.footer}>
-          {/* Voile très léger — laisse le parchemin respirer */}
           <View style={s.footerTint} />
 
           <View style={s.footerContent}>
@@ -72,8 +69,6 @@ export default function ChasseCard({ chasse, onPress }: Props) {
             </View>
           </View>
         </View>
-
-      </ImageBackground>
     </TouchableOpacity>
   );
 }
@@ -91,9 +86,6 @@ const s = StyleSheet.create({
     elevation: 8,
   },
 
-  scroll: { backgroundColor: "#1A1205" },
-
-  // Photo
   photoWrap: { height: 180, backgroundColor: Colors.bgElevated },
   noImg: { alignItems: "center", justifyContent: "center", backgroundColor: "#0D0905" },
   coffreImg: { width: 90, height: 90 },

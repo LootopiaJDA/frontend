@@ -144,7 +144,7 @@ const s_ = StyleSheet.create({
 
   sep:     { flexDirection: 'row', alignItems: 'center', gap: Sp.md, marginVertical: Sp.lg },
   sepLine: { flex: 1, height: 1, backgroundColor: Colors.borderWarm },
-  sepText: { fontFamily: Fonts.title, color: Colors.textMuted, fontSize: 11, letterSpacing: 1 },
+  sepText: { fontFamily: Fonts.title, color: Colors.gold, fontSize: 11, letterSpacing: 1 },
 
   links:      { flexDirection: 'row', justifyContent: 'center', marginBottom: Sp.xl },
   linkText:   { fontFamily: Fonts.title, color: Colors.textSecondary, fontSize: 13 },
