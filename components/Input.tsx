@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
-import { Colors, R, Sp } from '../constants/theme';
+import { Colors, Fonts, R, Sp } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 
 interface Props {
@@ -65,10 +65,10 @@ export default function Input({
 const styles = StyleSheet.create({
   wrap: { marginBottom: Sp.md },
   label: {
+    fontFamily: Fonts.title,
     color: Colors.textSecondary,
     fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1.2,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
     marginBottom: 7,
   },

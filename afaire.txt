@@ -1,2 +1,8 @@
 -get all modifier , ca reprends simplement les chasses de l'utilisateur en question, pour l'admin ou le joueur ils ne peuvent pas voir les chasses
 -valider les paternaires par l'admin
+-Dans les informations des user mettres les infos des partenaires id
+-Pour les joueurs , possibilité sde voir les chasses en fonction de plusieurs paramètre , soit en fonction de la ville ou elle se situe , soit dans un certains périmètre actions 
+
+
+
+-autorise r la suppresion chasse , user etc par admin

@@ -9,6 +9,7 @@ import { Chasse } from '../constants/types';
 import { chasseService } from '../services/api';
 import { Colors, Sp, R } from '../constants/theme';
 import Input from './Input';
+import CityAutocomplete from './CityAutocomplete';
 import { useChasseForm, ChasseEtat } from '../hooks/useChasseForm';
 import { useImagePicker } from '../hooks/useImagePicker';
 
@@ -21,8 +22,8 @@ interface Props {
 }
 
 export default function ChasseFormModal({ visible, mode, chasse, onClose, onSaved }: Props) {
-  const { form, setForm, setField, errors, setErrors, resetForCreate, resetForEdit, validate, buildCreateFormData, buildUpdatePayload } = useChasseForm();
-  const { image, pick: pickImage, reset: resetImage } = useImagePicker();
+  const { form, setForm, setField, setLocation, errors, setErrors, resetForCreate, resetForEdit, validate, buildCreateFormData, buildUpdatePayload } = useChasseForm();
+  const { image, pickOrShoot: pickImage, reset: resetImage } = useImagePicker('chasse');
   const [loading, setLoading] = useState(false);
   const [showStart, setShowStart] = useState(false);
   const [showEnd, setShowEnd] = useState(false);
@@ -105,7 +106,7 @@ export default function ChasseFormModal({ visible, mode, chasse, onClose, onSave
               ) : (
                 <View style={s.imagePlaceholder}>
                   <Ionicons name="image-outline" size={32} color={Colors.textMuted} />
-                  <Text style={s.imagePlaceholderText}>Sélectionner une image</Text>
+                  <Text style={s.imagePlaceholderText}>Galerie ou appareil photo</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -120,14 +121,10 @@ export default function ChasseFormModal({ visible, mode, chasse, onClose, onSave
               icon="bookmark-outline"
               autoCapitalize="sentences"
             />
-            <Input
-              label="Localisation"
-              placeholder="Paris, Musée du Louvre..."
+            <CityAutocomplete
               value={form.localisation}
-              onChangeText={setField('localisation')}
+              onSelect={setLocation}
               error={errors.localisation}
-              icon="location-outline"
-              autoCapitalize="sentences"
             />
 
               <Input

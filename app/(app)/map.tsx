@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Sp, R } from '@/constants/theme';
 import { useHuntTracker } from '@/hooks/useHuntTracker';
 import { useHuntStore } from '@/store/huntStore';
+import { chasseService, etapeService } from '@/services/api';
 
 // ─── Overlay victoire ─────────────────────────────────────────────────────────
 function VictoryOverlay({ onDismiss }: { onDismiss: () => void }) {
@@ -61,29 +62,41 @@ export default function MapScreen() {
   const router = useRouter();
   const { pendingValidation, setPendingValidation } = useHuntStore();
 
-  const [activeChasseId, setActiveChasseId] = useState<number | null>(null);
-  const [loadingChasse, setLoadingChasse] = useState(true);
-  const [showVictory, setShowVictory] = useState(false);
+  const [activeChasseId, setActiveChasseId]       = useState<number | null>(null);
+  const [completedEtapeIds, setCompletedEtapeIds] = useState<number[]>([]);
+  const [loadingChasse, setLoadingChasse]         = useState(true);
+  const [showVictory, setShowVictory]             = useState(false);
 
   const digPanelY = useRef(new Animated.Value(220)).current;
 
-  // ─── Résolution de la chasse active ─────────────────────────────────────────
-  useEffect(() => {
-    if (params.chasseId) {
-      setActiveChasseId(Number(params.chasseId));
-    }
-    setLoadingChasse(false);
-  }, [params.chasseId]);
-
-  const tracker = useHuntTracker(activeChasseId ?? 0);
-
-  // ─── Retour depuis l'écran AR : avancer l'étape ──────────────────────────────
+  // ─── Résolution de la chasse active + progression ───────────────────────────
   useFocusEffect(useCallback(() => {
-    if (pendingValidation) {
+    setLoadingChasse(true);
+    chasseService.getMe()
+      .then(data => {
+        const id = params.chasseId ? Number(params.chasseId) : null;
+        const active = (data.chasses ?? []).find(
+          uc => uc.statut === 'IN_PROGRESS' && (!id || uc.id_chasse === id)
+        ) ?? (id ? (data.chasses ?? []).find(uc => uc.id_chasse === id) : null);
+        setActiveChasseId(active ? active.id_chasse : null);
+        const done = (active?.UserChasseEtape ?? []).map(uce => uce.id_etape);
+        setCompletedEtapeIds(done);
+      })
+      .catch(() => { setActiveChasseId(null); setCompletedEtapeIds([]); })
+      .finally(() => setLoadingChasse(false));
+  }, [params.chasseId]));
+
+  const tracker = useHuntTracker(activeChasseId ?? 0, completedEtapeIds);
+
+  // ─── Retour depuis l'écran AR : valider l'étape puis avancer ─────────────────
+  // useEffect (pas useFocusEffect) pour réagir dès que les deps sont prêtes
+  useEffect(() => {
+    if (pendingValidation && activeChasseId && tracker.currentEtape) {
       setPendingValidation(false);
+      etapeService.validate(activeChasseId, tracker.currentEtape.id_etape).catch(() => {});
       tracker.advanceOnly();
     }
-  }, [pendingValidation, tracker.advanceOnly]));
+  }, [pendingValidation, activeChasseId, tracker.currentEtape]);
 
   // ─── Affichage panel Creuser ─────────────────────────────────────────────────
   useEffect(() => {
@@ -97,7 +110,10 @@ export default function MapScreen() {
 
   // ─── Victoire ────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (tracker.completed) setShowVictory(true);
+    if (tracker.completed && activeChasseId) {
+      setShowVictory(true);
+      chasseService.complete(activeChasseId).catch(() => {});
+    }
   }, [tracker.completed]);
 
   const handleLaunchAR = () => {
@@ -227,7 +243,7 @@ export default function MapScreen() {
       {/* ─── Panel Creuser → Lancer AR ──────────────────────────────────────── */}
       <Animated.View
         style={[st.digPanel, { transform: [{ translateY: digPanelY }] }]}
-        pointerEvents={tracker.isInRadius ? 'auto' : 'none'}
+        pointerEvents={tracker.isInRadius && !!activeChasseId ? 'auto' : 'none'}
       >
         <View style={st.digHandle} />
         <View style={st.digRow}>

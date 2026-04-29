@@ -73,6 +73,8 @@ export interface Chasse {
   description?: string | null;
   image?: string | null;
   localisation?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   etat: StatutChasse;
   created_at: string;
   updated_at?: string;
@@ -90,6 +92,7 @@ export interface UserChasse {
   completed_at?: string | null;
   statut: StatutUserChasse;
   chasse?: Chasse;
+  UserChasseEtape?: UserChasseEtape[];
 }
 
 export interface UserChasseEtape {

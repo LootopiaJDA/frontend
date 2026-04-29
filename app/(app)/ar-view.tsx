@@ -257,7 +257,7 @@ export default function ArViewScreen() {
 
     setValidated(true);
     setPendingValidation(true);
-    setTimeout(() => router.back(), 600);
+    setTimeout(() => router.navigate({ pathname: '/(app)/map', params: { chasseId } }), 600);
   };
 
   // ─── Écran de permission ──────────────────────────────────────────────────
@@ -287,7 +287,7 @@ export default function ArViewScreen() {
       <SafeAreaView style={st.overlay}>
         {/* Header */}
         <View style={st.header}>
-          <TouchableOpacity style={st.closeBtn} onPress={() => router.back()}>
+          <TouchableOpacity style={st.closeBtn} onPress={() => router.navigate({ pathname: '/(app)/map', params: { chasseId } })}>
             <Ionicons name="close" size={20} color="#fff" />
           </TouchableOpacity>
           <View style={st.headerCenter}>

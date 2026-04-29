@@ -233,19 +233,6 @@ export default function ChasseDetail() {
                             label="+ Ajouter une étape"
                             onPress={() => setEtapeModal({ visible: true, mode: 'create', etape: null })}
                         />
-                        {etapes.length > 0 && (
-                            <TouchableOpacity
-                                style={s.testBtn}
-                                onPress={() => router.push({
-                                    pathname: '/(app)/map',
-                                    params: { chasseId },
-                                })}
-                                activeOpacity={0.85}
-                            >
-                                <Ionicons name="play-circle-outline" size={20} color={Colors.gold} />
-                                <Text style={s.testBtnText}>Tester ma chasse</Text>
-                            </TouchableOpacity>
-                        )}
                     </View>
 
                     {/* Liste étapes */}

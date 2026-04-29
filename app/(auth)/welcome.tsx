@@ -1,238 +1,227 @@
 import React, { useEffect, useRef } from 'react';
 import {
-  View, Text, StyleSheet, Animated, TouchableOpacity,
-  Dimensions, Platform,
+  View, Text, StyleSheet, Animated,
+  TouchableOpacity, Dimensions, Platform, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Sp, R } from '../../constants/theme';
+import { Colors, Fonts, Sp, R } from '../../constants/theme';
+
+import CoffreSvg    from '../../assets/images/coffre.svg';
+import BoussoleSvg  from '../../assets/images/boussole.svg';
+import ParcheminSvg from '../../assets/images/petit-parchemin.svg';
+import PieceSvg     from '../../assets/images/piece.svg';
+import CroixSvg     from '../../assets/images/croix.svg';
 
 const { width, height } = Dimensions.get('window');
 
-const CONSTELLATIONS = Array.from({ length: 35 }, (_, i) => ({
-  id: i,
-  x: Math.random() * width,
-  y: Math.random() * height * 0.6,
-  size: Math.random() * 2.5 + 0.8,
-  opacity: Math.random() * 0.5 + 0.15,
-}));
+const MAP_BG = require('../../assets/images/parchemin-tresor.png');
+
+const COFFRE_SIZE  = 150;
+const COMPASS_SIZE = 220;
+const HERO_H       = 190;
+const SCROLL_W     = width * 1.2;
+const SCROLL_H     = SCROLL_W * 0.82;
 
 export default function Welcome() {
-  const router = useRouter();
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const router     = useRouter();
+  const fadeAnim   = useRef(new Animated.Value(0)).current;
+  const slideAnim  = useRef(new Animated.Value(30)).current;
+  const floatAnim  = useRef(new Animated.Value(0)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
-      Animated.spring(slideAnim, { toValue: 0, tension: 50, friction: 10, useNativeDriver: true }),
+      Animated.timing(fadeAnim,  { toValue: 1, duration: 900, useNativeDriver: true }),
+      Animated.spring(slideAnim, { toValue: 0, tension: 38, friction: 9, useNativeDriver: true }),
     ]).start();
 
     Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 1.08, duration: 2200, useNativeDriver: true }),
-          Animated.timing(pulseAnim, { toValue: 1, duration: 2200, useNativeDriver: true }),
-        ])
+      Animated.sequence([
+        Animated.timing(floatAnim, { toValue: -8, duration: 2200, useNativeDriver: true }),
+        Animated.timing(floatAnim, { toValue: 0,  duration: 2200, useNativeDriver: true }),
+      ])
+    ).start();
+
+    Animated.loop(
+      Animated.timing(rotateAnim, { toValue: 1, duration: 26000, useNativeDriver: true })
     ).start();
   }, []);
 
+  const spin = rotateAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+
   return (
-      <View style={styles.bg}>
-        {/* Étoiles */}
-        {CONSTELLATIONS.map(s => (
-            <View
-                key={s.id}
-                style={[styles.star, { left: s.x, top: s.y, width: s.size, height: s.size, opacity: s.opacity }]}
-            />
-        ))}
+    <View style={st.root}>
 
-        {/* Cercle d'ambiance */}
-        <View style={styles.glowCircle} />
-        <View style={styles.glowCircle2} />
+      {/* ── Fond carte ── */}
+      <Image source={MAP_BG} style={st.mapBg} resizeMode="cover" />
+      <View style={st.mapOverlay} />
 
-        {/* Lignes de grille fines */}
-        <View style={[styles.gridV, { left: '25%' }]} />
-        <View style={[styles.gridV, { left: '50%' }]} />
-        <View style={[styles.gridV, { left: '75%' }]} />
-        <View style={[styles.gridH, { top: '30%' }]} />
-        <View style={[styles.gridH, { top: '60%' }]} />
+      {/* ── Halos ── */}
+      <View style={[st.glow, { top: -80, left: -60, width: 340, height: 340, borderRadius: 170 }]} />
+      <View style={[st.glow, { bottom: 80, right: -80, width: 260, height: 260, borderRadius: 130, backgroundColor: Colors.gold, opacity: 0.07 }]} />
 
-        <SafeAreaView style={styles.safe}>
-          {/* Logo + titre */}
-          <Animated.View style={[styles.hero, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-            <Animated.View style={[styles.compassRing, { transform: [{ scale: pulseAnim }] }]}>
-              <View style={styles.compassInner}>
-                <Ionicons name="compass" size={52} color={Colors.gold} />
-              </View>
-            </Animated.View>
-
-            <View style={styles.titleBlock}>
-              <Text style={styles.brand}>LOOTOPIA</Text>
-              <View style={styles.dividerRow}>
-                <View style={styles.dividerLine} />
-                <Ionicons name="diamond" size={10} color={Colors.gold} />
-                <View style={styles.dividerLine} />
-              </View>
-              <Text style={styles.tagline}>Chasses au trésor numériques</Text>
-            </View>
-
-            {/* Features pills */}
-            <View style={styles.pills}>
-              {[
-                { icon: 'location', label: 'Géolocalisation' },
-                { icon: 'cube', label: 'Réalité augmentée' },
-                { icon: 'trophy', label: 'Classements' },
-              ].map(p => (
-                  <View key={p.label} style={styles.pill}>
-                    <Ionicons name={p.icon as any} size={12} color={Colors.gold} />
-                    <Text style={styles.pillText}>{p.label}</Text>
-                  </View>
-              ))}
-            </View>
-          </Animated.View>
-
-          {/* Boutons */}
-          <Animated.View style={[styles.actions, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-            <TouchableOpacity
-                style={styles.btnPrimary}
-                onPress={() => router.push('/(auth)/login')}
-                activeOpacity={0.82}
-            >
-              <Text style={styles.btnPrimaryText}>Se connecter</Text>
-              <Ionicons name="arrow-forward" size={18} color={Colors.black} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-                style={styles.btnSecondary}
-                onPress={() => router.push('/(auth)/register')}
-                activeOpacity={0.82}
-            >
-              <Text style={styles.btnSecondaryText}>Créer un compte joueur</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-                style={styles.btnLink}
-                onPress={() => router.push('/(auth)/register-partner')}
-                activeOpacity={0.75}
-            >
-              <Ionicons name="business-outline" size={14} color={Colors.textMuted} />
-              <Text style={styles.btnLinkText}>
-                Vous êtes un partenaire ?{' '}
-                <Text style={styles.btnLinkAccent}>Rejoindre →</Text>
-              </Text>
-            </TouchableOpacity>
-          </Animated.View>
-        </SafeAreaView>
+      {/* ── Décorations absolues ── */}
+      <View style={[st.deco, { top: height * 0.09, right: Sp.xl,  width: 44, height: 44, opacity: 1.0, transform: [{ rotate: '6deg'   }] }]}>
+        <CroixSvg width={44} height={44} />
       </View>
+      <View style={[st.deco, { top: height * 0.90, left: Sp.lg,   width: 32, height: 32, opacity: 1.0, transform: [{ rotate: '-12deg' }] }]}>
+        <CroixSvg width={32} height={32} />
+      </View>
+      <View style={[st.deco, { top: height * 0.18, left: Sp.md,   width: 42, height: 42, opacity: 0.75 }]}>
+        <PieceSvg width={42} height={42} />
+      </View>
+      <View style={[st.deco, { top: height * 0.20, right: Sp.sm,  width: 34, height: 34, opacity: 0.70, transform: [{ rotate: '20deg'  }] }]}>
+        <PieceSvg width={34} height={34} />
+      </View>
+
+      <SafeAreaView style={st.safe}>
+
+        {/* ── Hero : boussole (fond) + coffre flottant ── */}
+        <Animated.View style={[st.heroArea, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+          <Animated.View style={[st.compass, { transform: [{ rotate: spin }] }]}>
+            <BoussoleSvg width={COMPASS_SIZE} height={COMPASS_SIZE} />
+          </Animated.View>
+          <Animated.View style={{ transform: [{ translateY: floatAnim }] }}>
+            <CoffreSvg width={COFFRE_SIZE} height={COFFRE_SIZE} />
+          </Animated.View>
+        </Animated.View>
+
+        {/* ── Parchemin titre ── */}
+        <Animated.View style={[st.scrollArea, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+          <View style={st.scrollWrap}>
+            <View style={StyleSheet.absoluteFill}>
+              <ParcheminSvg width={SCROLL_W} height={SCROLL_H} />
+            </View>
+            <View style={st.scrollContent}>
+              <Text style={st.brand} numberOfLines={1} adjustsFontSizeToFit>
+                LOOTOPIA
+              </Text>
+            </View>
+          </View>
+        </Animated.View>
+
+        {/* ── Boutons ── */}
+        <Animated.View style={[st.actions, { opacity: fadeAnim }]}>
+
+          <TouchableOpacity style={st.btnPrimary} onPress={() => router.push('/(auth)/login')} activeOpacity={0.82}>
+            <Ionicons name="compass" size={18} color={Colors.black} />
+            <Text style={st.btnPrimaryText}>Se connecter</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={st.btnSecondary} onPress={() => router.push('/(auth)/register')} activeOpacity={0.82}>
+            <Text style={st.btnSecondaryText}>Créer un compte joueur</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={st.btnLink} onPress={() => router.push('/(auth)/register-partner')} activeOpacity={0.75}>
+            <Ionicons name="business-outline" size={14} color={Colors.parchment} />
+            <Text style={st.btnLinkText}>
+              Partenaire ?{'  '}<Text style={st.btnLinkAccent}>Rejoindre →</Text>
+            </Text>
+          </TouchableOpacity>
+
+        </Animated.View>
+
+      </SafeAreaView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  bg: { flex: 1, backgroundColor: Colors.bg },
-  star: { position: 'absolute', borderRadius: 99, backgroundColor: Colors.textPrimary },
-  glowCircle: {
-    position: 'absolute',
-    width: 340,
-    height: 340,
-    borderRadius: 170,
-    backgroundColor: Colors.gold,
-    opacity: 0.04,
-    top: -80,
-    left: width / 2 - 170,
+const st = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#0C0800' },
+
+  mapBg:      { position: 'absolute', width: '100%', height: '100%' },
+  mapOverlay: { position: 'absolute', width: '100%', height: '100%', backgroundColor: 'rgba(10,7,0,0.58)' },
+
+  glow: { position: 'absolute', backgroundColor: Colors.amber, opacity: 0.08 },
+  deco: { position: 'absolute' },
+
+  safe: {
+    flex: 1,
+    justifyContent: 'space-between',
+    paddingTop: Sp.md,
+    paddingBottom: Platform.OS === 'ios' ? Sp.md : Sp.xl,
   },
-  glowCircle2: {
-    position: 'absolute',
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    backgroundColor: Colors.accent,
-    opacity: 0.05,
-    bottom: 60,
-    right: -80,
-  },
-  gridV: { position: 'absolute', width: 1, top: 0, bottom: 0, backgroundColor: Colors.border, opacity: 0.4 },
-  gridH: { position: 'absolute', left: 0, right: 0, height: 1, backgroundColor: Colors.border, opacity: 0.3 },
-  safe: { flex: 1, justifyContent: 'space-between', paddingBottom: Platform.OS === 'ios' ? 0 : Sp.lg },
-  hero: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Sp.xl, gap: Sp.xl },
-  compassRing: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 1,
-    borderColor: Colors.gold + '50',
+
+  // Hero
+  heroArea: {
+    height: HERO_H,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.bgCard,
   },
-  compassInner: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: Colors.bgElevated,
+  compass: {
+    position: 'absolute',
+    width: COMPASS_SIZE,
+    height: COMPASS_SIZE,
+    opacity: 0.30,
+  },
+
+  // Parchemin
+  scrollArea: { alignItems: 'center' },
+  scrollWrap: {
+    width: SCROLL_W,
+    height: SCROLL_H,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.gold + '30',
   },
-  titleBlock: { alignItems: 'center', gap: Sp.sm },
-  brand: {
-    color: Colors.textPrimary,
-    fontSize: 44,
-    fontWeight: '900',
-    letterSpacing: 10,
-  },
-  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: Sp.md, width: 160 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: Colors.border },
-  tagline: {
-    color: Colors.gold,
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 3,
-    textTransform: 'uppercase',
-  },
-  pills: { flexDirection: 'row', gap: Sp.sm, flexWrap: 'wrap', justifyContent: 'center' },
-  pill: {
-    flexDirection: 'row',
+  scrollContent: {
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: Colors.bgElevated,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: R.full,
+    gap: 8,
     paddingHorizontal: Sp.md,
-    paddingVertical: 6,
+    paddingVertical: Sp.lg,
+    width: SCROLL_W,
   },
-  pillText: { color: Colors.textSecondary, fontSize: 12 },
-  actions: { paddingHorizontal: Sp.lg, paddingBottom: Sp.lg, gap: Sp.sm },
-  btnPrimary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+
+  brand: {
+    fontFamily: Fonts.display,
+    color: '#3D1E04',
+    fontSize: 30,
+    letterSpacing: 5,
+    width: '100%',
+    textAlign: 'center',
+  },
+
+  divider: { flexDirection: 'row', alignItems: 'center', gap: Sp.md, width: '75%' },
+  divLine:  { flex: 1, height: 1, backgroundColor: '#8B5E1A55' },
+
+  tagline: {
+    fontFamily: Fonts.title,
+    color: '#5C3610',
+    fontSize: 8,
+    letterSpacing: 2.5,
+    textAlign: 'center',
+    opacity: 0.85,
+  },
+
+  // Boutons
+  actions: {
+    paddingHorizontal: Sp.lg,
     gap: Sp.sm,
-    backgroundColor: Colors.gold,
-    borderRadius: R.md,
-    paddingVertical: 16,
   },
-  btnPrimaryText: { color: Colors.black, fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },
+
+  btnPrimary: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: Sp.sm, backgroundColor: Colors.gold,
+    borderRadius: R.md, paddingVertical: 15,
+    shadowColor: Colors.gold, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.45, shadowRadius: 12, elevation: 6,
+  },
+  btnPrimaryText: { fontFamily: Fonts.title, color: Colors.black, fontSize: 15, letterSpacing: 1 },
+
   btnSecondary: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.bgElevated,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: R.md,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-    paddingVertical: 15,
+    borderWidth: 1, borderColor: 'rgba(201,147,58,0.40)',
+    paddingVertical: 14,
   },
-  btnSecondaryText: { color: Colors.textPrimary, fontSize: 15, fontWeight: '600' },
+  btnSecondaryText: { fontFamily: Fonts.title, color: Colors.textPrimary, fontSize: 14, letterSpacing: 0.5 },
+
   btnLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Sp.xs,
-    paddingVertical: Sp.sm,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: Sp.xs, paddingVertical: Sp.sm,
   },
-  btnLinkText: { color: Colors.textMuted, fontSize: 13 },
-  btnLinkAccent: { color: Colors.gold, fontWeight: '600' },
+  btnLinkText:   { color: Colors.parchment, fontSize: 13 },
+  btnLinkAccent: { fontFamily: Fonts.title, color: Colors.gold, fontSize: 13 },
 });

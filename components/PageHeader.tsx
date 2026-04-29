@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Sp, R } from '../constants/theme';
+import { Colors, Fonts, Sp, R } from '../constants/theme';
 
 interface Props {
   title: string;
@@ -47,17 +47,17 @@ const styles = StyleSheet.create({
     borderRadius: R.sm,
     backgroundColor: Colors.bgElevated,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderWarm,
     alignItems: 'center',
     justifyContent: 'center',
   },
   subtitle: {
-    color: Colors.gold,
+    fontFamily: Fonts.title,
+    color: Colors.amber,
     fontSize: 10,
-    fontWeight: '700',
     letterSpacing: 2,
     textTransform: 'uppercase',
     marginBottom: 2,
   },
-  title: { color: Colors.textPrimary, fontSize: 24, fontWeight: '800', letterSpacing: -0.5 },
+  title: { fontFamily: Fonts.title, color: Colors.textPrimary, fontSize: 22, letterSpacing: 1 },
 });

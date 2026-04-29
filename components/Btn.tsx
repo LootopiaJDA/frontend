@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native';
-import { Colors, R, Sp } from '../constants/theme';
+import { Colors, Fonts, R, Sp } from '../constants/theme';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline';
 
@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
   danger: { backgroundColor: Colors.errorBg, borderWidth: 1, borderColor: Colors.error },
   outline: { backgroundColor: 'transparent', borderWidth: 1, borderColor: Colors.borderLight },
 
-  label: { fontWeight: '700', fontSize: 15, letterSpacing: 0.3 },
+  label: { fontFamily: Fonts.title, fontSize: 15, letterSpacing: 0.8 },
   labelSmall: { fontSize: 13 },
   primaryText: { color: Colors.black },
   secondaryText: { color: Colors.textPrimary },

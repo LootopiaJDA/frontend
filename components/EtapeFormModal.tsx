@@ -4,8 +4,8 @@ import {
   KeyboardAvoidingView, Platform, SafeAreaView, Alert, Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import { Etape } from '../constants/types';
+import { useImagePicker } from '../hooks/useImagePicker';
 import { etapeService } from '../services/api';
 import { Colors, Sp, R } from '../constants/theme';
 import Input from './Input';
@@ -40,16 +40,21 @@ export default function EtapeFormModal({
   visible, mode, chasseId, etape, nextRank = 1, onClose, onSaved,
 }: Props) {
   const [form, setForm] = useState<EtapeForm>(EMPTY_FORM);
-  const [image, setImage] = useState<{ uri: string; name: string; type: string } | null>(null);
+  const { image, pickOrShoot: pickImage, reset: resetImage } = useImagePicker('etape');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
+
+  // Efface l'erreur image dès qu'une image est choisie
+  useEffect(() => {
+    if (image) setErrors(e => ({ ...e, image: '' }));
+  }, [image]);
 
   // Reset form when modal opens
   useEffect(() => {
     if (!visible) return;
     setErrors({});
-    setImage(null);
+    resetImage();
     setMapOpen(false);
     if (mode === 'create') {
       setForm({ ...EMPTY_FORM, rank: String(nextRank) });
@@ -68,20 +73,6 @@ export default function EtapeFormModal({
 
   const setField = (key: keyof EtapeForm) => (value: string) =>
     setForm(f => ({ ...f, [key]: value }));
-
-  const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') { Alert.alert('Permission requise', 'Accès galerie nécessaire'); return; }
-    const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true, aspect: [1, 1], quality: 0.85,
-    });
-    if (!res.canceled && res.assets[0]) {
-      const a = res.assets[0];
-      setImage({ uri: a.uri, name: a.fileName || `etape_${Date.now()}.jpg`, type: a.mimeType || 'image/jpeg' });
-      setErrors(e => ({ ...e, image: '' }));
-    }
-  };
 
   const handleMapConfirm = (lat: number, lng: number, address: string, rayon: number) => {
     setForm(f => ({
@@ -171,7 +162,7 @@ export default function EtapeFormModal({
                     label="Rang"
                     value={form.rank}
                     onChangeText={setField('rank')}
-                    keyboardType="numeric"
+                    keyboardType={"numeric"}
                     error={errors.rank}
                     icon="layers-outline"
                   />
@@ -181,7 +172,7 @@ export default function EtapeFormModal({
                     label="Rayon (m)"
                     value={form.rayon}
                     onChangeText={setField('rayon')}
-                    keyboardType="numeric"
+                    keyboard={"numeric"}
                     error={errors.rayon}
                     icon="radio-outline"
                   />
@@ -267,7 +258,7 @@ export default function EtapeFormModal({
                     <View style={s.imagePlaceholderIcon}>
                       <Ionicons name="camera-outline" size={28} color={Colors.textMuted} />
                     </View>
-                    <Text style={s.imagePlaceholderTxt}>Sélectionner une image</Text>
+                    <Text style={s.imagePlaceholderTxt}>Galerie ou appareil photo</Text>
                     <Text style={s.imagePlaceholderSub}>Format carré recommandé</Text>
                   </View>
                 )}

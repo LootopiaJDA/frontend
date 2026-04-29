@@ -5,6 +5,8 @@ interface ChasseUpdatePayload {
   name?: string;
   localisation?: string;
   etat?: StatutChasse;
+  latitude?: number;
+  longitude?: number;
 }
 
 const req = async (path: string, options: RequestInit = {}) => {
@@ -35,14 +37,13 @@ export const userService = {
     partenaire: { siret: string; company_name: string; adresse?: string };
   }) => req(EP.REGISTER_PARTNER, { method: 'POST', body: JSON.stringify(data) }),
   getAll: (): Promise<User[]> => req(EP.USERS),
-  getById: (id: number): Promise<User> => req(`${EP.USERS}/${id}`),
   update: (id: number, data: Partial<User>) =>
       req(`${EP.USERS}/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  delete: (id: number) => req(`${EP.USERS}/${id}`, { method: 'DELETE' }),
 };
 
 export const chasseService = {
-  getAll: (): Promise<{ allChasse: Chasse[] }> => req(EP.CHASSES),
+  getAll: (localisation?: string): Promise<{ allChasse: Chasse[] }> =>
+    req(localisation ? `${EP.CHASSES}?localisation=${encodeURIComponent(localisation)}` : EP.CHASSES),
   getByPartenaire: (id: number): Promise<{ chasseByPart: Chasse[] }> =>
       req(`${EP.CHASSES}?partenaire=${id}`),
   getById: (id: number): Promise<ChasseDetail> => req(EP.CHASSE(id)),
@@ -56,16 +57,20 @@ export const chasseService = {
   update: (id: number, data: ChasseUpdatePayload) =>
       req(EP.CHASSE_UPDATE(id), { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: number) => req(EP.CHASSE_DELETE(id), { method: 'DELETE' }),
-  // Rejoindre une chasse (joueur)
-  join: (chasseId: number) => req(`/chasse/inscription/${chasseId}`, { method: 'POST' }),
-  // Joueurs inscrits à une chasse (admin/partenaire)
-  getPlayers: (chasseId: number) => req(`/chasse/getPlayerChasses/${chasseId}`),
+  join: (chasseId: number) => req(`/chasse/${chasseId}/join`, { method: 'POST' }),
+  complete: (chasseId: number) => req(EP.CHASSE_COMPLETE(chasseId), { method: 'PATCH' }),
+  getMe: (): Promise<{ chasses: UserChasse[] }> => req(EP.CHASSE_ME),
 };
 
 export const partenaireService = {
   getAll: (): Promise<any[]> => req('/partenaire'),
   updateStatut: (id: number, statut: 'ACTIVE' | 'INACTIVE' | 'VERIFICATION') =>
       req(`/partenaire/${id}`, { method: 'PATCH', body: JSON.stringify({ statut }) }),
+};
+
+export const adminService = {
+  validatePartenaire: (id: number, statut: 'ACTIVE' | 'INACTIVE') =>
+      req(`/admin/partenaire/${id}/validate`, { method: 'POST', body: JSON.stringify({ statut }) }),
 };
 
 export const etapeService = {
@@ -93,4 +98,6 @@ export const etapeService = {
   },
   delete: (chasseId: number, etapeId: number) =>
       req(EP.ETAPE_DELETE(chasseId, etapeId), { method: 'DELETE' }),
+  validate: (chasseId: number, etapeId: number) =>
+      req(EP.ETAPE_VALIDATE(chasseId, etapeId), { method: 'POST' }),
 };

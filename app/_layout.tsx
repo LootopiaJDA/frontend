@@ -3,6 +3,7 @@ import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { Stack } from 'expo-router';
 import { useAuth, AuthProvider } from '../context/AuthContext';
 import { Colors, Sp } from "@/constants/theme";
+import { useFonts, Cinzel_700Bold, Cinzel_900Black } from '@expo-google-fonts/cinzel';
 
 function RootStack() {
     const { loading } = useAuth();
@@ -20,6 +21,7 @@ function RootStack() {
 }
 
 export default function RootLayout() {
+    useFonts({ Cinzel_700Bold, Cinzel_900Black });
     return (
         <AuthProvider>
             <RootStack />
