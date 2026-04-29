@@ -162,7 +162,7 @@ const s_ = StyleSheet.create({
 
   roleBadge: {
     flexDirection: 'row', alignItems: 'center', gap: Sp.xs,
-    backgroundColor: Colors.warningBg, borderWidth: 1, borderColor: Colors.warning + '44',
+    backgroundColor: Colors.warningBg, borderWidth: 1, borderColor: Colors.warning + '80',
     borderRadius: R.full, paddingHorizontal: Sp.md, paddingVertical: 6,
     alignSelf: 'flex-start', marginBottom: Sp.lg,
   },
@@ -179,7 +179,7 @@ const s_ = StyleSheet.create({
   infoBox: {
     flexDirection: 'row', gap: Sp.sm,
     backgroundColor: Colors.warningBg, borderRadius: R.md,
-    borderWidth: 1, borderColor: Colors.warning + '33',
+    borderWidth: 1, borderColor: Colors.warning + '50',
     padding: Sp.md, marginVertical: Sp.lg, alignItems: 'flex-start',
   },
   infoText: { fontFamily: Fonts.title, color: Colors.textSecondary, fontSize: 12, flex: 1, lineHeight: 20 },

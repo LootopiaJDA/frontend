@@ -176,9 +176,6 @@ export default function Dashboard() {
         {chasses.length > 0 && (
           <View style={st.sectionHd}>
             <Text style={st.sectionTitle}>Mes chasses</Text>
-            <TouchableOpacity onPress={() => setCreateVisible(true)}>
-              <Text style={st.sectionAction}>+ Nouvelle</Text>
-            </TouchableOpacity>
           </View>
         )}
 
@@ -294,7 +291,7 @@ const card = StyleSheet.create({
 });
 
 const st = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, paddingTop: 10 },
 
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',

@@ -174,7 +174,7 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: Sp.xs, paddingVertical: Sp.sm,
   },
-  partnerLinkText: { fontFamily: Fonts.title, color: Colors.textMuted, fontSize: 12 },
+  partnerLinkText: { fontFamily: Fonts.title, color: Colors.gold, fontSize: 12 },
 
   errorBanner: {
     flexDirection: 'row', alignItems: 'center', gap: Sp.xs,

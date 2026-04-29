@@ -66,10 +66,6 @@ export default function PartnerProfil() {
         <View style={st.menuCard}>
           {[
             { icon: 'map-outline',                  label: 'Voir les chasses publiques', onPress: () => router.push('/(app)/chasses') },
-            { icon: 'analytics-outline',             label: 'Statistiques',               onPress: () => {} },
-            { icon: 'settings-outline',              label: 'Paramètres',                 onPress: () => {} },
-            { icon: 'help-circle-outline',           label: 'Aide & Support',             onPress: () => {} },
-            { icon: 'information-circle-outline',    label: 'À propos de Lootopia',       onPress: () => {} },
           ].map((item, i, arr) => (
             <TouchableOpacity
               key={item.label}
@@ -90,8 +86,6 @@ export default function PartnerProfil() {
           <Ionicons name="log-out-outline" size={20} color={Colors.error} />
           <Text style={st.logoutText}>Se déconnecter</Text>
         </TouchableOpacity>
-
-        <Text style={st.version}>Lootopia Partenaire v1.0.0</Text>
       </ScrollView>
     </ScreenBackground>
   );

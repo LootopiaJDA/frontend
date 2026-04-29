@@ -64,10 +64,7 @@ export default function ProfilJoueurScreen() {
 
     const menuItems = [
         { icon: 'trophy-outline',         label: 'Mes scores & récompenses', onPress: () => {} },
-        { icon: 'map-outline',            label: 'Chasses en cours',         onPress: () => router.push('/(app)/chasses') },
-        { icon: 'notifications-outline',  label: 'Notifications',            onPress: () => {} },
-        { icon: 'settings-outline',       label: 'Paramètres',               onPress: () => {} },
-        { icon: 'help-circle-outline',    label: 'Aide & Support',           onPress: () => {} },
+        { icon: 'map-outline',            label: 'Chasses en cours',         onPress: () => router.push('/(app)/map') },
     ];
 
     return (
@@ -131,8 +128,6 @@ export default function ProfilJoueurScreen() {
                     <Ionicons name="log-out-outline" size={20} color={Colors.error} />
                     <Text style={st.logoutText}>Se déconnecter</Text>
                 </TouchableOpacity>
-
-                <Text style={st.version}>Lootopia v1.0.0</Text>
             </ScrollView>
         </ScreenBackground>
     );
@@ -156,7 +151,7 @@ const st = StyleSheet.create({
     },
     avatarText: { fontFamily: Fonts.display, fontSize: 26, color: Colors.gold },
     username:   { fontFamily: Fonts.display, fontSize: 20, color: Colors.textPrimary, letterSpacing: 1 },
-    email:      { fontFamily: Fonts.title,   fontSize: 12, color: Colors.textMuted },
+    email:      { fontFamily: Fonts.title,   fontSize: 12, color: Colors.gold, letterSpacing: 1 },
     badgeRow:   { flexDirection: 'row', gap: Sp.sm, marginTop: Sp.xs },
 
     statsRow:   {
@@ -195,5 +190,4 @@ const st = StyleSheet.create({
         padding: Sp.md,
     },
     logoutText: { fontFamily: Fonts.title, color: Colors.error, fontSize: 14 },
-    version:    { fontFamily: Fonts.title, color: Colors.textMuted, fontSize: 11, textAlign: 'center', marginTop: Sp.lg, paddingBottom: Sp.xl },
 });

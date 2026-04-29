@@ -6,7 +6,7 @@ import { Colors, Fonts, Sp, R } from "../constants/theme";
 
 const CROIX   = require("../assets/images/croix.png");
 const COFFRE  = require("../assets/images/coffre.png");
-const SCROLL  = require("../assets/images/parchemin-tresor.svg");
+const SCROLL  = require("../assets/images/parchemin-tresor.png");
 
 type Props = { chasse: Chasse; onPress?: () => void };
 
