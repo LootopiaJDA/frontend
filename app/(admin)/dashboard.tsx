@@ -1,13 +1,14 @@
 import React, { useState, useCallback } from 'react';
 import {
     View, Text, StyleSheet, ScrollView,
-    ActivityIndicator, SafeAreaView, TouchableOpacity,
+    ActivityIndicator, TouchableOpacity,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { userService, chasseService, partenaireService } from '../../services/api';
-import { Colors, Sp, R } from '../../constants/theme';
+import { Colors, Fonts, Sp, R } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
+import ScreenBackground from '../../components/ScreenBackground';
 
 type Stats = {
     totalUsers: number;
@@ -49,14 +50,14 @@ export default function AdminDashboard() {
 
     if (loading) {
         return (
-            <View style={st.center}>
-                <ActivityIndicator size="large" color={Colors.error} />
-            </View>
+            <ScreenBackground style={st.center}>
+                <ActivityIndicator size="large" color={Colors.gold} />
+            </ScreenBackground>
         );
     }
 
     return (
-        <SafeAreaView style={st.safe}>
+        <ScreenBackground style={st.safe}>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={st.scroll}>
 
                 {/* Header */}
@@ -179,13 +180,13 @@ export default function AdminDashboard() {
                 </View>
 
             </ScrollView>
-        </SafeAreaView>
+        </ScreenBackground>
     );
 }
 
 const st = StyleSheet.create({
-    safe:   { flex: 1, backgroundColor: Colors.bg },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.bg },
+    safe:   { flex: 1 },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     scroll: { padding: Sp.lg, paddingBottom: 100, gap: Sp.md },
 
     header: {
@@ -199,38 +200,38 @@ const st = StyleSheet.create({
         borderWidth: 1, borderColor: Colors.error + '44',
         alignItems: 'center', justifyContent: 'center',
     },
-    headerTitle: { fontSize: 20, fontWeight: '800', color: Colors.textPrimary },
-    headerSub:   { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
+    headerTitle: { fontFamily: Fonts.display, fontSize: 18, color: Colors.textPrimary, letterSpacing: 1 },
+    headerSub:   { fontFamily: Fonts.title,   fontSize: 11, color: Colors.textMuted, marginTop: 2 },
 
     grid: { flexDirection: 'row', gap: Sp.md },
 
     statCard: {
         flex: 1, backgroundColor: Colors.bgCard,
-        borderRadius: R.lg, borderWidth: 1, borderColor: Colors.border,
+        borderRadius: R.lg, borderWidth: 1, borderColor: Colors.borderWarm,
         borderTopWidth: 2, padding: Sp.md,
         alignItems: 'center', gap: 4,
     },
-    statVal:   { fontSize: 28, fontWeight: '800', color: Colors.textPrimary, marginTop: 4 },
-    statLabel: { fontSize: 11, color: Colors.textMuted, textAlign: 'center' },
-    statHint:  { fontSize: 10, color: Colors.gold, fontWeight: '600', marginTop: 2 },
+    statVal:   { fontFamily: Fonts.display, fontSize: 26, color: Colors.textPrimary, marginTop: 4 },
+    statLabel: { fontFamily: Fonts.title,   fontSize: 10, color: Colors.textMuted, textAlign: 'center' },
+    statHint:  { fontFamily: Fonts.title,   fontSize: 9,  color: Colors.gold, marginTop: 2, letterSpacing: 0.5 },
 
     sectionTitle: {
-        fontSize: 10, fontWeight: '700', color: Colors.error,
-        letterSpacing: 1.5, textTransform: 'uppercase', marginTop: Sp.sm,
+        fontFamily: Fonts.title, fontSize: 9, fontWeight: '700', color: Colors.error,
+        letterSpacing: 2, textTransform: 'uppercase', marginTop: Sp.sm,
     },
 
     actionsCard: {
         backgroundColor: Colors.bgCard,
-        borderRadius: R.lg, borderWidth: 1, borderColor: Colors.border,
+        borderRadius: R.lg, borderWidth: 1, borderColor: Colors.borderWarm,
         overflow: 'hidden',
     },
     actionRow:   { flexDirection: 'row', alignItems: 'center', padding: Sp.md, gap: Sp.md },
     actionIcon:  { width: 44, height: 44, borderRadius: R.md, alignItems: 'center', justifyContent: 'center' },
     actionBody:  { flex: 1 },
-    actionLabel: { fontSize: 14, fontWeight: '700', color: Colors.textPrimary },
-    actionSub:   { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
-    separator:   { height: 1, backgroundColor: Colors.border, marginLeft: Sp.md + 44 + Sp.md },
+    actionLabel: { fontFamily: Fonts.title, fontSize: 13, color: Colors.textPrimary },
+    actionSub:   { fontFamily: Fonts.title, fontSize: 11, color: Colors.textMuted, marginTop: 2 },
+    separator:   { height: 1, backgroundColor: Colors.borderWarm, marginLeft: Sp.md + 44 + Sp.md },
 
     badge:     { backgroundColor: Colors.error, borderRadius: R.full, minWidth: 22, height: 22, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
-    badgeText: { color: '#fff', fontSize: 11, fontWeight: '800' },
+    badgeText: { fontFamily: Fonts.title, color: '#fff', fontSize: 11 },
 });

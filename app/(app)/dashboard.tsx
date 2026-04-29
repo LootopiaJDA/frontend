@@ -1,14 +1,17 @@
 import React, { useState, useCallback } from 'react';
 import {
     View, Text, StyleSheet, ScrollView, TouchableOpacity,
-    SafeAreaView, ActivityIndicator, RefreshControl, Image,
+    ActivityIndicator, RefreshControl, Image,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { chasseService } from '@/services/api';
 import { Chasse } from '@/constants/types';
-import { Colors, Sp, R } from '@/constants/theme';
+import { Colors, Fonts, Sp, R } from '@/constants/theme';
+import ScreenBackground from '@/components/ScreenBackground';
+
+const BOUSSOLE = require('../../assets/images/boussole.png');
 
 function getGreeting(): string {
     const h = new Date().getHours();
@@ -46,7 +49,7 @@ const hr = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: Colors.border,
+        borderColor: Colors.borderWarm,
         overflow: 'hidden',
         gap: Sp.md,
         paddingRight: Sp.md,
@@ -58,8 +61,8 @@ const hr = StyleSheet.create({
         justifyContent: 'center',
     },
     info:  { flex: 1, paddingVertical: Sp.sm },
-    name:  { fontSize: 14, fontWeight: '700', color: Colors.textPrimary },
-    meta:  { fontSize: 11, color: Colors.textMuted, marginTop: 3 },
+    name:  { fontFamily: Fonts.title, fontSize: 13, color: Colors.textPrimary },
+    meta:  { fontFamily: Fonts.title, fontSize: 10, color: Colors.textMuted, marginTop: 3 },
 });
 
 export default function DashboardJoueurScreen() {
@@ -89,7 +92,7 @@ export default function DashboardJoueurScreen() {
     const chassesActives = allChasses.filter(c => c.etat === 'ACTIVE');
 
     return (
-        <SafeAreaView style={st.safe}>
+        <ScreenBackground style={st.safe}>
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={st.scroll}
@@ -128,7 +131,7 @@ export default function DashboardJoueurScreen() {
                         </Text>
                     </View>
                     <View style={st.heroIcon}>
-                        <Ionicons name="compass" size={48} color={Colors.gold} style={{ opacity: 0.9 }} />
+                        <Image source={BOUSSOLE} style={st.boussoleImg} resizeMode="cover" />
                     </View>
                 </View>
 
@@ -191,21 +194,20 @@ export default function DashboardJoueurScreen() {
                     </>
                 )}
             </ScrollView>
-        </SafeAreaView>
+        </ScreenBackground>
     );
 }
 
 const st = StyleSheet.create({
-    safe:   { flex: 1, backgroundColor: Colors.bg },
+    safe:   { flex: 1 },
     scroll: { paddingBottom: 60 },
 
-    // Header
     header:     {
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-        paddingHorizontal: Sp.lg, paddingTop: Sp.md, paddingBottom: Sp.sm,
+        paddingHorizontal: Sp.lg, paddingTop: Sp.xxl, paddingBottom: Sp.sm,
     },
-    greeting:   { fontSize: 13, color: Colors.textMuted, letterSpacing: 0.3 },
-    name:       { fontSize: 22, fontWeight: '800', color: Colors.textPrimary, marginTop: 2 },
+    greeting:   { fontFamily: Fonts.title, fontSize: 11, color: Colors.textMuted, letterSpacing: 1 },
+    name:       { fontFamily: Fonts.display, fontSize: 20, color: Colors.textPrimary, marginTop: 2, letterSpacing: 0.5 },
     nameAccent: { color: Colors.gold },
 
     avatar: {
@@ -214,28 +216,27 @@ const st = StyleSheet.create({
         borderWidth: 2, borderColor: Colors.gold + '33',
         alignItems: 'center', justifyContent: 'center',
     },
-    avatarText: { fontSize: 15, fontWeight: '800', color: Colors.gold },
+    avatarText: { fontFamily: Fonts.display, fontSize: 14, color: Colors.gold },
     avatarDot:  {
         position: 'absolute', top: -2, right: -2,
         width: 12, height: 12, borderRadius: 6,
         backgroundColor: '#4ecb8a', borderWidth: 2, borderColor: Colors.bg,
     },
 
-    // Hero banner
     heroBanner: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         marginHorizontal: Sp.lg, marginVertical: Sp.md,
         backgroundColor: Colors.bgCard,
-        borderRadius: R.xl, borderWidth: 1, borderColor: Colors.gold + '33',
+        borderRadius: R.xl, borderWidth: 1, borderColor: Colors.borderWarm,
         padding: Sp.lg,
         overflow: 'hidden',
     },
-    heroLeft:  { flex: 1, gap: 6 },
-    heroTitle: { fontSize: 22, fontWeight: '800', color: Colors.textPrimary, lineHeight: 28 },
-    heroSub:   { fontSize: 13, color: Colors.gold, fontWeight: '600' },
-    heroIcon:  { opacity: 0.85 },
+    heroLeft:    { flex: 1, gap: 6 },
+    heroTitle:   { fontFamily: Fonts.display, fontSize: 20, color: Colors.textPrimary, lineHeight: 26, letterSpacing: 0.5 },
+    heroSub:     { fontFamily: Fonts.title,   fontSize: 12, color: Colors.amber },
+    heroIcon:    { width: 64, height: 64, borderRadius: 32, overflow: 'hidden', borderWidth: 1.5, borderColor: Colors.gold + '55' },
+    boussoleImg: { width: '100%', height: '100%' },
 
-    // Quick actions
     quickRow: {
         flexDirection: 'row', gap: Sp.md,
         paddingHorizontal: Sp.lg, marginBottom: Sp.lg,
@@ -250,21 +251,19 @@ const st = StyleSheet.create({
         alignItems: 'center', justifyContent: 'center',
         marginBottom: 4,
     },
-    quickLabel: { fontSize: 14, fontWeight: '800', color: Colors.textPrimary },
-    quickSub:   { fontSize: 11, color: Colors.textMuted },
+    quickLabel: { fontFamily: Fonts.title,   fontSize: 13, color: Colors.textPrimary },
+    quickSub:   { fontFamily: Fonts.title,   fontSize: 10, color: Colors.textMuted },
 
-    // Section
     sectionHd:     {
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
         paddingHorizontal: Sp.lg, marginBottom: Sp.sm,
     },
-    sectionTitle:  { fontSize: 14, fontWeight: '700', color: Colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.8 },
-    sectionAction: { fontSize: 12, color: Colors.gold, fontWeight: '600' },
+    sectionTitle:  { fontFamily: Fonts.title, fontSize: 10, color: Colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1.5 },
+    sectionAction: { fontFamily: Fonts.title, fontSize: 11, color: Colors.gold },
 
     huntList: { paddingHorizontal: Sp.lg, gap: Sp.sm },
 
-    // Empty
     empty:      { alignItems: 'center', gap: Sp.sm, paddingVertical: Sp.xl, paddingHorizontal: Sp.xl },
-    emptyTitle: { fontSize: 16, fontWeight: '700', color: Colors.textSecondary },
-    emptySub:   { fontSize: 13, color: Colors.textMuted, textAlign: 'center', lineHeight: 20 },
+    emptyTitle: { fontFamily: Fonts.title, fontSize: 14, color: Colors.textSecondary },
+    emptySub:   { fontFamily: Fonts.title, fontSize: 12, color: Colors.textMuted, textAlign: 'center', lineHeight: 20 },
 });

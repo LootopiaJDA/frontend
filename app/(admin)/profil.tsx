@@ -1,14 +1,15 @@
 import React from 'react';
 import {
     View, Text, StyleSheet, ScrollView,
-    TouchableOpacity, Alert, SafeAreaView,
+    TouchableOpacity, Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
-import { Colors, Sp, R } from '../../constants/theme';
+import { Colors, Fonts, Sp, R } from '../../constants/theme';
 import StatusBadge from '../../components/StatusBadge';
 import PageHeader from '../../components/PageHeader';
+import ScreenBackground from '../../components/ScreenBackground';
 
 export default function AdminProfilScreen() {
     const { user, logout } = useAuth();
@@ -33,7 +34,7 @@ export default function AdminProfilScreen() {
     };
 
     return (
-        <SafeAreaView style={st.safe}>
+        <ScreenBackground style={st.safe}>
             <ScrollView showsVerticalScrollIndicator={false}>
                 <PageHeader title="Mon profil" subtitle="Admin" />
 
@@ -74,12 +75,12 @@ export default function AdminProfilScreen() {
 
                 <Text style={st.version}>Lootopia Admin v1.0.0</Text>
             </ScrollView>
-        </SafeAreaView>
+        </ScreenBackground>
     );
 }
 
 const st = StyleSheet.create({
-    safe:       { flex: 1, backgroundColor: Colors.bg },
+    safe:       { flex: 1 },
 
     hero:       { alignItems: 'center', paddingVertical: Sp.xl, gap: Sp.sm },
     avatar:     {
@@ -89,26 +90,26 @@ const st = StyleSheet.create({
         alignItems: 'center', justifyContent: 'center',
         marginBottom: Sp.xs,
     },
-    avatarText: { fontSize: 28, fontWeight: '800', color: Colors.error },
-    username:   { fontSize: 22, fontWeight: '800', color: Colors.textPrimary },
-    email:      { fontSize: 13, color: Colors.textMuted },
+    avatarText: { fontFamily: Fonts.display, fontSize: 26, color: Colors.error },
+    username:   { fontFamily: Fonts.display, fontSize: 20, color: Colors.textPrimary, letterSpacing: 1 },
+    email:      { fontFamily: Fonts.title,   fontSize: 12, color: Colors.textMuted },
 
     card:       {
         marginHorizontal: Sp.lg, marginBottom: Sp.lg,
         backgroundColor: Colors.bgCard,
-        borderRadius: R.lg, borderWidth: 1, borderColor: Colors.border,
+        borderRadius: R.lg, borderWidth: 1, borderColor: Colors.borderWarm,
         overflow: 'hidden',
     },
     row:        { flexDirection: 'row', alignItems: 'center', padding: Sp.md, gap: Sp.md },
-    rowBorder:  { borderBottomWidth: 1, borderBottomColor: Colors.border },
+    rowBorder:  { borderBottomWidth: 1, borderBottomColor: Colors.borderWarm },
     rowIcon:    {
         width: 34, height: 34, borderRadius: R.sm,
         backgroundColor: Colors.bgElevated,
         alignItems: 'center', justifyContent: 'center',
     },
     rowBody:    { flex: 1 },
-    rowLabel:   { fontSize: 11, color: Colors.textMuted, marginBottom: 2 },
-    rowValue:   { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
+    rowLabel:   { fontFamily: Fonts.title, fontSize: 10, color: Colors.textMuted, marginBottom: 2, letterSpacing: 0.5 },
+    rowValue:   { fontFamily: Fonts.title, fontSize: 13, color: Colors.textPrimary },
 
     logoutBtn:  {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
@@ -117,6 +118,6 @@ const st = StyleSheet.create({
         borderRadius: R.md, borderWidth: 1, borderColor: Colors.error + '44',
         padding: Sp.md,
     },
-    logoutText: { color: Colors.error, fontSize: 15, fontWeight: '600' },
-    version:    { color: Colors.textMuted, fontSize: 12, textAlign: 'center', marginTop: Sp.lg, paddingBottom: Sp.xl },
+    logoutText: { fontFamily: Fonts.title, color: Colors.error, fontSize: 14 },
+    version:    { fontFamily: Fonts.title, color: Colors.textMuted, fontSize: 11, textAlign: 'center', marginTop: Sp.lg, paddingBottom: Sp.xl },
 });

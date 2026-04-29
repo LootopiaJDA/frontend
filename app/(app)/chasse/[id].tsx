@@ -7,24 +7,33 @@ import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { chasseService } from '../../../services/api';
 import { ChasseDetail } from '../../../constants/types';
-import { Colors, Sp, R } from '../../../constants/theme';
+import { Colors, Fonts, Sp, R } from '../../../constants/theme';
 import Btn from '../../../components/Btn';
+import ScreenBackground from '../../../components/ScreenBackground';
 
 export default function ChasseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const chasseId = Number(id);
 
-  const [chasse, setChasse] = useState<ChasseDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [joining, setJoining] = useState(false);
-  const [joined, setJoined] = useState(false);
+  const [chasse, setChasse]               = useState<ChasseDetail | null>(null);
+  const [loading, setLoading]             = useState(true);
+  const [joining, setJoining]             = useState(false);
+  const [alreadyJoined, setAlreadyJoined] = useState(false);
+  const [hasOtherActive, setHasOtherActive] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const detail = await chasseService.getById(chasseId);
+      const [detail, meData] = await Promise.all([
+        chasseService.getById(chasseId),
+        chasseService.getMe().catch(() => ({ chasses: [] })),
+      ]);
       setChasse(detail);
+
+      const userChasses = meData.chasses ?? [];
+      setAlreadyJoined(userChasses.some(uc => uc.id_chasse === chasseId && uc.statut === 'IN_PROGRESS'));
+      setHasOtherActive(userChasses.some(uc => uc.id_chasse !== chasseId && uc.statut === 'IN_PROGRESS'));
     } catch (err) {
       console.log('Erreur chargement chasse:', err);
     } finally {
@@ -38,11 +47,10 @@ export default function ChasseDetailScreen() {
     setJoining(true);
     try {
       await chasseService.join(chasseId);
-      setJoined(true);
+      setAlreadyJoined(true);
     } catch (err: any) {
-      // Si déjà inscrit, on considère ça comme un succès
       if (err.message?.toLowerCase().includes('already') || err.message?.toLowerCase().includes('inscription')) {
-        setJoined(true);
+        setAlreadyJoined(true);
       } else {
         Alert.alert('Erreur', err.message ?? 'Impossible de rejoindre la chasse');
       }
@@ -102,7 +110,7 @@ export default function ChasseDetailScreen() {
                   {isActive ? 'Active' : chasse.etat}
                 </Text>
               </View>
-              {joined && (
+              {alreadyJoined && (
                 <View style={[st.badge, { borderColor: '#4ecb8a' }]}>
                   <Ionicons name="checkmark-circle" size={11} color="#4ecb8a" />
                   <Text style={[st.badgeText, { color: '#4ecb8a' }]}>Inscrit</Text>
@@ -178,8 +186,15 @@ export default function ChasseDetailScreen() {
                 <Ionicons name="time-outline" size={16} color={Colors.textMuted} />
                 <Text style={st.inactiveText}>Cette chasse n'est pas encore active</Text>
               </View>
-            ) : joined ? (
+            ) : alreadyJoined ? (
               <Btn label="Jouer sur la carte" onPress={handlePlay} />
+            ) : hasOtherActive ? (
+              <View style={st.warningBanner}>
+                <Ionicons name="warning-outline" size={16} color={Colors.warning} />
+                <Text style={st.warningText}>
+                  Vous avez déjà une chasse en cours. Terminez-la avant d'en rejoindre une autre.
+                </Text>
+              </View>
             ) : (
               <View style={st.ctaRow}>
                 <View style={{ flex: 1 }}>
@@ -295,4 +310,11 @@ const st = StyleSheet.create({
     borderWidth: 1, borderColor: Colors.border,
   },
   inactiveText: { fontSize: 13, color: Colors.textMuted },
+
+  warningBanner: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: Sp.sm,
+    backgroundColor: Colors.warning + '18', borderRadius: R.md, padding: Sp.md,
+    borderWidth: 1, borderColor: Colors.warning + '55',
+  },
+  warningText: { flex: 1, fontSize: 13, color: Colors.warning, lineHeight: 18 },
 });

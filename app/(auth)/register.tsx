@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, KeyboardAvoidingView, Platform,
+  Alert, KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Input from '../../components/Input';
 import Btn from '../../components/Btn';
-import { Colors, Sp, R } from '../../constants/theme';
+import ScreenBackground from '../../components/ScreenBackground';
+import { Colors, Fonts, Sp, R } from '../../constants/theme';
 import { userService } from '../../services/api';
+
+const BOUSSOLE = require('../../assets/images/boussole.png');
 
 export default function Register() {
   const router = useRouter();
@@ -36,7 +39,7 @@ export default function Register() {
     setLoading(true);
     try {
       await userService.register({ username: form.username, email: form.email.toLowerCase().trim(), password: form.password, role: 'JOUEUR' });
-      Alert.alert('Compte créé ! 🎉', 'Vous pouvez maintenant vous connecter.', [
+      Alert.alert('Compte créé !', 'Vous pouvez maintenant vous connecter.', [
         { text: 'Se connecter', onPress: () => router.replace('/(auth)/login') },
       ]);
     } catch (err: any) {
@@ -47,32 +50,31 @@ export default function Register() {
   };
 
   return (
-    <View style={styles.bg}>
-      <View style={styles.glowTop} />
-      <View style={styles.glowBottom} />
+    <ScreenBackground>
+      <View style={s_.glowTop} />
+      <View style={s_.glowBottom} />
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={s_.scroll} keyboardShouldPersistTaps="handled">
           <SafeAreaView>
-            <TouchableOpacity style={styles.back} onPress={() => router.back()}>
+            <TouchableOpacity style={s_.back} onPress={() => router.back()}>
               <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
             </TouchableOpacity>
 
-            <View style={styles.header}>
-              <View style={styles.iconWrap}>
-                <Ionicons name="person-add-outline" size={28} color={Colors.gold} />
+            <View style={s_.header}>
+              <View style={s_.compassWrap}>
+                <Image source={BOUSSOLE} style={s_.compassImg} resizeMode="cover" />
               </View>
-              <Text style={styles.title}>Créer un compte</Text>
-              <Text style={styles.sub}>Rejoignez l'aventure Lootopia</Text>
+              <Text style={s_.title}>Créer un compte</Text>
+              <Text style={s_.sub}>Rejoignez l'aventure Lootopia</Text>
             </View>
 
-            {/* Role badge */}
-            <View style={styles.roleBadge}>
-              <Ionicons name="game-controller-outline" size={15} color={Colors.accentLight} />
-              <Text style={styles.roleText}>Compte Joueur</Text>
+            <View style={s_.roleBadge}>
+              <Ionicons name="game-controller-outline" size={14} color={Colors.amber} />
+              <Text style={s_.roleText}>Compte Joueur</Text>
             </View>
 
-            <View style={styles.form}>
+            <View style={s_.form}>
               <Input label="Pseudo" placeholder="explorateur_42" value={form.username} onChangeText={s('username')} error={errors.username} icon="at-outline" autoCapitalize="none" />
               <Input label="Email" placeholder="vous@example.com" value={form.email} onChangeText={s('email')} error={errors.email} keyboard="email-address" icon="mail-outline" autoCapitalize="none" />
               <Input label="Mot de passe" placeholder="••••••••" value={form.password} onChangeText={s('password')} error={errors.password} secure icon="lock-closed-outline" />
@@ -80,66 +82,71 @@ export default function Register() {
               <Btn label="Créer mon compte" onPress={handleRegister} loading={loading} style={{ marginTop: Sp.sm }} />
             </View>
 
-            <View style={styles.sep}>
-              <View style={styles.sepLine} />
-              <Text style={styles.sepText}>ou</Text>
-              <View style={styles.sepLine} />
+            <View style={s_.sep}>
+              <View style={s_.sepLine} />
+              <Text style={s_.sepText}>ou</Text>
+              <View style={s_.sepLine} />
             </View>
 
-            <View style={styles.links}>
-              <Text style={styles.linkText}>Déjà un compte ?</Text>
+            <View style={s_.links}>
+              <Text style={s_.linkText}>Déjà un compte ?</Text>
               <TouchableOpacity onPress={() => router.replace('/(auth)/login')}>
-                <Text style={styles.linkAccent}> Se connecter</Text>
+                <Text style={s_.linkAccent}> Se connecter</Text>
               </TouchableOpacity>
             </View>
           </SafeAreaView>
         </ScrollView>
       </KeyboardAvoidingView>
-    </View>
+    </ScreenBackground>
   );
 }
 
-const styles = StyleSheet.create({
-  bg:         { flex: 1, backgroundColor: Colors.bg },
-  glowTop:    { position: 'absolute', width: 280, height: 280, borderRadius: 140, backgroundColor: Colors.accent, opacity: 0.04, top: -60, right: -60 },
-  glowBottom: { position: 'absolute', width: 200, height: 200, borderRadius: 100, backgroundColor: Colors.gold, opacity: 0.04, bottom: 0, left: -60 },
+const COMPASS_SIZE = 70;
+
+const s_ = StyleSheet.create({
+  glowTop:    { position: 'absolute', width: 280, height: 280, borderRadius: 140, backgroundColor: Colors.amber, opacity: 0.05, top: -80, right: -60 },
+  glowBottom: { position: 'absolute', width: 200, height: 200, borderRadius: 100, backgroundColor: Colors.gold,  opacity: 0.04, bottom: 0, left: -60 },
 
   scroll: { flexGrow: 1, padding: Sp.lg, paddingTop: Sp.xl },
 
   back: {
     width: 40, height: 40, borderRadius: R.md,
     backgroundColor: Colors.bgElevated,
-    borderWidth: 1, borderColor: Colors.border,
+    borderWidth: 1, borderColor: Colors.borderWarm,
     alignItems: 'center', justifyContent: 'center',
     marginBottom: Sp.xl,
   },
 
-  header:  { marginBottom: Sp.lg, gap: Sp.sm },
-  iconWrap: {
-    width: 60, height: 60, borderRadius: R.xl,
-    backgroundColor: Colors.bgCard,
-    borderWidth: 1, borderColor: Colors.gold + '33',
-    alignItems: 'center', justifyContent: 'center',
+  header: { marginBottom: Sp.xl, gap: Sp.sm },
+
+  compassWrap: {
+    width: COMPASS_SIZE, height: COMPASS_SIZE, borderRadius: COMPASS_SIZE / 2,
+    overflow: 'hidden',
+    borderWidth: 1.5, borderColor: Colors.gold + '55',
     marginBottom: Sp.sm,
+    shadowColor: Colors.gold, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 10,
+    elevation: 6,
   },
-  title: { fontSize: 32, fontWeight: '800', color: Colors.textPrimary, letterSpacing: -0.5 },
-  sub:   { fontSize: 15, color: Colors.textSecondary },
+  compassImg: { width: '100%', height: '100%' },
+
+  title: { fontFamily: Fonts.display, fontSize: 26, color: Colors.textPrimary, letterSpacing: 3 },
+  sub:   { fontFamily: Fonts.title,   fontSize: 13, color: Colors.textSecondary, letterSpacing: 0.5 },
 
   roleBadge: {
     flexDirection: 'row', alignItems: 'center', gap: Sp.xs,
-    backgroundColor: '#5B4BDB18', borderWidth: 1, borderColor: '#5B4BDB44',
+    backgroundColor: Colors.goldGlow, borderWidth: 1, borderColor: Colors.gold + '33',
     borderRadius: R.full, paddingHorizontal: Sp.md, paddingVertical: 6,
     alignSelf: 'flex-start', marginBottom: Sp.lg,
   },
-  roleText: { color: Colors.accentLight, fontSize: 12, fontWeight: '700' },
+  roleText: { fontFamily: Fonts.title, color: Colors.amber, fontSize: 11, letterSpacing: 0.5 },
 
   form: { gap: Sp.xs },
 
   sep:     { flexDirection: 'row', alignItems: 'center', gap: Sp.md, marginVertical: Sp.lg },
-  sepLine: { flex: 1, height: 1, backgroundColor: Colors.border },
-  sepText: { color: Colors.textMuted, fontSize: 12 },
+  sepLine: { flex: 1, height: 1, backgroundColor: Colors.borderWarm },
+  sepText: { fontFamily: Fonts.title, color: Colors.textMuted, fontSize: 11, letterSpacing: 1 },
 
   links:      { flexDirection: 'row', justifyContent: 'center', marginBottom: Sp.xl },
-  linkText:   { color: Colors.textSecondary, fontSize: 14 },
-  linkAccent: { color: Colors.gold, fontSize: 14, fontWeight: '700' },
+  linkText:   { fontFamily: Fonts.title, color: Colors.textSecondary, fontSize: 13 },
+  linkAccent: { fontFamily: Fonts.title, color: Colors.gold, fontSize: 13 },
 });

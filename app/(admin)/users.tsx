@@ -9,9 +9,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { userService, partenaireService, adminService } from '../../services/api';
 import { Partenaire } from '../../constants/types';
 import { User } from '../../constants/types';
-import { Colors, Sp, R } from '../../constants/theme';
+import { Colors, Fonts, Sp, R } from '../../constants/theme';
 import PageHeader from '../../components/PageHeader';
 import StatusBadge from '../../components/StatusBadge';
+import ScreenBackground from '../../components/ScreenBackground';
 
 export default function UsersScreen() {
     const [users, setUsers] = useState<User[]>([]);
@@ -80,9 +81,9 @@ export default function UsersScreen() {
 
     if (loading) {
         return (
-            <View style={st.center}>
-                <ActivityIndicator size="large" color={Colors.error} />
-            </View>
+            <ScreenBackground style={st.center}>
+                <ActivityIndicator size="large" color={Colors.gold} />
+            </ScreenBackground>
         );
     }
 
@@ -91,7 +92,7 @@ export default function UsersScreen() {
     const enAttente   = partenaires.filter(u => u.partener?.statut === 'VERIFICATION');
 
     return (
-        <SafeAreaView style={st.safe}>
+        <ScreenBackground style={st.safe}>
             <PageHeader title="Utilisateurs" subtitle={`${users.length} comptes`} />
 
             {enAttente.length > 0 && (
@@ -251,7 +252,7 @@ export default function UsersScreen() {
                     </SafeAreaView>
                 )}
             </Modal>
-        </SafeAreaView>
+        </ScreenBackground>
     );
 }
 
@@ -269,14 +270,14 @@ function InfoRow({ icon, label, value, last = false }: {
 
 const ir = StyleSheet.create({
     row:   { flexDirection: 'row', alignItems: 'center', gap: Sp.md, paddingVertical: 12 },
-    border:{ borderBottomWidth: 1, borderBottomColor: Colors.border },
-    label: { fontSize: 13, color: Colors.textMuted, width: 80 },
-    value: { flex: 1, fontSize: 13, fontWeight: '600', color: Colors.textPrimary, textAlign: 'right' },
+    border:{ borderBottomWidth: 1, borderBottomColor: Colors.borderWarm },
+    label: { fontFamily: Fonts.title, fontSize: 11, color: Colors.textMuted, width: 80, letterSpacing: 0.5 },
+    value: { fontFamily: Fonts.title, flex: 1, fontSize: 12, color: Colors.textPrimary, textAlign: 'right' },
 });
 
 const st = StyleSheet.create({
-    safe:   { flex: 1, backgroundColor: Colors.bg },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.bg },
+    safe:   { flex: 1 },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     list:   { paddingHorizontal: Sp.lg, paddingBottom: 100 },
 
     alertBanner: {
@@ -284,22 +285,22 @@ const st = StyleSheet.create({
         backgroundColor: Colors.warningBg, borderBottomWidth: 1, borderBottomColor: Colors.warning + '44',
         paddingHorizontal: Sp.lg, paddingVertical: Sp.sm,
     },
-    alertText: { fontSize: 13, color: Colors.warning, fontWeight: '600' },
+    alertText: { fontFamily: Fonts.title, fontSize: 12, color: Colors.warning },
 
     summary: {
         flexDirection: 'row', backgroundColor: Colors.bgCard,
-        borderRadius: R.lg, borderWidth: 1, borderColor: Colors.border,
+        borderRadius: R.lg, borderWidth: 1, borderColor: Colors.borderWarm,
         marginBottom: Sp.md, overflow: 'hidden',
     },
     summaryItem:    { flex: 1, alignItems: 'center', paddingVertical: Sp.md, gap: 4 },
-    summaryDivider: { width: 1, backgroundColor: Colors.border },
-    summaryVal:     { fontSize: 20, fontWeight: '800', color: Colors.gold },
-    summaryLabel:   { fontSize: 11, color: Colors.textMuted },
+    summaryDivider: { width: 1, backgroundColor: Colors.borderWarm },
+    summaryVal:     { fontFamily: Fonts.display, fontSize: 20, color: Colors.gold },
+    summaryLabel:   { fontFamily: Fonts.title,   fontSize: 10, color: Colors.textMuted },
 
     card: {
         flexDirection: 'row', alignItems: 'center',
         backgroundColor: Colors.bgCard,
-        borderRadius: R.lg, borderWidth: 1, borderColor: Colors.border,
+        borderRadius: R.lg, borderWidth: 1, borderColor: Colors.borderWarm,
         padding: Sp.md, gap: Sp.md,
     },
     cardPending: { borderColor: Colors.warning, backgroundColor: Colors.warningBg },
@@ -313,47 +314,47 @@ const st = StyleSheet.create({
         alignItems: 'center', justifyContent: 'center', flexShrink: 0,
     },
     avatarPending: { backgroundColor: Colors.warningBg, borderWidth: 1, borderColor: Colors.warning },
-    avatarText: { fontSize: 15, fontWeight: '800', color: Colors.gold },
+    avatarText: { fontFamily: Fonts.display, fontSize: 14, color: Colors.gold },
 
-    username:  { fontSize: 14, fontWeight: '700', color: Colors.textPrimary },
-    email:     { fontSize: 12, color: Colors.textMuted },
+    username:  { fontFamily: Fonts.title, fontSize: 13, color: Colors.textPrimary },
+    email:     { fontFamily: Fonts.title, fontSize: 11, color: Colors.textMuted },
     badgeRow:  { flexDirection: 'row', gap: Sp.xs, flexWrap: 'wrap', marginTop: 2 },
-    company:   { fontSize: 11, color: Colors.textSecondary, marginTop: 2 },
+    company:   { fontFamily: Fonts.title, fontSize: 10, color: Colors.amber, marginTop: 2 },
 
     empty:     { alignItems: 'center', gap: Sp.md, paddingTop: 80 },
-    emptyText: { fontSize: 16, color: Colors.textMuted },
+    emptyText: { fontFamily: Fonts.title, fontSize: 14, color: Colors.textMuted },
 
     // Modal
     modalSafe:       { flex: 1, backgroundColor: Colors.bg },
     modalHeader:     {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         paddingHorizontal: Sp.lg, paddingVertical: Sp.md,
-        borderBottomWidth: 1, borderBottomColor: Colors.border,
+        borderBottomWidth: 1, borderBottomColor: Colors.borderWarm,
     },
     modalClose:      { padding: 4 },
-    modalTitle:      { fontSize: 17, fontWeight: '700', color: Colors.textPrimary },
+    modalTitle:      { fontFamily: Fonts.title, fontSize: 15, color: Colors.textPrimary, letterSpacing: 0.5 },
     modalScroll:     { padding: Sp.lg, paddingBottom: 60, gap: Sp.md },
 
     modalHero:       { alignItems: 'center', paddingVertical: Sp.lg, gap: Sp.sm },
     modalAvatar:     {
         width: 72, height: 72, borderRadius: 22,
         backgroundColor: Colors.bgElevated,
-        borderWidth: 2, borderColor: Colors.border,
+        borderWidth: 2, borderColor: Colors.borderWarm,
         alignItems: 'center', justifyContent: 'center',
     },
     modalAvatarPending: { borderColor: Colors.warning, backgroundColor: Colors.warningBg },
-    modalAvatarText: { fontSize: 26, fontWeight: '800', color: Colors.gold },
-    modalUsername:   { fontSize: 20, fontWeight: '800', color: Colors.textPrimary },
-    modalEmail:      { fontSize: 13, color: Colors.textMuted },
+    modalAvatarText: { fontFamily: Fonts.display, fontSize: 24, color: Colors.gold },
+    modalUsername:   { fontFamily: Fonts.display, fontSize: 18, color: Colors.textPrimary, letterSpacing: 1 },
+    modalEmail:      { fontFamily: Fonts.title,   fontSize: 12, color: Colors.textMuted },
     modalBadgeRow:   { flexDirection: 'row', gap: Sp.sm, marginTop: Sp.xs },
 
     modalSection: {
-        fontSize: 10, fontWeight: '700', color: Colors.error,
-        letterSpacing: 1.5, textTransform: 'uppercase', marginTop: Sp.sm,
+        fontFamily: Fonts.title, fontSize: 9, color: Colors.gold,
+        letterSpacing: 2, textTransform: 'uppercase', marginTop: Sp.sm,
     },
     infoCard: {
         backgroundColor: Colors.bgCard, borderRadius: R.lg,
-        borderWidth: 1, borderColor: Colors.border,
+        borderWidth: 1, borderColor: Colors.borderWarm,
         paddingHorizontal: Sp.md,
     },
 
@@ -362,5 +363,5 @@ const st = StyleSheet.create({
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Sp.sm,
         backgroundColor: Colors.success, borderRadius: R.md, padding: Sp.md,
     },
-    btnValidateText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+    btnValidateText: { fontFamily: Fonts.title, color: '#fff', fontSize: 13 },
 });

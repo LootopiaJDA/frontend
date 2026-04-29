@@ -146,7 +146,7 @@ export default function EtapeFormModal({
             <TouchableOpacity onPress={onClose} style={s.closeBtn}>
               <Ionicons name="close" size={22} color={Colors.textSecondary} />
             </TouchableOpacity>
-            <Text style={s.title}>{isCreate ? 'Nouvelle étape' : "Modifier l'étapeOk"}</Text>
+            <Text style={s.title}>{isCreate ? 'Nouvelle étape' : "Modifier l'étape"}</Text>
             <TouchableOpacity onPress={handleSave} disabled={loading} style={[s.saveBtn, loading && { opacity: 0.5 }]}>
               <Text style={s.saveBtnText}>{loading ? '...' : isCreate ? 'Créer' : 'Sauver'}</Text>
             </TouchableOpacity>

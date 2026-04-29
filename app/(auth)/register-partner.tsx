@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, KeyboardAvoidingView, Platform,
+  Alert, KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Input from '../../components/Input';
 import Btn from '../../components/Btn';
-import { Colors, Sp, R } from '../../constants/theme';
+import ScreenBackground from '../../components/ScreenBackground';
+import { Colors, Fonts, Sp, R } from '../../constants/theme';
 import { userService } from '../../services/api';
+
+const BOUSSOLE = require('../../assets/images/boussole.png');
 
 export default function RegisterPartner() {
   const router = useRouter();
@@ -47,7 +50,7 @@ export default function RegisterPartner() {
         partenaire: { company_name: form.company_name, siret: form.siret.replace(/\s/g, ''), adresse: form.adresse },
       });
       Alert.alert(
-        'Demande envoyée ✅',
+        'Demande envoyée',
         'Votre compte partenaire est en cours de vérification. Vous serez notifié par email sous 24-48h.',
         [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
       );
@@ -59,101 +62,103 @@ export default function RegisterPartner() {
   };
 
   return (
-    <View style={styles.bg}>
-      <View style={styles.glowTop} />
-      <View style={styles.glowBottom} />
+    <ScreenBackground>
+      <View style={s_.glowTop} />
+      <View style={s_.glowBottom} />
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={s_.scroll} keyboardShouldPersistTaps="handled">
           <SafeAreaView>
-            <TouchableOpacity style={styles.back} onPress={() => router.back()}>
+            <TouchableOpacity style={s_.back} onPress={() => router.back()}>
               <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
             </TouchableOpacity>
 
-            <View style={styles.header}>
-              <View style={styles.iconWrap}>
-                <Ionicons name="business-outline" size={28} color={Colors.gold} />
+            <View style={s_.header}>
+              <View style={s_.compassWrap}>
+                <Image source={BOUSSOLE} style={s_.compassImg} resizeMode="cover" />
               </View>
-              <Text style={styles.title}>Compte Partenaire</Text>
-              <Text style={styles.sub}>Créez et gérez vos chasses au trésor</Text>
+              <Text style={s_.title}>Compte Partenaire</Text>
+              <Text style={s_.sub}>Créez et gérez vos chasses au trésor</Text>
             </View>
 
-            <View style={styles.roleBadge}>
-              <Ionicons name="shield-checkmark-outline" size={15} color={Colors.warning} />
-              <Text style={styles.roleText}>Partenaire · Vérification requise</Text>
+            <View style={s_.roleBadge}>
+              <Ionicons name="shield-checkmark-outline" size={14} color={Colors.warning} />
+              <Text style={s_.roleText}>Partenaire · Vérification requise</Text>
             </View>
 
-            {/* Section compte */}
-            <Text style={styles.section}>Informations de compte</Text>
-            <View style={styles.form}>
+            <Text style={s_.section}>Informations de compte</Text>
+            <View style={s_.form}>
               <Input label="Nom / Prénom" placeholder="Jean Dupont" value={form.username} onChangeText={s('username')} error={errors.username} icon="person-outline" autoCapitalize="words" />
               <Input label="Email professionnel" placeholder="contact@societe.fr" value={form.email} onChangeText={s('email')} error={errors.email} keyboard="email-address" icon="mail-outline" autoCapitalize="none" />
               <Input label="Mot de passe" placeholder="••••••••" value={form.password} onChangeText={s('password')} error={errors.password} secure icon="lock-closed-outline" />
               <Input label="Confirmer le mot de passe" placeholder="••••••••" value={form.confirm} onChangeText={s('confirm')} error={errors.confirm} secure icon="lock-closed-outline" />
             </View>
 
-            {/* Section entreprise */}
-            <Text style={styles.section}>Informations entreprise</Text>
-            <View style={styles.form}>
+            <Text style={s_.section}>Informations entreprise</Text>
+            <View style={s_.form}>
               <Input label="Nom de la société" placeholder="Musée National, Mairie de..." value={form.company_name} onChangeText={s('company_name')} error={errors.company_name} icon="briefcase-outline" autoCapitalize="words" />
               <Input label="Numéro SIRET" placeholder="123 456 789 01234" value={form.siret} onChangeText={s('siret')} error={errors.siret} keyboard="numeric" icon="card-outline" />
               <Input label="Adresse (optionnel)" placeholder="1 rue de la Paix, 75001 Paris" value={form.adresse} onChangeText={s('adresse')} icon="location-outline" autoCapitalize="sentences" />
             </View>
 
-            {/* Info box */}
-            <View style={styles.infoBox}>
+            <View style={s_.infoBox}>
               <Ionicons name="time-outline" size={16} color={Colors.warning} />
-              <Text style={styles.infoText}>
+              <Text style={s_.infoText}>
                 Votre compte sera examiné par notre équipe avant activation. Ce processus prend généralement 24 à 48h ouvrées.
               </Text>
             </View>
 
             <Btn label="Envoyer la demande" onPress={handleRegister} loading={loading} style={{ marginTop: Sp.sm }} />
 
-            <View style={styles.sep}>
-              <View style={styles.sepLine} />
-              <Text style={styles.sepText}>ou</Text>
-              <View style={styles.sepLine} />
+            <View style={s_.sep}>
+              <View style={s_.sepLine} />
+              <Text style={s_.sepText}>ou</Text>
+              <View style={s_.sepLine} />
             </View>
 
-            <View style={styles.links}>
-              <Text style={styles.linkText}>Déjà un compte ?</Text>
+            <View style={s_.links}>
+              <Text style={s_.linkText}>Déjà un compte ?</Text>
               <TouchableOpacity onPress={() => router.replace('/(auth)/login')}>
-                <Text style={styles.linkAccent}> Se connecter</Text>
+                <Text style={s_.linkAccent}> Se connecter</Text>
               </TouchableOpacity>
             </View>
           </SafeAreaView>
         </ScrollView>
       </KeyboardAvoidingView>
-    </View>
+    </ScreenBackground>
   );
 }
 
-const styles = StyleSheet.create({
-  bg:         { flex: 1, backgroundColor: Colors.bg },
-  glowTop:    { position: 'absolute', width: 300, height: 300, borderRadius: 150, backgroundColor: Colors.gold, opacity: 0.04, top: -100, right: -60 },
-  glowBottom: { position: 'absolute', width: 200, height: 200, borderRadius: 100, backgroundColor: Colors.accent, opacity: 0.04, bottom: 0, left: -60 },
+const COMPASS_SIZE = 70;
+
+const s_ = StyleSheet.create({
+  glowTop:    { position: 'absolute', width: 300, height: 300, borderRadius: 150, backgroundColor: Colors.amber, opacity: 0.05, top: -100, right: -60 },
+  glowBottom: { position: 'absolute', width: 200, height: 200, borderRadius: 100, backgroundColor: Colors.gold,  opacity: 0.04, bottom: 0, left: -60 },
 
   scroll: { flexGrow: 1, padding: Sp.lg, paddingTop: Sp.xl },
 
   back: {
     width: 40, height: 40, borderRadius: R.md,
     backgroundColor: Colors.bgElevated,
-    borderWidth: 1, borderColor: Colors.border,
+    borderWidth: 1, borderColor: Colors.borderWarm,
     alignItems: 'center', justifyContent: 'center',
     marginBottom: Sp.xl,
   },
 
-  header:  { marginBottom: Sp.lg, gap: Sp.sm },
-  iconWrap: {
-    width: 60, height: 60, borderRadius: R.xl,
-    backgroundColor: Colors.bgCard,
-    borderWidth: 1, borderColor: Colors.gold + '33',
-    alignItems: 'center', justifyContent: 'center',
+  header: { marginBottom: Sp.xl, gap: Sp.sm },
+
+  compassWrap: {
+    width: COMPASS_SIZE, height: COMPASS_SIZE, borderRadius: COMPASS_SIZE / 2,
+    overflow: 'hidden',
+    borderWidth: 1.5, borderColor: Colors.gold + '55',
     marginBottom: Sp.sm,
+    shadowColor: Colors.gold, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 10,
+    elevation: 6,
   },
-  title: { fontSize: 32, fontWeight: '800', color: Colors.textPrimary, letterSpacing: -0.5 },
-  sub:   { fontSize: 15, color: Colors.textSecondary },
+  compassImg: { width: '100%', height: '100%' },
+
+  title: { fontFamily: Fonts.display, fontSize: 26, color: Colors.textPrimary, letterSpacing: 3 },
+  sub:   { fontFamily: Fonts.title,   fontSize: 13, color: Colors.textSecondary, letterSpacing: 0.5 },
 
   roleBadge: {
     flexDirection: 'row', alignItems: 'center', gap: Sp.xs,
@@ -161,11 +166,11 @@ const styles = StyleSheet.create({
     borderRadius: R.full, paddingHorizontal: Sp.md, paddingVertical: 6,
     alignSelf: 'flex-start', marginBottom: Sp.lg,
   },
-  roleText: { color: Colors.warning, fontSize: 12, fontWeight: '700' },
+  roleText: { fontFamily: Fonts.title, color: Colors.warning, fontSize: 11, letterSpacing: 0.5 },
 
   section: {
-    color: Colors.gold, fontSize: 11, fontWeight: '700',
-    letterSpacing: 1.5, textTransform: 'uppercase',
+    fontFamily: Fonts.title, color: Colors.gold, fontSize: 10,
+    letterSpacing: 2, textTransform: 'uppercase',
     marginBottom: Sp.md, marginTop: Sp.lg,
   },
 
@@ -177,13 +182,13 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: Colors.warning + '33',
     padding: Sp.md, marginVertical: Sp.lg, alignItems: 'flex-start',
   },
-  infoText: { color: Colors.textSecondary, fontSize: 13, flex: 1, lineHeight: 20 },
+  infoText: { fontFamily: Fonts.title, color: Colors.textSecondary, fontSize: 12, flex: 1, lineHeight: 20 },
 
   sep:     { flexDirection: 'row', alignItems: 'center', gap: Sp.md, marginVertical: Sp.lg },
-  sepLine: { flex: 1, height: 1, backgroundColor: Colors.border },
-  sepText: { color: Colors.textMuted, fontSize: 12 },
+  sepLine: { flex: 1, height: 1, backgroundColor: Colors.borderWarm },
+  sepText: { fontFamily: Fonts.title, color: Colors.textMuted, fontSize: 11, letterSpacing: 1 },
 
   links:      { flexDirection: 'row', justifyContent: 'center', marginBottom: Sp.xl },
-  linkText:   { color: Colors.textSecondary, fontSize: 14 },
-  linkAccent: { color: Colors.gold, fontSize: 14, fontWeight: '700' },
+  linkText:   { fontFamily: Fonts.title, color: Colors.textSecondary, fontSize: 13 },
+  linkAccent: { fontFamily: Fonts.title, color: Colors.gold, fontSize: 13 },
 });

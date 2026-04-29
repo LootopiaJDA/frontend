@@ -5,10 +5,13 @@ export const Colors = {
   bgInput: '#12121E',
   border: '#1E1E32',
   borderLight: '#2A2A45',
+  borderWarm: '#2E1F0A',
   gold: '#C9933A',
   goldLight: '#E8B455',
   goldDim: '#C9933A55',
   goldGlow: '#C9933A18',
+  amber: '#D4882A',
+  parchment: '#C8A96E',
   accent: '#5B4BDB',
   accentLight: '#7B6EF5',
   success: '#3DAA7A',
@@ -22,6 +25,11 @@ export const Colors = {
   textMuted: '#3E3C55',
   white: '#FFFFFF',
   black: '#000000',
+};
+
+export const Fonts = {
+  display: 'Cinzel_900Black',
+  title: 'Cinzel_700Bold',
 };
 
 export const Sp = {

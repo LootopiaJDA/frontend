@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import {
     View, Text, StyleSheet, ScrollView,
-    TouchableOpacity, Alert, SafeAreaView,
+    TouchableOpacity, Alert, Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
-import { Colors, Sp, R } from '@/constants/theme';
+import { Colors, Fonts, Sp, R } from '@/constants/theme';
 import StatusBadge from '@/components/StatusBadge';
 import PageHeader from '@/components/PageHeader';
+import ScreenBackground from '@/components/ScreenBackground';
 import { chasseService } from '@/services/api';
+
+const PIECE = require('../../assets/images/piece.png');
 
 interface PlayerStats {
     completed: number;
@@ -37,7 +40,7 @@ export default function ProfilJoueurScreen() {
             });
             setStats({ completed, inProgress });
         } catch {
-            // Silently fail — stats restent à 0
+            // Silently fail
         }
     };
 
@@ -68,7 +71,7 @@ export default function ProfilJoueurScreen() {
     ];
 
     return (
-        <SafeAreaView style={st.safe}>
+        <ScreenBackground style={st.safe}>
             <ScrollView showsVerticalScrollIndicator={false}>
                 <PageHeader title="Mon profil" subtitle="Joueur" />
 
@@ -78,14 +81,12 @@ export default function ProfilJoueurScreen() {
                         <View style={st.avatar}>
                             <Text style={st.avatarText}>{initials}</Text>
                         </View>
-                        {/* Halo décoratif */}
                         <View style={st.avatarRing} />
                     </View>
 
                     <Text style={st.username}>{user.username}</Text>
                     <Text style={st.email}>{user.email}</Text>
 
-                    {/* StatusBadge réutilisé ✅ */}
                     <View style={st.badgeRow}>
                         <StatusBadge status={user.role} />
                     </View>
@@ -133,14 +134,13 @@ export default function ProfilJoueurScreen() {
 
                 <Text style={st.version}>Lootopia v1.0.0</Text>
             </ScrollView>
-        </SafeAreaView>
+        </ScreenBackground>
     );
 }
 
 const st = StyleSheet.create({
-    safe: { flex: 1, backgroundColor: Colors.bg },
+    safe: { flex: 1 },
 
-    // Hero
     hero:       { alignItems: 'center', paddingVertical: Sp.xl, gap: Sp.sm },
     avatarWrap: { position: 'relative', marginBottom: Sp.sm },
     avatar:     {
@@ -154,41 +154,39 @@ const st = StyleSheet.create({
         position: 'absolute', top: -6, left: -6, right: -6, bottom: -6,
         borderRadius: 34, borderWidth: 1, borderColor: Colors.gold + '20',
     },
-    avatarText: { fontSize: 30, fontWeight: '800', color: Colors.gold },
-    username:   { fontSize: 22, fontWeight: '800', color: Colors.textPrimary },
-    email:      { fontSize: 13, color: Colors.textMuted },
+    avatarText: { fontFamily: Fonts.display, fontSize: 26, color: Colors.gold },
+    username:   { fontFamily: Fonts.display, fontSize: 20, color: Colors.textPrimary, letterSpacing: 1 },
+    email:      { fontFamily: Fonts.title,   fontSize: 12, color: Colors.textMuted },
     badgeRow:   { flexDirection: 'row', gap: Sp.sm, marginTop: Sp.xs },
 
-    // Stats
     statsRow:   {
         flexDirection: 'row',
         marginHorizontal: Sp.lg, marginBottom: Sp.lg,
         backgroundColor: Colors.bgCard,
-        borderRadius: R.lg, borderWidth: 1, borderColor: Colors.border,
+        borderRadius: R.lg, borderWidth: 1, borderColor: Colors.borderWarm,
         overflow: 'hidden',
     },
     statItem:   { flex: 1, alignItems: 'center', padding: Sp.md, gap: 4 },
-    statBorder: { borderLeftWidth: 1, borderRightWidth: 1, borderColor: Colors.border },
-    statVal:    { fontSize: 22, fontWeight: '800', color: Colors.gold },
-    statLabel:  { fontSize: 11, color: Colors.textMuted, textAlign: 'center', lineHeight: 16 },
+    statBorder: { borderLeftWidth: 1, borderRightWidth: 1, borderColor: Colors.borderWarm },
+    pieceIcon:  { width: 22, height: 22, opacity: 0.85 },
+    statVal:    { fontFamily: Fonts.display, fontSize: 22, color: Colors.gold },
+    statLabel:  { fontFamily: Fonts.title,   fontSize: 10, color: Colors.textMuted, textAlign: 'center', lineHeight: 16 },
 
-    // Menu
     menuCard:   {
         marginHorizontal: Sp.lg, marginBottom: Sp.lg,
         backgroundColor: Colors.bgCard,
-        borderRadius: R.lg, borderWidth: 1, borderColor: Colors.border,
+        borderRadius: R.lg, borderWidth: 1, borderColor: Colors.borderWarm,
         overflow: 'hidden',
     },
     menuItem:   { flexDirection: 'row', alignItems: 'center', padding: Sp.md, gap: Sp.md },
-    menuBorder: { borderBottomWidth: 1, borderBottomColor: Colors.border },
+    menuBorder: { borderBottomWidth: 1, borderBottomColor: Colors.borderWarm },
     menuIcon:   {
         width: 34, height: 34, borderRadius: R.sm,
         backgroundColor: Colors.bgElevated,
         alignItems: 'center', justifyContent: 'center',
     },
-    menuLabel:  { flex: 1, fontSize: 15, color: Colors.textPrimary },
+    menuLabel:  { flex: 1, fontFamily: Fonts.title, fontSize: 13, color: Colors.textPrimary },
 
-    // Logout
     logoutBtn:  {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
         gap: Sp.sm, marginHorizontal: Sp.lg,
@@ -196,6 +194,6 @@ const st = StyleSheet.create({
         borderRadius: R.md, borderWidth: 1, borderColor: Colors.error + '44',
         padding: Sp.md,
     },
-    logoutText: { color: Colors.error, fontSize: 15, fontWeight: '600' },
-    version:    { color: Colors.textMuted, fontSize: 12, textAlign: 'center', marginTop: Sp.lg, paddingBottom: Sp.xl },
+    logoutText: { fontFamily: Fonts.title, color: Colors.error, fontSize: 14 },
+    version:    { fontFamily: Fonts.title, color: Colors.textMuted, fontSize: 11, textAlign: 'center', marginTop: Sp.lg, paddingBottom: Sp.xl },
 });

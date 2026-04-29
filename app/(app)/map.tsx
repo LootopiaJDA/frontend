@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Sp, R } from '@/constants/theme';
 import { useHuntTracker } from '@/hooks/useHuntTracker';
 import { useHuntStore } from '@/store/huntStore';
+import { chasseService } from '@/services/api';
 
 // ─── Overlay victoire ─────────────────────────────────────────────────────────
 function VictoryOverlay({ onDismiss }: { onDismiss: () => void }) {
@@ -97,7 +98,10 @@ export default function MapScreen() {
 
   // ─── Victoire ────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (tracker.completed) setShowVictory(true);
+    if (tracker.completed && activeChasseId) {
+      setShowVictory(true);
+      chasseService.complete(activeChasseId).catch(() => {});
+    }
   }, [tracker.completed]);
 
   const handleLaunchAR = () => {
@@ -227,7 +231,7 @@ export default function MapScreen() {
       {/* ─── Panel Creuser → Lancer AR ──────────────────────────────────────── */}
       <Animated.View
         style={[st.digPanel, { transform: [{ translateY: digPanelY }] }]}
-        pointerEvents={tracker.isInRadius ? 'auto' : 'none'}
+        pointerEvents={tracker.isInRadius && !!activeChasseId ? 'auto' : 'none'}
       >
         <View style={st.digHandle} />
         <View style={st.digRow}>

@@ -8,8 +8,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { chasseService } from '../../services/api';
 import { Chasse } from '../../constants/types';
-import { Colors, Sp, R } from '../../constants/theme';
+import { Colors, Fonts, Sp, R } from '../../constants/theme';
 import ChasseFormModal from '../../components/ChasseFormModal';
+import ScreenBackground from '../../components/ScreenBackground';
 
 const ETAT_COLOR: Record<string, string> = {
   PENDING:   Colors.warning,
@@ -138,7 +139,7 @@ export default function Dashboard() {
   const initials  = user.username.slice(0, 2).toUpperCase();
 
   return (
-      <View style={st.container}>
+      <ScreenBackground style={st.container}>
         {/* Header */}
         <View style={st.header}>
           <View style={st.headerLeft}>
@@ -172,7 +173,7 @@ export default function Dashboard() {
         </View>
 
         {/* Label section */}
-        {chasses.length <0 && (
+        {chasses.length > 0 && (
           <View style={st.sectionHd}>
             <Text style={st.sectionTitle}>Mes chasses</Text>
             <TouchableOpacity onPress={() => setCreateVisible(true)}>
@@ -242,14 +243,14 @@ export default function Dashboard() {
             onClose={() => setEditTarget(null)}
             onSaved={loadChasses}
         />
-      </View>
+      </ScreenBackground>
   );
 }
 
 const card = StyleSheet.create({
   wrap: {
     backgroundColor: Colors.bgCard, borderRadius: R.xl,
-    overflow: 'hidden', borderWidth: 1, borderColor: Colors.border,
+    overflow: 'hidden', borderWidth: 1, borderColor: Colors.borderWarm,
   },
 
   imageWrap:     { position: 'relative' },
@@ -261,23 +262,23 @@ const card = StyleSheet.create({
     padding: Sp.md, paddingTop: Sp.xl,
     backgroundColor: 'rgba(8,8,16,0.65)',
   },
-  overlayTitle: { fontSize: 16, fontWeight: '800', color: '#fff', letterSpacing: 0.2 },
+  overlayTitle: { fontFamily: Fonts.title, fontSize: 15, color: '#EDEAF3', letterSpacing: 0.5 },
 
   statusBadge: {
     position: 'absolute', top: Sp.sm, right: Sp.sm,
     flexDirection: 'row', alignItems: 'center', gap: 5,
     backgroundColor: 'rgba(8,8,16,0.75)',
     borderRadius: R.full, paddingHorizontal: 10, paddingVertical: 5,
-    borderWidth: 1, borderColor: Colors.border,
+    borderWidth: 1, borderColor: Colors.borderWarm,
   },
   statusDot:  { width: 7, height: 7, borderRadius: 4 },
-  statusText: { fontSize: 11, fontWeight: '700', color: Colors.textPrimary },
+  statusText: { fontFamily: Fonts.title, fontSize: 10, color: Colors.textPrimary },
 
   footer:     { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Sp.md, paddingVertical: 10, gap: Sp.sm },
   footerMeta: { flex: 1, gap: 3 },
   metaRow:    { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  metaText:   { fontSize: 11, color: Colors.textMuted },
-  metaSep:    { fontSize: 11, color: Colors.textMuted, marginHorizontal: 2 },
+  metaText:   { fontFamily: Fonts.title, fontSize: 10, color: Colors.textMuted },
+  metaSep:    { fontSize: 10, color: Colors.textMuted, marginHorizontal: 2 },
 
   actions: { flexDirection: 'row', gap: Sp.sm },
   btnEdit: {
@@ -293,7 +294,7 @@ const card = StyleSheet.create({
 });
 
 const st = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bg },
+  container: { flex: 1 },
 
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
@@ -301,8 +302,8 @@ const st = StyleSheet.create({
   },
   headerLeft:      { flex: 1, gap: 2 },
   headerRight:     { flexDirection: 'row', alignItems: 'center', gap: Sp.sm },
-  company:         { fontSize: 11, color: Colors.gold, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
-  greeting:        { fontSize: 20, fontWeight: '800', color: Colors.textPrimary },
+  company:         { fontFamily: Fonts.title, fontSize: 10, color: Colors.amber, textTransform: 'uppercase', letterSpacing: 1.5 },
+  greeting:        { fontFamily: Fonts.display, fontSize: 18, color: Colors.textPrimary, letterSpacing: 0.5 },
   greetingAccent:  { color: Colors.gold },
 
   addBtn: {
@@ -314,28 +315,26 @@ const st = StyleSheet.create({
     backgroundColor: Colors.bgElevated, borderWidth: 1, borderColor: Colors.gold + '33',
     alignItems: 'center', justifyContent: 'center',
   },
-  avatarText: { color: Colors.gold, fontSize: 14, fontWeight: '800' },
+  avatarText: { fontFamily: Fonts.display, color: Colors.gold, fontSize: 13 },
 
-  // Stats bar
   statsRow: {
     flexDirection: 'row',
     marginHorizontal: Sp.lg, marginBottom: Sp.lg,
     backgroundColor: Colors.bgCard,
-    borderRadius: R.lg, borderWidth: 1, borderColor: Colors.border,
+    borderRadius: R.lg, borderWidth: 1, borderColor: Colors.borderWarm,
     overflow: 'hidden',
   },
   statItem:   { flex: 1, alignItems: 'center', paddingVertical: Sp.md, gap: 2 },
-  statBorder: { borderLeftWidth: 1, borderRightWidth: 1, borderColor: Colors.border },
-  statVal:    { fontSize: 20, fontWeight: '800', color: Colors.gold },
-  statLabel:  { fontSize: 11, color: Colors.textMuted },
+  statBorder: { borderLeftWidth: 1, borderRightWidth: 1, borderColor: Colors.borderWarm },
+  statVal:    { fontFamily: Fonts.display, fontSize: 20, color: Colors.gold },
+  statLabel:  { fontFamily: Fonts.title,   fontSize: 10, color: Colors.textMuted },
 
-  // Section header
   sectionHd: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: Sp.lg, marginBottom: Sp.sm,
   },
-  sectionTitle:  { fontSize: 13, fontWeight: '700', color: Colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.8 },
-  sectionAction: { fontSize: 12, color: Colors.gold, fontWeight: '600' },
+  sectionTitle:  { fontFamily: Fonts.title, fontSize: 10, color: Colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1.5 },
+  sectionAction: { fontFamily: Fonts.title, fontSize: 11, color: Colors.gold },
 
   list:   { paddingHorizontal: Sp.lg, paddingBottom: 100 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
@@ -346,12 +345,12 @@ const st = StyleSheet.create({
     backgroundColor: Colors.bgCard, borderWidth: 1, borderColor: Colors.gold + '33',
     alignItems: 'center', justifyContent: 'center', marginBottom: Sp.sm,
   },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary },
-  emptySub:   { fontSize: 14, color: Colors.textMuted },
+  emptyTitle: { fontFamily: Fonts.display, fontSize: 16, color: Colors.textPrimary, letterSpacing: 0.5 },
+  emptySub:   { fontFamily: Fonts.title,   fontSize: 12, color: Colors.textMuted },
   createBtn: {
     flexDirection: 'row', alignItems: 'center', gap: Sp.sm,
     marginTop: Sp.sm, backgroundColor: Colors.gold,
     paddingHorizontal: Sp.lg, paddingVertical: Sp.md, borderRadius: R.md,
   },
-  createText: { fontWeight: '700', color: Colors.black, fontSize: 14 },
+  createText: { fontFamily: Fonts.title, color: Colors.black, fontSize: 13 },
 });

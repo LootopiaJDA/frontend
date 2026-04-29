@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors, R, Sp } from '../constants/theme';
+import { Colors, Fonts, R, Sp } from '../constants/theme';
 import { StatutChasse } from '../constants/types';
 
 const CONFIG: Record<string, { label: string; color: string; bg: string }> = {
@@ -35,5 +35,5 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   dot: { width: 5, height: 5, borderRadius: 3 },
-  text: { fontSize: 11, fontWeight: '700', letterSpacing: 0.3 },
+  text: { fontFamily: Fonts.title, fontSize: 10, letterSpacing: 0.5 },
 });

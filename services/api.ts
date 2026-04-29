@@ -5,6 +5,8 @@ interface ChasseUpdatePayload {
   name?: string;
   localisation?: string;
   etat?: StatutChasse;
+  latitude?: number;
+  longitude?: number;
 }
 
 const req = async (path: string, options: RequestInit = {}) => {
@@ -40,7 +42,8 @@ export const userService = {
 };
 
 export const chasseService = {
-  getAll: (): Promise<{ allChasse: Chasse[] }> => req(EP.CHASSES),
+  getAll: (localisation?: string): Promise<{ allChasse: Chasse[] }> =>
+    req(localisation ? `${EP.CHASSES}?localisation=${encodeURIComponent(localisation)}` : EP.CHASSES),
   getByPartenaire: (id: number): Promise<{ chasseByPart: Chasse[] }> =>
       req(`${EP.CHASSES}?partenaire=${id}`),
   getById: (id: number): Promise<ChasseDetail> => req(EP.CHASSE(id)),
@@ -55,6 +58,7 @@ export const chasseService = {
       req(EP.CHASSE_UPDATE(id), { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: number) => req(EP.CHASSE_DELETE(id), { method: 'DELETE' }),
   join: (chasseId: number) => req(`/chasse/${chasseId}/join`, { method: 'POST' }),
+  complete: (chasseId: number) => req(EP.CHASSE_COMPLETE(chasseId), { method: 'PATCH' }),
   getMe: (): Promise<{ chasses: UserChasse[] }> => req(EP.CHASSE_ME),
 };
 

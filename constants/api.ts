@@ -26,6 +26,7 @@ export const EP = {
   CHASSE_CREATE: '/chasse',
   CHASSE_UPDATE: (id: number) => `/chasse/${id}`,
   CHASSE_DELETE: (id: number) => `/chasse/${id}`,
+  CHASSE_COMPLETE: (id: number) => `/chasse/${id}/complete`,
   // Etape
   ETAPE_CREATE: (chasseId: number) => `/etape/${chasseId}`,
   ETAPE_DELETE: (chasseId: number, etapeId: number) => `/etape/${chasseId}/${etapeId}`,
