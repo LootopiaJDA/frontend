@@ -14,7 +14,7 @@ import ChasseCard from '@/components/ChasseCard';
 import PageHeader from '@/components/PageHeader';
 import ScreenBackground from '@/components/ScreenBackground';
 
-const COFFRE = require('../../assets/images/coffre.svg');
+const COFFRE = require('../../assets/images/coffre.png');
 const LOUPE  = require('../../assets/images/loupe.png');
 
 type SortKey = 'date_desc' | 'date_asc';
@@ -239,7 +239,6 @@ export default function ChassesScreen() {
                 ItemSeparatorComponent={() => <View style={{ height: Sp.md }} />}
                 ListEmptyComponent={
                     <View style={st.empty}>
-                        <Image source={search ? LOUPE : COFFRE} style={search ? st.loupeImg : st.coffreImg} resizeMode="contain" />
                         <Text style={st.emptyTitle}>
                             {search ? 'Aucun résultat' : cityFilter ? `Aucune chasse à ${cityFilter}` : 'Aucune chasse disponible'}
                         </Text>
@@ -378,8 +377,8 @@ const st = StyleSheet.create({
 
     list:      { paddingHorizontal: Sp.lg, paddingBottom: 100 },
     empty:     { alignItems: 'center', gap: Sp.md, paddingTop: 80 },
-    emptyTitle:{ fontSize: 16, fontWeight: '700', color: Colors.textSecondary },
-    emptySub:  { fontSize: 13, color: Colors.textMuted, textAlign: 'center' },
+    emptyTitle:{ fontSize: 20, fontWeight: '700', color: Colors.textSecondary },
+    emptySub:  { fontSize: 18, color: Colors.textSecondary, textAlign: 'center' },
     clearText: { color: Colors.gold, fontSize: 13, fontWeight: '600' },
     coffreImg: { width: 110, height: 110, opacity: 0.7 },
     loupeImg:  { width: 80, height: 80, opacity: 0.7 },

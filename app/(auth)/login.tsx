@@ -10,7 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 import Input from '../../components/Input';
 import Btn from '../../components/Btn';
 import ScreenBackground from '../../components/ScreenBackground';
-import { Colors, Fonts, Sp, R } from '../../constants/theme';
+import { Colors, Design, Fonts, Sp, R } from '../../constants/theme';
 
 const BOUSSOLE = require('../../assets/images/boussole.png');
 
@@ -57,7 +57,7 @@ export default function Login() {
           <SafeAreaView>
 
             <TouchableOpacity style={s.back} onPress={() => router.back()}>
-              <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
+              <Ionicons name="chevron-back" size={20} color={Design.text.heading} />
             </TouchableOpacity>
 
             {/* Header */}
@@ -118,7 +118,7 @@ export default function Login() {
             </View>
 
             <TouchableOpacity style={s.partnerLink} onPress={() => router.push('/(auth)/register-partner')}>
-              <Ionicons name="business-outline" size={14} color={Colors.textMuted} />
+              <Ionicons name="business-outline" size={24} color={Design.text.parchment} />
               <Text style={s.partnerLinkText}>Rejoindre en tant que partenaire</Text>
             </TouchableOpacity>
 
@@ -139,8 +139,8 @@ const s = StyleSheet.create({
 
   back: {
     width: 40, height: 40, borderRadius: R.md,
-    backgroundColor: Colors.bgElevated,
-    borderWidth: 1, borderColor: Colors.borderWarm,
+    backgroundColor: Design.bg.elevated,
+    borderWidth: 1, borderColor: Design.border.warm,
     alignItems: 'center', justifyContent: 'center',
     marginBottom: Sp.xl,
   },
@@ -157,24 +157,24 @@ const s = StyleSheet.create({
   },
   compassImg: { width: '100%', height: '100%' },
 
-  title: { fontFamily: Fonts.display, fontSize: 28, color: Colors.textPrimary, letterSpacing: 3 },
-  sub:   { fontFamily: Fonts.title, fontSize: 13, color: Colors.textSecondary, letterSpacing: 0.5 },
+  title: { fontFamily: Fonts.display, fontSize: 28, color: Design.text.heading, letterSpacing: 3 },
+  sub:   { fontFamily: Fonts.title, fontSize: 13, color: Design.text.label, letterSpacing: 0.5 },
 
   form: { gap: Sp.xs },
 
   sep:     { flexDirection: 'row', alignItems: 'center', gap: Sp.md, marginVertical: Sp.lg },
-  sepLine: { flex: 1, height: 1, backgroundColor: Colors.borderWarm },
-  sepText: { fontFamily: Fonts.title, color: Colors.textMuted, fontSize: 11, letterSpacing: 1 },
+  sepLine: { flex: 1, height: 1, backgroundColor: Design.border.warm },
+  sepText: { fontFamily: Fonts.title, color: Design.text.parchment, fontSize: 20, letterSpacing: 1 },
 
   links:      { flexDirection: 'row', justifyContent: 'center', marginBottom: Sp.md },
-  linkText:   { fontFamily: Fonts.title, color: Colors.textSecondary, fontSize: 13 },
-  linkAccent: { fontFamily: Fonts.title, color: Colors.gold, fontSize: 13 },
+  linkText:   { fontFamily: Fonts.title, color: Design.text.label, fontSize: 13 },
+  linkAccent: { fontFamily: Fonts.title, color: Design.text.accent, fontSize: 13 },
 
   partnerLink: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: Sp.xs, paddingVertical: Sp.sm,
   },
-  partnerLinkText: { fontFamily: Fonts.title, color: Colors.gold, fontSize: 12 },
+  partnerLinkText: { fontFamily: Fonts.title, color: Design.text.accent, fontSize: 12 },
 
   errorBanner: {
     flexDirection: 'row', alignItems: 'center', gap: Sp.xs,

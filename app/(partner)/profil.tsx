@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
-import { Colors, Fonts, Sp, R } from '../../constants/theme';
+import { Colors, Design, Fonts, Sp, R } from '../../constants/theme';
 import StatusBadge from '../../components/StatusBadge';
 import ScreenBackground from '../../components/ScreenBackground';
 
@@ -46,7 +46,7 @@ export default function PartnerProfil() {
         {user.partener && (
           <View style={st.partnerCard}>
             <View style={st.partnerCardHeader}>
-              <Ionicons name="business-outline" size={18} color={Colors.gold} />
+              <Ionicons name="business-outline" size={18} color={Design.text.accent} />
               <Text style={st.partnerCardTitle}>Informations entreprise</Text>
             </View>
             {[
@@ -73,10 +73,10 @@ export default function PartnerProfil() {
               onPress={item.onPress}
             >
               <View style={st.menuIcon}>
-                <Ionicons name={item.icon as any} size={18} color={Colors.textSecondary} />
+                <Ionicons name={item.icon as any} size={18} color={Design.text.label} />
               </View>
               <Text style={st.menuLabel}>{item.label}</Text>
-              <Ionicons name="chevron-forward" size={15} color={Colors.textMuted} />
+              <Ionicons name="chevron-forward" size={15} color={Design.text.meta} />
             </TouchableOpacity>
           ))}
         </View>
@@ -95,7 +95,7 @@ const st = StyleSheet.create({
   scroll: { flexGrow: 1 },
 
   headerBg: {
-    backgroundColor: Colors.bgCard, borderBottomWidth: 1, borderBottomColor: Colors.borderWarm,
+    backgroundColor: Design.bg.card, borderBottomWidth: 1, borderBottomColor: Design.border.warm,
     paddingTop: 60, paddingBottom: Sp.xl,
     alignItems: 'center', gap: Sp.sm,
     overflow: 'hidden', position: 'relative',
@@ -106,46 +106,46 @@ const st = StyleSheet.create({
   },
   avatar: {
     width: 80, height: 80, borderRadius: 40,
-    backgroundColor: Colors.goldGlow,
+    backgroundColor: Design.bg.gold,
     borderWidth: 2, borderColor: Colors.gold + '44',
     alignItems: 'center', justifyContent: 'center',
   },
-  avatarText:  { fontFamily: Fonts.display, color: Colors.gold, fontSize: 26 },
-  username:    { fontFamily: Fonts.display, color: Colors.textPrimary, fontSize: 20, letterSpacing: 1 },
-  email:       { fontFamily: Fonts.title,   color: Colors.textMuted, fontSize: 12 },
+  avatarText:  { fontFamily: Fonts.display, color: Design.text.accent, fontSize: 26 },
+  username:    { fontFamily: Fonts.display, color: Design.text.heading, fontSize: 20, letterSpacing: 1 },
+  email:       { fontFamily: Fonts.title,   color: Design.text.meta, fontSize: 12 },
   badgeRow:    { flexDirection: 'row', gap: Sp.sm, marginTop: Sp.xs },
 
   partnerCard: {
-    margin: Sp.lg, backgroundColor: Colors.bgCard,
-    borderRadius: R.lg, borderWidth: 1, borderColor: Colors.borderWarm, overflow: 'hidden',
+    margin: Sp.lg, backgroundColor: Design.bg.card,
+    borderRadius: R.lg, borderWidth: 1, borderColor: Design.border.warm, overflow: 'hidden',
   },
   partnerCardHeader: {
     flexDirection: 'row', alignItems: 'center', gap: Sp.sm,
-    padding: Sp.md, borderBottomWidth: 1, borderBottomColor: Colors.borderWarm,
-    backgroundColor: Colors.bgElevated,
+    padding: Sp.md, borderBottomWidth: 1, borderBottomColor: Design.border.warm,
+    backgroundColor: Design.bg.elevated,
   },
-  partnerCardTitle: { fontFamily: Fonts.title, color: Colors.textPrimary, fontSize: 13, letterSpacing: 0.5 },
-  infoRow:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Sp.md, borderBottomWidth: 1, borderBottomColor: Colors.borderWarm },
-  infoLabel:{ fontFamily: Fonts.title, color: Colors.textMuted, fontSize: 11, letterSpacing: 0.5 },
-  infoVal:  { fontFamily: Fonts.title, color: Colors.textPrimary, fontSize: 12 },
+  partnerCardTitle: { fontFamily: Fonts.title, color: Design.text.heading, fontSize: 13, letterSpacing: 0.5 },
+  infoRow:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Sp.md, borderBottomWidth: 1, borderBottomColor: Design.border.warm },
+  infoLabel:{ fontFamily: Fonts.title, color: Design.text.meta, fontSize: 11, letterSpacing: 0.5 },
+  infoVal:  { fontFamily: Fonts.title, color: Design.text.heading, fontSize: 12 },
 
   menuCard: {
     marginHorizontal: Sp.lg, marginBottom: Sp.lg,
-    backgroundColor: Colors.bgCard,
-    borderRadius: R.lg, borderWidth: 1, borderColor: Colors.borderWarm, overflow: 'hidden',
+    backgroundColor: Design.bg.card,
+    borderRadius: R.lg, borderWidth: 1, borderColor: Design.border.warm, overflow: 'hidden',
   },
   menuItem:   { flexDirection: 'row', alignItems: 'center', padding: Sp.md, gap: Sp.md },
-  menuBorder: { borderBottomWidth: 1, borderBottomColor: Colors.borderWarm },
-  menuIcon:   { width: 34, height: 34, borderRadius: R.sm, backgroundColor: Colors.bgElevated, alignItems: 'center', justifyContent: 'center' },
-  menuLabel:  { flex: 1, fontFamily: Fonts.title, color: Colors.textPrimary, fontSize: 13 },
+  menuBorder: { borderBottomWidth: 1, borderBottomColor: Design.border.warm },
+  menuIcon:   { width: 34, height: 34, borderRadius: R.sm, backgroundColor: Design.bg.elevated, alignItems: 'center', justifyContent: 'center' },
+  menuLabel:  { flex: 1, fontFamily: Fonts.title, color: Design.text.heading, fontSize: 13 },
 
   logoutBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: Sp.sm, marginHorizontal: Sp.lg,
-    backgroundColor: Colors.errorBg,
+    backgroundColor: Design.bg.danger,
     borderRadius: R.md, borderWidth: 1, borderColor: Colors.error + '44',
     padding: Sp.md,
   },
   logoutText: { fontFamily: Fonts.title, color: Colors.error, fontSize: 14 },
-  version:    { fontFamily: Fonts.title, color: Colors.textMuted, fontSize: 11, textAlign: 'center', marginTop: Sp.lg, paddingBottom: Sp.xl },
+  version:    { fontFamily: Fonts.title, color: Design.text.meta, fontSize: 11, textAlign: 'center', marginTop: Sp.lg, paddingBottom: Sp.xl },
 });

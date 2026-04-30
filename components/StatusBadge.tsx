@@ -1,21 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors, Fonts, R, Sp } from '../constants/theme';
-import { StatutChasse } from '../constants/types';
-
-const CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  ACTIVE:       { label: 'Active',      color: Colors.success, bg: Colors.successBg },
-  PENDING:      { label: 'En attente',  color: Colors.warning, bg: Colors.warningBg },
-  COMPLETED:    { label: 'Terminée',    color: Colors.textSecondary, bg: Colors.border },
-  VERIFICATION: { label: 'Vérification',color: Colors.warning, bg: Colors.warningBg },
-  INACTIVE:     { label: 'Inactif',     color: Colors.error,   bg: Colors.errorBg },
-  JOUEUR:       { label: 'Joueur',      color: Colors.accentLight, bg: '#5B4BDB22' },
-  PARTENAIRE:   { label: 'Partenaire',  color: Colors.gold,    bg: Colors.goldGlow },
-  ADMIN:        { label: 'Admin',       color: Colors.error,   bg: Colors.errorBg },
-};
+import { Design, Fonts, R } from '../constants/theme';
 
 export default function StatusBadge({ status }: { status: string }) {
-  const cfg = CONFIG[status] ?? { label: status, color: Colors.textSecondary, bg: Colors.border };
+  const cfg = (Design.status as any)[status] ?? {
+    label: status,
+    color: Design.text.label,
+    bg:    Design.border.default,
+  };
   return (
     <View style={[styles.badge, { backgroundColor: cfg.bg }]}>
       <View style={[styles.dot, { backgroundColor: cfg.color }]} />
@@ -34,6 +26,6 @@ const styles = StyleSheet.create({
     borderRadius: R.full,
     alignSelf: 'flex-start',
   },
-  dot: { width: 5, height: 5, borderRadius: 3 },
+  dot:  { width: 5, height: 5, borderRadius: 3 },
   text: { fontFamily: Fonts.title, fontSize: 10, letterSpacing: 0.5 },
 });

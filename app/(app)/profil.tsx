@@ -6,7 +6,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
-import { Colors, Fonts, Sp, R } from '@/constants/theme';
+import { Colors, Design, Fonts, Sp, R } from '@/constants/theme';
 import StatusBadge from '@/components/StatusBadge';
 import PageHeader from '@/components/PageHeader';
 import ScreenBackground from '@/components/ScreenBackground';
@@ -115,10 +115,10 @@ export default function ProfilJoueurScreen() {
                             activeOpacity={0.7}
                         >
                             <View style={st.menuIcon}>
-                                <Ionicons name={item.icon as any} size={18} color={Colors.textSecondary} />
+                                <Ionicons name={item.icon as any} size={18} color={Design.text.label} />
                             </View>
                             <Text style={st.menuLabel}>{item.label}</Text>
-                            <Ionicons name="chevron-forward" size={15} color={Colors.textMuted} />
+                            <Ionicons name="chevron-forward" size={15} color={Design.text.meta} />
                         </TouchableOpacity>
                     ))}
                 </View>
@@ -140,7 +140,7 @@ const st = StyleSheet.create({
     avatarWrap: { position: 'relative', marginBottom: Sp.sm },
     avatar:     {
         width: 88, height: 88, borderRadius: 28,
-        backgroundColor: Colors.bgElevated,
+        backgroundColor: Design.bg.elevated,
         borderWidth: 2, borderColor: Colors.gold + '44',
         alignItems: 'center', justifyContent: 'center',
         zIndex: 1,
@@ -149,43 +149,43 @@ const st = StyleSheet.create({
         position: 'absolute', top: -6, left: -6, right: -6, bottom: -6,
         borderRadius: 34, borderWidth: 1, borderColor: Colors.gold + '20',
     },
-    avatarText: { fontFamily: Fonts.display, fontSize: 26, color: Colors.gold },
-    username:   { fontFamily: Fonts.display, fontSize: 20, color: Colors.textPrimary, letterSpacing: 1 },
-    email:      { fontFamily: Fonts.title,   fontSize: 12, color: Colors.gold, letterSpacing: 1 },
+    avatarText: { fontFamily: Fonts.display, fontSize: 26, color: Design.text.accent },
+    username:   { fontFamily: Fonts.display, fontSize: 20, color: Design.text.heading, letterSpacing: 1 },
+    email:      { fontFamily: Fonts.title,   fontSize: 12, color: Design.text.accent, letterSpacing: 1 },
     badgeRow:   { flexDirection: 'row', gap: Sp.sm, marginTop: Sp.xs },
 
     statsRow:   {
         flexDirection: 'row',
         marginHorizontal: Sp.lg, marginBottom: Sp.lg,
-        backgroundColor: Colors.bgCard,
-        borderRadius: R.lg, borderWidth: 1, borderColor: Colors.borderWarm,
+        backgroundColor: Design.bg.card,
+        borderRadius: R.lg, borderWidth: 1, borderColor: Design.border.warm,
         overflow: 'hidden',
     },
     statItem:   { flex: 1, alignItems: 'center', padding: Sp.md, gap: 4 },
-    statBorder: { borderLeftWidth: 1, borderRightWidth: 1, borderColor: Colors.borderWarm },
+    statBorder: { borderLeftWidth: 1, borderRightWidth: 1, borderColor: Design.border.warm },
     pieceIcon:  { width: 22, height: 22, opacity: 0.85 },
-    statVal:    { fontFamily: Fonts.display, fontSize: 22, color: Colors.gold },
-    statLabel:  { fontFamily: Fonts.title,   fontSize: 10, color: Colors.textMuted, textAlign: 'center', lineHeight: 16 },
+    statVal:    { fontFamily: Fonts.display, fontSize: 22, color: Design.text.accent },
+    statLabel:  { fontFamily: Fonts.title,   fontSize: 10, color: Design.text.meta, textAlign: 'center', lineHeight: 16 },
 
     menuCard:   {
         marginHorizontal: Sp.lg, marginBottom: Sp.lg,
-        backgroundColor: Colors.bgCard,
-        borderRadius: R.lg, borderWidth: 1, borderColor: Colors.borderWarm,
+        backgroundColor: Design.bg.card,
+        borderRadius: R.lg, borderWidth: 1, borderColor: Design.border.warm,
         overflow: 'hidden',
     },
     menuItem:   { flexDirection: 'row', alignItems: 'center', padding: Sp.md, gap: Sp.md },
-    menuBorder: { borderBottomWidth: 1, borderBottomColor: Colors.borderWarm },
+    menuBorder: { borderBottomWidth: 1, borderBottomColor: Design.border.warm },
     menuIcon:   {
         width: 34, height: 34, borderRadius: R.sm,
-        backgroundColor: Colors.bgElevated,
+        backgroundColor: Design.bg.elevated,
         alignItems: 'center', justifyContent: 'center',
     },
-    menuLabel:  { flex: 1, fontFamily: Fonts.title, fontSize: 13, color: Colors.textPrimary },
+    menuLabel:  { flex: 1, fontFamily: Fonts.title, fontSize: 13, color: Design.text.heading },
 
     logoutBtn:  {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
         gap: Sp.sm, marginHorizontal: Sp.lg,
-        backgroundColor: Colors.errorBg,
+        backgroundColor: Design.bg.danger,
         borderRadius: R.md, borderWidth: 1, borderColor: Colors.error + '44',
         padding: Sp.md,
     },

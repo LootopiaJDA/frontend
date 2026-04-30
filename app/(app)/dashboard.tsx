@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { chasseService } from '@/services/api';
 import { Chasse } from '@/constants/types';
-import { Colors, Fonts, Sp, R } from '@/constants/theme';
+import { Colors, Design, Fonts, Sp, R } from '@/constants/theme';
 import ScreenBackground from '@/components/ScreenBackground';
 
 const BOUSSOLE = require('../../assets/images/boussole.png');
@@ -20,7 +20,7 @@ function HuntRow({ chasse, onPress }: { chasse: Chasse; onPress: () => void }) {
                 <Image source={{ uri: chasse.image }} style={hr.thumb} />
             ) : (
                 <View style={[hr.thumb, hr.thumbFallback]}>
-                    <Ionicons name="map-outline" size={18} color={Colors.gold} />
+                    <Ionicons name="map-outline" size={18} color={Design.text.accent} />
                 </View>
             )}
             <View style={hr.info}>
@@ -29,32 +29,32 @@ function HuntRow({ chasse, onPress }: { chasse: Chasse; onPress: () => void }) {
                     ? <Text style={hr.meta} numberOfLines={1}>{chasse.localisation}</Text>
                     : null}
             </View>
-            <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
+            <Ionicons name="chevron-forward" size={16} color={Design.text.meta} />
         </TouchableOpacity>
     );
 }
 
 const hr = StyleSheet.create({
     wrap: {
-        backgroundColor: Colors.bgCard,
+        backgroundColor: Design.bg.card,
         borderRadius: R.lg,
         flexDirection: 'row',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: Colors.borderWarm,
+        borderColor: Design.border.warm,
         overflow: 'hidden',
         gap: Sp.md,
         paddingRight: Sp.md,
     },
     thumb: { width: 56, height: 56 },
     thumbFallback: {
-        backgroundColor: Colors.bgElevated,
+        backgroundColor: Design.bg.elevated,
         alignItems: 'center',
         justifyContent: 'center',
     },
     info:  { flex: 1, paddingVertical: Sp.sm },
-    name:  { fontFamily: Fonts.title, fontSize: 13, color: Colors.textPrimary },
-    meta:  { fontFamily: Fonts.title, fontSize: 10, color: Colors.textMuted, marginTop: 3 },
+    name:  { fontFamily: Fonts.title, fontSize: 13, color: Design.text.heading },
+    meta:  { fontFamily: Fonts.title, fontSize: 10, color: Design.text.meta, marginTop: 3 },
 });
 
 export default function DashboardJoueurScreen() {
@@ -129,8 +129,8 @@ export default function DashboardJoueurScreen() {
                         onPress={() => router.push('/(app)/chasses')}
                         activeOpacity={0.75}
                     >
-                        <View style={[st.quickIcon, { backgroundColor: Colors.goldGlow }]}>
-                            <Ionicons name="search-outline" size={22} color={Colors.gold} />
+                        <View style={[st.quickIcon, { backgroundColor: Design.bg.gold }]}>
+                            <Ionicons name="search-outline" size={22} color={Design.text.accent} />
                         </View>
                         <Text style={st.quickLabel}>Explorer</Text>
                         <Text style={st.quickSub}>Toutes les chasses</Text>
@@ -154,7 +154,7 @@ export default function DashboardJoueurScreen() {
                     <ActivityIndicator color={Colors.gold} style={{ marginTop: 40 }} />
                 ) : chassesActives.length === 0 ? (
                     <View style={st.empty}>
-                        <Ionicons name="map-outline" size={44} color={Colors.textMuted} />
+                        <Ionicons name="map-outline" size={44} color={Design.text.meta} />
                         <Text style={st.emptyTitle}>Aucune chasse disponible</Text>
                         <Text style={st.emptySub}>Revenez bientôt pour de nouvelles aventures</Text>
                     </View>
@@ -193,34 +193,34 @@ const st = StyleSheet.create({
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
         paddingHorizontal: Sp.lg, paddingTop: Sp.xxl, paddingBottom: Sp.sm,
     },
-    greeting:   { fontFamily: Fonts.title, fontSize: 11, color: Colors.textMuted, letterSpacing: 1 },
-    name:       { fontFamily: Fonts.display, fontSize: 20, color: Colors.textPrimary, marginTop: 2, letterSpacing: 0.5 },
-    nameAccent: { color: Colors.gold },
+    greeting:   { fontFamily: Fonts.title, fontSize: 11, color: Design.text.meta, letterSpacing: 1 },
+    name:       { fontFamily: Fonts.display, fontSize: 20, color: Design.text.heading, marginTop: 2, letterSpacing: 0.5 },
+    nameAccent: { color: Design.text.accent },
 
     avatar: {
         width: 46, height: 46, borderRadius: 15,
-        backgroundColor: Colors.bgElevated,
+        backgroundColor: Design.bg.elevated,
         borderWidth: 2, borderColor: Colors.gold + '33',
         alignItems: 'center', justifyContent: 'center',
     },
-    avatarText: { fontFamily: Fonts.display, fontSize: 14, color: Colors.gold },
+    avatarText: { fontFamily: Fonts.display, fontSize: 14, color: Design.text.accent },
     avatarDot:  {
         position: 'absolute', top: -2, right: -2,
         width: 12, height: 12, borderRadius: 6,
-        backgroundColor: '#4ecb8a', borderWidth: 2, borderColor: Colors.bg,
+        backgroundColor: '#4ecb8a', borderWidth: 2, borderColor: Design.bg.screen,
     },
 
     heroBanner: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         marginHorizontal: Sp.lg, marginVertical: Sp.md,
-        backgroundColor: Colors.bgCard,
-        borderRadius: R.xl, borderWidth: 1, borderColor: Colors.borderWarm,
+        backgroundColor: Design.bg.card,
+        borderRadius: R.xl, borderWidth: 1, borderColor: Design.border.warm,
         padding: Sp.lg,
         overflow: 'hidden',
     },
     heroLeft:    { flex: 1, gap: 6 },
-    heroTitle:   { fontFamily: Fonts.display, fontSize: 20, color: Colors.textPrimary, lineHeight: 26, letterSpacing: 0.5 },
-    heroSub:     { fontFamily: Fonts.title,   fontSize: 12, color: Colors.amber },
+    heroTitle:   { fontFamily: Fonts.display, fontSize: 20, color: Design.text.heading, lineHeight: 26, letterSpacing: 0.5 },
+    heroSub:     { fontFamily: Fonts.title,   fontSize: 12, color: Design.text.warm },
     heroIcon:    { width: 64, height: 64, borderRadius: 32, overflow: 'hidden', borderWidth: 1.5, borderColor: Colors.gold + '55' },
     boussoleImg: { width: '100%', height: '100%' },
 
@@ -229,7 +229,7 @@ const st = StyleSheet.create({
         paddingHorizontal: Sp.lg, marginBottom: Sp.lg,
     },
     quickCard: {
-        flex: 1, backgroundColor: Colors.bgCard,
+        flex: 1, backgroundColor: Design.bg.card,
         borderRadius: R.xl, borderWidth: 1,
         padding: Sp.md, gap: 6,
     },
@@ -238,19 +238,19 @@ const st = StyleSheet.create({
         alignItems: 'center', justifyContent: 'center',
         marginBottom: 4,
     },
-    quickLabel: { fontFamily: Fonts.title,   fontSize: 13, color: Colors.textPrimary },
-    quickSub:   { fontFamily: Fonts.title,   fontSize: 10, color: Colors.textMuted },
+    quickLabel: { fontFamily: Fonts.title,   fontSize: 13, color: Design.text.heading },
+    quickSub:   { fontFamily: Fonts.title,   fontSize: 10, color: Design.text.meta },
 
     sectionHd:     {
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
         paddingHorizontal: Sp.lg, marginBottom: Sp.sm,
     },
-    sectionTitle:  { fontFamily: Fonts.title, fontSize: 10, color: Colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1.5 },
-    sectionAction: { fontFamily: Fonts.title, fontSize: 11, color: Colors.gold },
+    sectionTitle:  { fontFamily: Fonts.title, fontSize: 10, color: Design.text.label, textTransform: 'uppercase', letterSpacing: 1.5 },
+    sectionAction: { fontFamily: Fonts.title, fontSize: 11, color: Design.text.accent },
 
     huntList: { paddingHorizontal: Sp.lg, gap: Sp.sm },
 
     empty:      { alignItems: 'center', gap: Sp.sm, paddingVertical: Sp.xl, paddingHorizontal: Sp.xl },
-    emptyTitle: { fontFamily: Fonts.title, fontSize: 14, color: Colors.textSecondary },
-    emptySub:   { fontFamily: Fonts.title, fontSize: 12, color: Colors.textMuted, textAlign: 'center', lineHeight: 20 },
+    emptyTitle: { fontFamily: Fonts.title, fontSize: 14, color: Design.text.label },
+    emptySub:   { fontFamily: Fonts.title, fontSize: 12, color: Design.text.meta, textAlign: 'center', lineHeight: 20 },
 });

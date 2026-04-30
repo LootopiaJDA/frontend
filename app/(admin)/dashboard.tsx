@@ -6,7 +6,7 @@ import {
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { userService, chasseService, partenaireService } from '../../services/api';
-import { Colors, Fonts, Sp, R } from '../../constants/theme';
+import { Colors, Design, Fonts, Sp, R } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
 import ScreenBackground from '../../components/ScreenBackground';
 
@@ -125,7 +125,7 @@ export default function AdminDashboard() {
                         onPress={() => router.navigate('/(admin)/users')}
                         activeOpacity={0.7}
                     >
-                        <View style={[st.actionIcon, { backgroundColor: Colors.warningBg }]}>
+                        <View style={[st.actionIcon, { backgroundColor: Design.bg.warning }]}>
                             <Ionicons name="shield-checkmark-outline" size={20} color={Colors.warning} />
                         </View>
                         <View style={st.actionBody}>
@@ -141,7 +141,7 @@ export default function AdminDashboard() {
                                 <Text style={st.badgeText}>{stats.partenairesEnAttente}</Text>
                             </View>
                         )}
-                        <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
+                        <Ionicons name="chevron-forward" size={16} color={Design.text.meta} />
                     </TouchableOpacity>
 
                     <View style={st.separator} />
@@ -151,14 +151,14 @@ export default function AdminDashboard() {
                         onPress={() => router.navigate('/(admin)/users')}
                         activeOpacity={0.7}
                     >
-                        <View style={[st.actionIcon, { backgroundColor: Colors.goldGlow }]}>
+                        <View style={[st.actionIcon, { backgroundColor: Design.bg.gold }]}>
                             <Ionicons name="people-outline" size={20} color={Colors.gold} />
                         </View>
                         <View style={st.actionBody}>
                             <Text style={st.actionLabel}>Gérer les utilisateurs</Text>
                             <Text style={st.actionSub}>{stats.totalUsers} comptes enregistrés</Text>
                         </View>
-                        <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
+                        <Ionicons name="chevron-forward" size={16} color={Design.text.meta} />
                     </TouchableOpacity>
 
                     <View style={st.separator} />
@@ -175,7 +175,7 @@ export default function AdminDashboard() {
                             <Text style={st.actionLabel}>Voir les chasses</Text>
                             <Text style={st.actionSub}>{stats.totalChasses} chasses actives</Text>
                         </View>
-                        <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
+                        <Ionicons name="chevron-forward" size={16} color={Design.text.meta} />
                     </TouchableOpacity>
                 </View>
 
@@ -196,41 +196,41 @@ const st = StyleSheet.create({
     headerLeft:  { flexDirection: 'row', alignItems: 'center', gap: Sp.md },
     adminAvatar: {
         width: 46, height: 46, borderRadius: R.md,
-        backgroundColor: Colors.errorBg,
+        backgroundColor: Design.bg.danger,
         borderWidth: 1, borderColor: Colors.error + '44',
         alignItems: 'center', justifyContent: 'center',
     },
-    headerTitle: { fontFamily: Fonts.display, fontSize: 18, color: Colors.textPrimary, letterSpacing: 1 },
-    headerSub:   { fontFamily: Fonts.title,   fontSize: 11, color: Colors.textMuted, marginTop: 2 },
+    headerTitle: { fontFamily: Fonts.display, fontSize: 18, color: Design.text.heading, letterSpacing: 1 },
+    headerSub:   { fontFamily: Fonts.title,   fontSize: 11, color: Design.text.meta, marginTop: 2 },
 
     grid: { flexDirection: 'row', gap: Sp.md },
 
     statCard: {
-        flex: 1, backgroundColor: Colors.bgCard,
-        borderRadius: R.lg, borderWidth: 1, borderColor: Colors.borderWarm,
+        flex: 1, backgroundColor: Design.bg.card,
+        borderRadius: R.lg, borderWidth: 1, borderColor: Design.border.warm,
         borderTopWidth: 2, padding: Sp.md,
         alignItems: 'center', gap: 4,
     },
-    statVal:   { fontFamily: Fonts.display, fontSize: 26, color: Colors.textPrimary, marginTop: 4 },
-    statLabel: { fontFamily: Fonts.title,   fontSize: 10, color: Colors.textMuted, textAlign: 'center' },
-    statHint:  { fontFamily: Fonts.title,   fontSize: 9,  color: Colors.gold, marginTop: 2, letterSpacing: 0.5 },
+    statVal:   { fontFamily: Fonts.display, fontSize: 26, color: Design.text.heading, marginTop: 4 },
+    statLabel: { fontFamily: Fonts.title,   fontSize: 10, color: Design.text.meta, textAlign: 'center' },
+    statHint:  { fontFamily: Fonts.title,   fontSize: 9,  color: Design.text.accent, marginTop: 2, letterSpacing: 0.5 },
 
     sectionTitle: {
-        fontFamily: Fonts.title, fontSize: 9, fontWeight: '700', color: Colors.error,
+        fontFamily: Fonts.title, fontSize: 9, fontWeight: '700', color: Design.text.danger,
         letterSpacing: 2, textTransform: 'uppercase', marginTop: Sp.sm,
     },
 
     actionsCard: {
-        backgroundColor: Colors.bgCard,
-        borderRadius: R.lg, borderWidth: 1, borderColor: Colors.borderWarm,
+        backgroundColor: Design.bg.card,
+        borderRadius: R.lg, borderWidth: 1, borderColor: Design.border.warm,
         overflow: 'hidden',
     },
     actionRow:   { flexDirection: 'row', alignItems: 'center', padding: Sp.md, gap: Sp.md },
     actionIcon:  { width: 44, height: 44, borderRadius: R.md, alignItems: 'center', justifyContent: 'center' },
     actionBody:  { flex: 1 },
-    actionLabel: { fontFamily: Fonts.title, fontSize: 13, color: Colors.textPrimary },
-    actionSub:   { fontFamily: Fonts.title, fontSize: 11, color: Colors.textMuted, marginTop: 2 },
-    separator:   { height: 1, backgroundColor: Colors.borderWarm, marginLeft: Sp.md + 44 + Sp.md },
+    actionLabel: { fontFamily: Fonts.title, fontSize: 13, color: Design.text.heading },
+    actionSub:   { fontFamily: Fonts.title, fontSize: 11, color: Design.text.meta, marginTop: 2 },
+    separator:   { height: 1, backgroundColor: Design.border.warm, marginLeft: Sp.md + 44 + Sp.md },
 
     badge:     { backgroundColor: Colors.error, borderRadius: R.full, minWidth: 22, height: 22, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
     badgeText: { fontFamily: Fonts.title, color: '#fff', fontSize: 11 },

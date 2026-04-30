@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, Modal, ScrollView, TouchableOpacity,
-  KeyboardAvoidingView, Platform, SafeAreaView, Alert, Image,
+  KeyboardAvoidingView, Platform, Alert, Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Etape } from '../constants/types';
 import { useImagePicker } from '../hooks/useImagePicker';
 import { etapeService } from '../services/api';
-import { Colors, Sp, R } from '../constants/theme';
+import { Colors, Design, Sp, R } from '../constants/theme';
 import Input from './Input';
 import EtapeMapPicker from './EtapeMapPicker';
 
@@ -122,11 +123,15 @@ export default function EtapeFormModal({
     try {
       if (mode === 'create') {
         await etapeService.create(chasseId, buildFormData());
+        onSaved();
+        onClose();
+        Alert.alert('Étape créée !', `"${form.name}" a bien été ajoutée.`);
       } else if (etape) {
         await etapeService.update(chasseId, etape.id_etape, buildFormData());
+        onSaved();
+        onClose();
+        Alert.alert('Étape modifiée !', 'Les modifications ont été enregistrées.');
       }
-      onSaved();
-      onClose();
     } catch (err: any) {
       Alert.alert('Erreur', err.message ?? (mode === 'create' ? 'Création échouée' : 'Modification échouée'));
     } finally {
@@ -144,7 +149,7 @@ export default function EtapeFormModal({
           {/* Header */}
           <View style={s.header}>
             <TouchableOpacity onPress={onClose} style={s.closeBtn}>
-              <Ionicons name="close" size={22} color={Colors.textSecondary} />
+              <Ionicons name="close" size={22} color={Design.text.label} />
             </TouchableOpacity>
             <Text style={s.title}>{isCreate ? 'Nouvelle étape' : "Modifier l'étape"}</Text>
             <TouchableOpacity onPress={handleSave} disabled={loading} style={[s.saveBtn, loading && { opacity: 0.5 }]}>
@@ -192,7 +197,7 @@ export default function EtapeFormModal({
               {/* Position GPS */}
               <Text style={s.sectionLabel}>Position GPS *</Text>
               <TouchableOpacity style={s.mapBtn} onPress={() => setMapOpen(true)} activeOpacity={0.8}>
-                <Ionicons name="map" size={16} color={Colors.black} />
+                <Ionicons name="map" size={16} color={Design.text.onSolid} />
                 <Text style={s.mapBtnTxt}>
                   {hasPos ? 'Modifier la position sur la carte' : 'Choisir sur la carte'}
                 </Text>
@@ -256,7 +261,7 @@ export default function EtapeFormModal({
                 ) : (
                   <View style={s.imagePlaceholder}>
                     <View style={s.imagePlaceholderIcon}>
-                      <Ionicons name="camera-outline" size={28} color={Colors.textMuted} />
+                      <Ionicons name="camera-outline" size={28} color={Design.text.meta} />
                     </View>
                     <Text style={s.imagePlaceholderTxt}>Galerie ou appareil photo</Text>
                     <Text style={s.imagePlaceholderSub}>Format carré recommandé</Text>
@@ -267,7 +272,7 @@ export default function EtapeFormModal({
 
               {/* Info tip */}
               <View style={s.infoBox}>
-                <Ionicons name="bulb-outline" size={15} color={Colors.gold} />
+                <Ionicons name="bulb-outline" size={15} color={Design.text.accent} />
                 <Text style={s.infoTxt}>
                   Le rayon définit la distance à laquelle le joueur doit se trouver pour détecter l'étape.
                 </Text>
@@ -293,32 +298,32 @@ export default function EtapeFormModal({
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.bg },
+  safe: { flex: 1, backgroundColor: Design.bg.modal },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Sp.lg, paddingVertical: Sp.md,
-    borderBottomWidth: 1, borderBottomColor: Colors.border,
+    borderBottomWidth: 1, borderBottomColor: Design.border.default,
   },
   closeBtn: { padding: 4 },
-  title: { fontSize: 17, fontWeight: '700', color: Colors.textPrimary },
-  saveBtn: { backgroundColor: Colors.gold, borderRadius: R.sm, paddingHorizontal: Sp.md, paddingVertical: 7 },
-  saveBtnText: { color: Colors.black, fontWeight: '700', fontSize: 14 },
+  title: { fontSize: 17, fontWeight: '700', color: Design.text.heading },
+  saveBtn: { backgroundColor: Design.button.primary.bg, borderRadius: R.sm, paddingHorizontal: Sp.md, paddingVertical: 7 },
+  saveBtnText: { color: Design.text.onSolid, fontWeight: '700', fontSize: 14 },
   scroll: { padding: Sp.lg, paddingBottom: 60, gap: Sp.sm },
 
   row2: { flexDirection: 'row', gap: Sp.md },
 
   sectionLabel: {
-    fontSize: 10, fontWeight: '700', color: Colors.gold,
+    fontSize: 10, fontWeight: '700', color: Design.text.accent,
     letterSpacing: 1.5, textTransform: 'uppercase', marginTop: Sp.md, marginBottom: Sp.sm,
   },
 
   mapBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: Colors.gold, borderRadius: R.md, paddingVertical: 12, marginBottom: Sp.sm,
+    backgroundColor: Design.button.primary.bg, borderRadius: R.md, paddingVertical: 12, marginBottom: Sp.sm,
   },
-  mapBtnTxt: { color: Colors.black, fontSize: 14, fontWeight: '700' },
+  mapBtnTxt: { color: Design.text.onSolid, fontSize: 14, fontWeight: '700' },
 
-  errText: { color: Colors.error, fontSize: 12, marginBottom: Sp.sm },
+  errText: { color: Design.text.danger, fontSize: 12, marginBottom: Sp.sm },
 
   coordBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
@@ -327,13 +332,13 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: '#22C55E44',
   },
   coordTxt: { color: '#22C55E', fontSize: 12, fontWeight: '600' },
-  coordRayon: { color: Colors.textMuted, fontSize: 11 },
+  coordRayon: { color: Design.text.meta, fontSize: 11 },
 
   imagePicker: {
-    borderWidth: 2, borderColor: Colors.border, borderStyle: 'dashed',
+    borderWidth: 2, borderColor: Design.border.default, borderStyle: 'dashed',
     borderRadius: R.lg, overflow: 'hidden', height: 160, marginBottom: Sp.sm,
   },
-  imagePickerErr: { borderColor: Colors.error },
+  imagePickerErr: { borderColor: Design.border.error },
   imagePreview: { width: '100%', height: '100%' },
   imageOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -344,17 +349,17 @@ const s = StyleSheet.create({
   imagePlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Sp.sm },
   imagePlaceholderIcon: {
     width: 56, height: 56, borderRadius: 28,
-    backgroundColor: Colors.bgElevated, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: Design.bg.elevated, alignItems: 'center', justifyContent: 'center',
   },
-  imagePlaceholderTxt: { color: Colors.textSecondary, fontSize: 14 },
-  imagePlaceholderSub: { color: Colors.textMuted, fontSize: 12 },
+  imagePlaceholderTxt: { color: Design.text.label, fontSize: 14 },
+  imagePlaceholderSub: { color: Design.text.meta, fontSize: 12 },
 
   infoBox: {
     flexDirection: 'row', gap: Sp.sm,
-    backgroundColor: Colors.goldGlow, borderRadius: R.md,
+    backgroundColor: Design.bg.gold, borderRadius: R.md,
     borderWidth: 1, borderColor: Colors.gold + '30',
     padding: Sp.md, marginTop: Sp.sm,
     alignItems: 'flex-start',
   },
-  infoTxt: { color: Colors.textSecondary, fontSize: 13, flex: 1, lineHeight: 20 },
+  infoTxt: { color: Design.text.label, fontSize: 13, flex: 1, lineHeight: 20 },
 });

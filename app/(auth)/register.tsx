@@ -9,7 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Input from '../../components/Input';
 import Btn from '../../components/Btn';
 import ScreenBackground from '../../components/ScreenBackground';
-import { Colors, Fonts, Sp, R } from '../../constants/theme';
+import { Colors, Design, Fonts, Sp, R } from '../../constants/theme';
 import { userService } from '../../services/api';
 
 const BOUSSOLE = require('../../assets/images/boussole.png');
@@ -58,7 +58,7 @@ export default function Register() {
         <ScrollView contentContainerStyle={s_.scroll} keyboardShouldPersistTaps="handled">
           <SafeAreaView>
             <TouchableOpacity style={s_.back} onPress={() => router.back()}>
-              <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
+              <Ionicons name="chevron-back" size={20} color={Design.text.heading} />
             </TouchableOpacity>
 
             <View style={s_.header}>
@@ -70,7 +70,7 @@ export default function Register() {
             </View>
 
             <View style={s_.roleBadge}>
-              <Ionicons name="game-controller-outline" size={14} color={Colors.amber} />
+              <Ionicons name="game-controller-outline" size={14} color={Design.text.warm} />
               <Text style={s_.roleText}>Compte Joueur</Text>
             </View>
 
@@ -111,8 +111,8 @@ const s_ = StyleSheet.create({
 
   back: {
     width: 40, height: 40, borderRadius: R.md,
-    backgroundColor: Colors.bgElevated,
-    borderWidth: 1, borderColor: Colors.borderWarm,
+    backgroundColor: Design.bg.elevated,
+    borderWidth: 1, borderColor: Design.border.warm,
     alignItems: 'center', justifyContent: 'center',
     marginBottom: Sp.xl,
   },
@@ -129,24 +129,24 @@ const s_ = StyleSheet.create({
   },
   compassImg: { width: '100%', height: '100%' },
 
-  title: { fontFamily: Fonts.display, fontSize: 26, color: Colors.textPrimary, letterSpacing: 3 },
-  sub:   { fontFamily: Fonts.title,   fontSize: 13, color: Colors.textSecondary, letterSpacing: 0.5 },
+  title: { fontFamily: Fonts.display, fontSize: 26, color: Design.text.heading, letterSpacing: 3 },
+  sub:   { fontFamily: Fonts.title,   fontSize: 13, color: Design.text.label, letterSpacing: 0.5 },
 
   roleBadge: {
     flexDirection: 'row', alignItems: 'center', gap: Sp.xs,
-    backgroundColor: Colors.goldGlow, borderWidth: 1, borderColor: Colors.gold + '33',
+    backgroundColor: Design.bg.gold, borderWidth: 1, borderColor: Colors.gold + '33',
     borderRadius: R.full, paddingHorizontal: Sp.md, paddingVertical: 6,
     alignSelf: 'flex-start', marginBottom: Sp.lg,
   },
-  roleText: { fontFamily: Fonts.title, color: Colors.amber, fontSize: 11, letterSpacing: 0.5 },
+  roleText: { fontFamily: Fonts.title, color: Design.text.warm, fontSize: 11, letterSpacing: 0.5 },
 
   form: { gap: Sp.xs },
 
   sep:     { flexDirection: 'row', alignItems: 'center', gap: Sp.md, marginVertical: Sp.lg },
-  sepLine: { flex: 1, height: 1, backgroundColor: Colors.borderWarm },
-  sepText: { fontFamily: Fonts.title, color: Colors.gold, fontSize: 11, letterSpacing: 1 },
+  sepLine: { flex: 1, height: 1, backgroundColor: Design.border.warm },
+  sepText: { fontFamily: Fonts.title, color: Design.text.accent, fontSize: 11, letterSpacing: 1 },
 
   links:      { flexDirection: 'row', justifyContent: 'center', marginBottom: Sp.xl },
-  linkText:   { fontFamily: Fonts.title, color: Colors.textSecondary, fontSize: 13 },
-  linkAccent: { fontFamily: Fonts.title, color: Colors.gold, fontSize: 13 },
+  linkText:   { fontFamily: Fonts.title, color: Design.text.label, fontSize: 13 },
+  linkAccent: { fontFamily: Fonts.title, color: Design.text.accent, fontSize: 13 },
 });

@@ -6,7 +6,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
-import { Colors, Fonts, Sp, R } from '../../constants/theme';
+import { Colors, Design, Fonts, Sp, R } from '../../constants/theme';
 import StatusBadge from '../../components/StatusBadge';
 import PageHeader from '../../components/PageHeader';
 import ScreenBackground from '../../components/ScreenBackground';
@@ -57,7 +57,7 @@ export default function AdminProfilScreen() {
                     ].map((row, i, arr) => (
                         <View key={row.label} style={[st.row, i < arr.length - 1 && st.rowBorder]}>
                             <View style={st.rowIcon}>
-                                <Ionicons name={row.icon as any} size={16} color={Colors.textSecondary} />
+                                <Ionicons name={row.icon as any} size={16} color={Design.text.label} />
                             </View>
                             <View style={st.rowBody}>
                                 <Text style={st.rowLabel}>{row.label}</Text>
@@ -85,39 +85,39 @@ const st = StyleSheet.create({
     hero:       { alignItems: 'center', paddingVertical: Sp.xl, gap: Sp.sm },
     avatar:     {
         width: 80, height: 80, borderRadius: 24,
-        backgroundColor: Colors.errorBg,
+        backgroundColor: Design.bg.danger,
         borderWidth: 2, borderColor: Colors.error + '55',
         alignItems: 'center', justifyContent: 'center',
         marginBottom: Sp.xs,
     },
     avatarText: { fontFamily: Fonts.display, fontSize: 26, color: Colors.error },
-    username:   { fontFamily: Fonts.display, fontSize: 20, color: Colors.textPrimary, letterSpacing: 1 },
-    email:      { fontFamily: Fonts.title,   fontSize: 12, color: Colors.textMuted },
+    username:   { fontFamily: Fonts.display, fontSize: 20, color: Design.text.heading, letterSpacing: 1 },
+    email:      { fontFamily: Fonts.title,   fontSize: 12, color: Design.text.meta },
 
     card:       {
         marginHorizontal: Sp.lg, marginBottom: Sp.lg,
-        backgroundColor: Colors.bgCard,
-        borderRadius: R.lg, borderWidth: 1, borderColor: Colors.borderWarm,
+        backgroundColor: Design.bg.card,
+        borderRadius: R.lg, borderWidth: 1, borderColor: Design.border.warm,
         overflow: 'hidden',
     },
     row:        { flexDirection: 'row', alignItems: 'center', padding: Sp.md, gap: Sp.md },
-    rowBorder:  { borderBottomWidth: 1, borderBottomColor: Colors.borderWarm },
+    rowBorder:  { borderBottomWidth: 1, borderBottomColor: Design.border.warm },
     rowIcon:    {
         width: 34, height: 34, borderRadius: R.sm,
-        backgroundColor: Colors.bgElevated,
+        backgroundColor: Design.bg.elevated,
         alignItems: 'center', justifyContent: 'center',
     },
     rowBody:    { flex: 1 },
-    rowLabel:   { fontFamily: Fonts.title, fontSize: 10, color: Colors.textMuted, marginBottom: 2, letterSpacing: 0.5 },
-    rowValue:   { fontFamily: Fonts.title, fontSize: 13, color: Colors.textPrimary },
+    rowLabel:   { fontFamily: Fonts.title, fontSize: 10, color: Design.text.meta, marginBottom: 2, letterSpacing: 0.5 },
+    rowValue:   { fontFamily: Fonts.title, fontSize: 13, color: Design.text.heading },
 
     logoutBtn:  {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
         gap: Sp.sm, marginHorizontal: Sp.lg,
-        backgroundColor: Colors.errorBg,
+        backgroundColor: Design.bg.danger,
         borderRadius: R.md, borderWidth: 1, borderColor: Colors.error + '44',
         padding: Sp.md,
     },
     logoutText: { fontFamily: Fonts.title, color: Colors.error, fontSize: 14 },
-    version:    { fontFamily: Fonts.title, color: Colors.textMuted, fontSize: 11, textAlign: 'center', marginTop: Sp.lg, paddingBottom: Sp.xl },
+    version:    { fontFamily: Fonts.title, color: Design.text.meta, fontSize: 11, textAlign: 'center', marginTop: Sp.lg, paddingBottom: Sp.xl },
 });

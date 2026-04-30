@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
-import { Colors, Fonts, R, Sp } from '../constants/theme';
+import { Design, Fonts, R, Sp } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 
 interface Props {
@@ -35,12 +35,17 @@ export default function Input({
         multiline && { height: 24 * (lines || 4), alignItems: 'flex-start', paddingTop: Sp.md },
       ]}>
         {icon && (
-          <Ionicons name={icon} size={17} color={focused ? Colors.gold : Colors.textMuted} style={styles.iconLeft} />
+          <Ionicons
+            name={icon}
+            size={17}
+            color={focused ? Design.input.iconFocus : Design.input.icon}
+            style={styles.iconLeft}
+          />
         )}
         <TextInput
           style={[styles.input, multiline && { textAlignVertical: 'top' }]}
           placeholder={placeholder}
-          placeholderTextColor={Colors.textMuted}
+          placeholderTextColor={Design.input.placeholder}
           value={value}
           onChangeText={onChangeText}
           secureTextEntry={secure && !show}
@@ -53,7 +58,7 @@ export default function Input({
         />
         {secure && (
           <TouchableOpacity onPress={() => setShow(s => !s)} style={styles.eyeBtn}>
-            <Ionicons name={show ? 'eye-off-outline' : 'eye-outline'} size={18} color={Colors.textSecondary} />
+            <Ionicons name={show ? 'eye-off-outline' : 'eye-outline'} size={18} color={Design.input.icon} />
           </TouchableOpacity>
         )}
       </View>
@@ -63,10 +68,10 @@ export default function Input({
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginBottom: Sp.md },
+  wrap:     { marginBottom: Sp.md },
   label: {
     fontFamily: Fonts.title,
-    color: Colors.textSecondary,
+    color: Design.input.label,
     fontSize: 11,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
@@ -75,16 +80,16 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.bgInput,
+    backgroundColor: Design.input.bg,
     borderRadius: R.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Design.input.border,
     paddingHorizontal: Sp.md,
   },
-  focused: { borderColor: Colors.gold },
-  errBorder: { borderColor: Colors.error },
-  iconLeft: { marginRight: 10 },
-  input: { flex: 1, color: Colors.textPrimary, fontSize: 15, paddingVertical: Sp.md },
-  eyeBtn: { padding: 4 },
-  errText: { color: Colors.error, fontSize: 12, marginTop: 5 },
+  focused:   { borderColor: Design.input.borderFocus },
+  errBorder: { borderColor: Design.input.borderError },
+  iconLeft:  { marginRight: 10 },
+  input:     { flex: 1, color: Design.input.text, fontSize: 15, paddingVertical: Sp.md },
+  eyeBtn:    { padding: 4 },
+  errText:   { color: Design.text.danger, fontSize: 12, marginTop: 5 },
 });
