@@ -150,9 +150,6 @@ export default function Dashboard() {
             <TouchableOpacity style={st.addBtn} onPress={() => setCreateVisible(true)} activeOpacity={0.85}>
               <Ionicons name="add" size={22} color={Design.text.onSolid} />
             </TouchableOpacity>
-            <View style={st.avatar}>
-              <Text style={st.avatarText}>{initials}</Text>
-            </View>
           </View>
         </View>
 
@@ -299,7 +296,7 @@ const st = StyleSheet.create({
   },
   headerLeft:      { flex: 1, gap: 2 },
   headerRight:     { flexDirection: 'row', alignItems: 'center', gap: Sp.sm },
-  company:         { fontFamily: Fonts.title, fontSize: 10, color: Design.text.warm, textTransform: 'uppercase', letterSpacing: 1.5 },
+  company:         { fontFamily: Fonts.title, fontSize: 15, color: Design.text.heading, textTransform: 'uppercase', letterSpacing: 1.5 },
   greeting:        { fontFamily: Fonts.display, fontSize: 18, color: Design.text.heading, letterSpacing: 0.5 },
   greetingAccent:  { color: Design.text.accent },
 
@@ -330,7 +327,7 @@ const st = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: Sp.lg, marginBottom: Sp.sm,
   },
-  sectionTitle:  { fontFamily: Fonts.title, fontSize: 10, color: Design.text.label, textTransform: 'uppercase', letterSpacing: 1.5 },
+  sectionTitle:  { fontFamily: Fonts.title, fontSize: 15, color: Design.text.label, textTransform: 'uppercase', letterSpacing: 1.5 },
   sectionAction: { fontFamily: Fonts.title, fontSize: 11, color: Design.text.accent },
 
   list:   { paddingHorizontal: Sp.lg, paddingBottom: 100 },

@@ -4,7 +4,7 @@ const getBaseUrl = () => {
   const hostUri = Constants.expoConfig?.hostUri;
 
   if (!hostUri) {
-    return 'http://localhost:3000';
+    return 'http://20.46.53.133:3000';
   }
 
   const ip = hostUri.split(':')[0];

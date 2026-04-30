@@ -55,7 +55,7 @@ export const Design = {
     heading:   Colors.textPrimary,    // titres principaux, noms
     body:      Colors.textPrimary,    // contenu, descriptions
     label:     Colors.textSecondary,  // labels formulaires, sous-titres section
-    meta:      Colors.textMuted,      // IDs, timestamps, métadonnées
+    meta:      Colors.textSecondary,      // IDs, timestamps, métadonnées
     accent:    Colors.gold,           // liens, or, mises en valeur
     warm:      Colors.textTertiary,          // noms société, accents chauds
     danger:    Colors.error,

@@ -72,8 +72,6 @@ export default function AdminProfilScreen() {
                     <Ionicons name="log-out-outline" size={20} color={Colors.error} />
                     <Text style={st.logoutText}>Se déconnecter</Text>
                 </TouchableOpacity>
-
-                <Text style={st.version}>Lootopia Admin v1.0.0</Text>
             </ScrollView>
         </ScreenBackground>
     );

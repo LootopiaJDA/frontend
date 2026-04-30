@@ -1,8 +1,46 @@
 import { Tabs, Redirect } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Image, Animated } from 'react-native';
+import { useRef } from 'react';
+
 import { Colors } from '../../constants/theme';
 import LoadingScreen from '../../components/LoadingScreen';
 import { useRoleGuard } from '../../hooks/useRoleGuard';
+
+const DASHBOARD_ICON = require('../../assets/images/dashboard.png');
+const PROFIL_ICON = require('../../assets/images/profil.png');
+
+function TabIcon({ source, focused }: { source: any; focused: boolean }) {
+    const scale = useRef(new Animated.Value(1)).current;
+
+    Animated.timing(scale, {
+        toValue: focused ? 1.25 : 1,
+        duration: 180,
+        useNativeDriver: true,
+    }).start();
+
+    return (
+        <Animated.View
+            style={{
+                transform: [{ scale }],
+                alignItems: 'center',
+                justifyContent: 'center',
+                shadowColor: Colors.gold,
+                shadowOpacity: focused ? 0.6 : 0,
+                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 3 },
+            }}
+        >
+            <Image
+                source={source}
+                style={{
+                    width: 36,
+                    height: 36,
+                }}
+                resizeMode="contain"
+            />
+        </Animated.View>
+    );
+}
 
 export default function PartnerLayout() {
     const { status, user } = useRoleGuard();
@@ -15,31 +53,39 @@ export default function PartnerLayout() {
         <Tabs
             screenOptions={{
                 headerShown: false,
+
                 tabBarActiveTintColor: Colors.gold,
                 tabBarInactiveTintColor: Colors.textMuted,
+
                 tabBarStyle: {
-                    backgroundColor: Colors.bgCard,
-                    borderTopColor: Colors.border,
-                    height: 90,
+                    backgroundColor: '#0B0907',
+                    borderTopColor: '#2A2118',
+                    height: 110,
+                },
+
+                tabBarLabelStyle: {
+                    fontSize: 11,
+                    fontWeight: '600',
                 },
             }}
         >
-            {/* ── 2 onglets visibles ── */}
+
             <Tabs.Screen
                 name="dashboard"
                 options={{
                     title: 'Dashboard',
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="grid-outline" size={size} color={color} />
+                    tabBarIcon: ({ focused }) => (
+                        <TabIcon source={DASHBOARD_ICON} focused={focused} />
                     ),
                 }}
             />
+
             <Tabs.Screen
                 name="profil"
                 options={{
                     title: 'Profil',
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="person-outline" size={size} color={color} />
+                    tabBarIcon: ({ focused }) => (
+                        <TabIcon source={PROFIL_ICON} focused={focused} />
                     ),
                 }}
             />
@@ -56,6 +102,7 @@ export default function PartnerLayout() {
                 name="(components)/edit-etape"
                 options={{ href: null }}
             />
+
         </Tabs>
     );
 }

@@ -214,9 +214,6 @@ export default function ChasseDetailScreen() {
                 <View style={{ flex: 1 }}>
                   <Btn label="Rejoindre la chasse" onPress={handleJoin} loading={joining} />
                 </View>
-                <TouchableOpacity style={st.playBtn} onPress={handlePlay} activeOpacity={0.85}>
-                  <Ionicons name="navigate" size={22} color={Colors.gold} />
-                </TouchableOpacity>
               </View>
             )}
           </View>

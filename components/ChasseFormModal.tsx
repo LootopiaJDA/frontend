@@ -135,7 +135,7 @@ export default function ChasseFormModal({ visible, mode, chasse, onClose, onSave
                 placeholder="30"
                 value={form.limit_user}
                 onChangeText={setField('limit_user')}
-                keyboardType={"numeric"}
+                keyboard={"numeric"}
                 icon="people-outline"
               />
 

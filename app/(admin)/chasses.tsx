@@ -225,14 +225,6 @@ export default function AdminChassesScreen() {
                                     <Text style={st.noEtapesText}>Aucune étape configurée</Text>
                                 </View>
                             )}
-
-                            {/* Info suppression */}
-                            <View style={st.infoBox}>
-                                <Ionicons name="information-circle-outline" size={16} color={Design.text.meta} />
-                                <Text style={st.infoBoxText}>
-                                    La suppression d'une chasse est réservée au partenaire propriétaire.
-                                </Text>
-                            </View>
                         </ScrollView>
                     </SafeAreaView>
                 )}

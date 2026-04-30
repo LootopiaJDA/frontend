@@ -70,7 +70,7 @@ export default function Register() {
             </View>
 
             <View style={s_.roleBadge}>
-              <Ionicons name="game-controller-outline" size={14} color={Design.text.warm} />
+              <Ionicons name="game-controller-outline" size={14} color={Design.text.success} />
               <Text style={s_.roleText}>Compte Joueur</Text>
             </View>
 
@@ -134,11 +134,11 @@ const s_ = StyleSheet.create({
 
   roleBadge: {
     flexDirection: 'row', alignItems: 'center', gap: Sp.xs,
-    backgroundColor: Design.bg.gold, borderWidth: 1, borderColor: Colors.gold + '33',
+    backgroundColor: Design.bg.active, borderWidth: 1, borderColor: Colors.gold + '33',
     borderRadius: R.full, paddingHorizontal: Sp.md, paddingVertical: 6,
     alignSelf: 'flex-start', marginBottom: Sp.lg,
   },
-  roleText: { fontFamily: Fonts.title, color: Design.text.warm, fontSize: 11, letterSpacing: 0.5 },
+  roleText: { fontFamily: Fonts.title, color: Design.text.success, fontSize: 11, letterSpacing: 0.5 },
 
   form: { gap: Sp.xs },
 

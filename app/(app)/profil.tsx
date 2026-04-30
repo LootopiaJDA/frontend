@@ -69,7 +69,10 @@ export default function ProfilJoueurScreen() {
 
     return (
         <ScreenBackground style={st.safe}>
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView
+                contentContainerStyle={st.scroll}
+                showsVerticalScrollIndicator={false}
+            >
                 <PageHeader title="Mon profil" subtitle="Joueur" />
 
                 {/* Hero avatar */}
@@ -83,10 +86,6 @@ export default function ProfilJoueurScreen() {
 
                     <Text style={st.username}>{user.username}</Text>
                     <Text style={st.email}>{user.email}</Text>
-
-                    <View style={st.badgeRow}>
-                        <StatusBadge status={user.role} />
-                    </View>
                 </View>
 
                 {/* Stats rapides */}
@@ -135,6 +134,11 @@ export default function ProfilJoueurScreen() {
 
 const st = StyleSheet.create({
     safe: { flex: 1 },
+
+    scroll: {
+        flexGrow: 1,
+        paddingBottom: Sp.xl,
+    },
 
     hero:       { alignItems: 'center', paddingVertical: Sp.xl, gap: Sp.sm },
     avatarWrap: { position: 'relative', marginBottom: Sp.sm },

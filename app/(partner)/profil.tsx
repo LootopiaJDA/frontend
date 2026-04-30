@@ -1,21 +1,31 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import {
+  View, Text, StyleSheet, ScrollView,
+  TouchableOpacity, Alert,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { Colors, Design, Fonts, Sp, R } from '../../constants/theme';
 import StatusBadge from '../../components/StatusBadge';
+import PageHeader from '../../components/PageHeader';
 import ScreenBackground from '../../components/ScreenBackground';
 
 export default function PartnerProfil() {
   const { user, logout } = useAuth();
   const router = useRouter();
 
+  if (!user) return null;
+
+  const initials = user.username.slice(0, 2).toUpperCase();
+
   const handleLogout = () => {
     Alert.alert('Déconnexion', 'Voulez-vous vraiment vous déconnecter ?', [
       { text: 'Annuler', style: 'cancel' },
       {
-        text: 'Déconnexion', style: 'destructive', onPress: async () => {
+        text: 'Déconnexion',
+        style: 'destructive',
+        onPress: async () => {
           await logout();
           router.replace('/(auth)/welcome');
         },
@@ -23,129 +33,210 @@ export default function PartnerProfil() {
     ]);
   };
 
-  if (!user) return null;
-  const initials = user.username.slice(0, 2).toUpperCase();
-
   return (
-    <ScreenBackground>
-      <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={st.headerBg}>
-          <View style={st.headerGlow} />
-          <View style={st.avatar}>
-            <Text style={st.avatarText}>{initials}</Text>
-          </View>
-          <Text style={st.username}>{user.username}</Text>
-          <Text style={st.email}>{user.email}</Text>
-          <View style={st.badgeRow}>
-            <StatusBadge status={user.role} />
-            {user.partener && <StatusBadge status={user.partener.statut} />}
-          </View>
-        </View>
+      <ScreenBackground style={st.safe}>
+        <ScrollView
+            contentContainerStyle={st.scroll}
+            showsVerticalScrollIndicator={false}
+        >
 
-        {user.partener && (
-          <View style={st.partnerCard}>
-            <View style={st.partnerCardHeader}>
-              <Ionicons name="business-outline" size={18} color={Design.text.accent} />
-              <Text style={st.partnerCardTitle}>Informations entreprise</Text>
+          <PageHeader title="Mon profil" subtitle="Partenaire" />
+
+          {/* HERO */}
+          <View style={st.hero}>
+            <View style={st.avatar}>
+              <Text style={st.avatarText}>{initials}</Text>
             </View>
-            {[
-              { label: 'Société', value: user.partener.company_name },
-              { label: 'SIRET',   value: user.partener.siret },
-              { label: 'Statut',  value: user.partener.statut === 'ACTIVE' ? 'Actif' : 'En vérification' },
-            ].map(row => (
-              <View key={row.label} style={st.infoRow}>
-                <Text style={st.infoLabel}>{row.label}</Text>
-                <Text style={st.infoVal}>{row.value}</Text>
-              </View>
-            ))}
+
+            <Text style={st.username}>{user.username}</Text>
+            <Text style={st.email}>{user.email}</Text>
+
+            <View style={st.badgeRow}>
+              <StatusBadge status={user.role} />
+              {user.partener && (
+                  <StatusBadge status={user.partener.statut} />
+              )}
+            </View>
           </View>
-        )}
 
-        {/* Menu */}
-        <View style={st.menuCard}>
-          {[
-            { icon: 'map-outline',                  label: 'Voir les chasses publiques', onPress: () => router.push('/(app)/chasses') },
-          ].map((item, i, arr) => (
-            <TouchableOpacity
-              key={item.label}
-              style={[st.menuItem, i < arr.length - 1 && st.menuBorder]}
-              onPress={item.onPress}
-            >
-              <View style={st.menuIcon}>
-                <Ionicons name={item.icon as any} size={18} color={Design.text.label} />
+          {/* INFOS */}
+          {user.partener && (
+              <View style={st.card}>
+                {[
+                  { icon: 'business-outline', label: 'Société', value: user.partener.company_name },
+                  { icon: 'card-outline', label: 'SIRET', value: user.partener.siret },
+                  {
+                    icon: 'checkmark-circle-outline',
+                    label: 'Statut',
+                    value: user.partener.statut === 'ACTIVE' ? 'Actif' : 'En vérification',
+                  },
+                ].map((row, i, arr) => (
+                    <View
+                        key={row.label}
+                        style={[st.row, i < arr.length - 1 && st.rowBorder]}
+                    >
+                      <View style={st.rowIcon}>
+                        <Ionicons name={row.icon as any} size={16} color={Design.text.label} />
+                      </View>
+
+                      <View style={st.rowBody}>
+                        <Text style={st.rowLabel}>{row.label}</Text>
+                        <Text style={st.rowValue}>{row.value}</Text>
+                      </View>
+                    </View>
+                ))}
               </View>
-              <Text style={st.menuLabel}>{item.label}</Text>
-              <Ionicons name="chevron-forward" size={15} color={Design.text.meta} />
-            </TouchableOpacity>
-          ))}
-        </View>
+          )}
 
-        {/* Logout */}
-        <TouchableOpacity style={st.logoutBtn} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={20} color={Colors.error} />
-          <Text style={st.logoutText}>Se déconnecter</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </ScreenBackground>
+          {/* MENU (optionnel comme admin si besoin d’évoluer) */}
+          <View style={st.card}>
+            <TouchableOpacity
+                style={st.row}
+                onPress={() => router.push('/(app)/chasses')}
+            >
+              <View style={st.rowIcon}>
+                <Ionicons name="map-outline" size={16} color={Design.text.label} />
+              </View>
+
+              <View style={st.rowBody}>
+                <Text style={st.rowLabel}>Navigation</Text>
+                <Text style={st.rowValue}>Voir les chasses publiques</Text>
+              </View>
+
+              <Ionicons name="chevron-forward" size={16} color={Design.text.meta} />
+            </TouchableOpacity>
+          </View>
+
+          {/* LOGOUT */}
+          <TouchableOpacity
+              style={st.logoutBtn}
+              onPress={handleLogout}
+              activeOpacity={0.8}
+          >
+            <Ionicons name="log-out-outline" size={20} color={Colors.error} />
+            <Text style={st.logoutText}>Se déconnecter</Text>
+          </TouchableOpacity>
+
+        </ScrollView>
+      </ScreenBackground>
   );
 }
 
 const st = StyleSheet.create({
-  scroll: { flexGrow: 1 },
+  safe: { flex: 1 },
 
-  headerBg: {
-    backgroundColor: Design.bg.card, borderBottomWidth: 1, borderBottomColor: Design.border.warm,
-    paddingTop: 60, paddingBottom: Sp.xl,
-    alignItems: 'center', gap: Sp.sm,
-    overflow: 'hidden', position: 'relative',
+  scroll: {
+    flexGrow: 1,
+    paddingBottom: Sp.xl,
   },
-  headerGlow: {
-    position: 'absolute', width: 200, height: 200, borderRadius: 100,
-    backgroundColor: Colors.gold, opacity: 0.05, top: -60,
+
+  hero: {
+    alignItems: 'center',
+    paddingVertical: Sp.xl,
+    gap: Sp.sm,
   },
+
   avatar: {
-    width: 80, height: 80, borderRadius: 40,
-    backgroundColor: Design.bg.gold,
-    borderWidth: 2, borderColor: Colors.gold + '44',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  avatarText:  { fontFamily: Fonts.display, color: Design.text.accent, fontSize: 26 },
-  username:    { fontFamily: Fonts.display, color: Design.text.heading, fontSize: 20, letterSpacing: 1 },
-  email:       { fontFamily: Fonts.title,   color: Design.text.meta, fontSize: 12 },
-  badgeRow:    { flexDirection: 'row', gap: Sp.sm, marginTop: Sp.xs },
-
-  partnerCard: {
-    margin: Sp.lg, backgroundColor: Design.bg.card,
-    borderRadius: R.lg, borderWidth: 1, borderColor: Design.border.warm, overflow: 'hidden',
-  },
-  partnerCardHeader: {
-    flexDirection: 'row', alignItems: 'center', gap: Sp.sm,
-    padding: Sp.md, borderBottomWidth: 1, borderBottomColor: Design.border.warm,
+    width: 80,
+    height: 80,
+    borderRadius: 24,
     backgroundColor: Design.bg.elevated,
+    borderWidth: 2,
+    borderColor: Colors.gold + '44',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  partnerCardTitle: { fontFamily: Fonts.title, color: Design.text.heading, fontSize: 13, letterSpacing: 0.5 },
-  infoRow:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Sp.md, borderBottomWidth: 1, borderBottomColor: Design.border.warm },
-  infoLabel:{ fontFamily: Fonts.title, color: Design.text.meta, fontSize: 11, letterSpacing: 0.5 },
-  infoVal:  { fontFamily: Fonts.title, color: Design.text.heading, fontSize: 12 },
 
-  menuCard: {
-    marginHorizontal: Sp.lg, marginBottom: Sp.lg,
-    backgroundColor: Design.bg.card,
-    borderRadius: R.lg, borderWidth: 1, borderColor: Design.border.warm, overflow: 'hidden',
+  avatarText: {
+    fontFamily: Fonts.display,
+    fontSize: 26,
+    color: Design.text.accent,
   },
-  menuItem:   { flexDirection: 'row', alignItems: 'center', padding: Sp.md, gap: Sp.md },
-  menuBorder: { borderBottomWidth: 1, borderBottomColor: Design.border.warm },
-  menuIcon:   { width: 34, height: 34, borderRadius: R.sm, backgroundColor: Design.bg.elevated, alignItems: 'center', justifyContent: 'center' },
-  menuLabel:  { flex: 1, fontFamily: Fonts.title, color: Design.text.heading, fontSize: 13 },
+
+  username: {
+    fontFamily: Fonts.display,
+    fontSize: 20,
+    color: Design.text.heading,
+    letterSpacing: 1,
+  },
+
+  email: {
+    fontFamily: Fonts.title,
+    fontSize: 12,
+    color: Design.text.meta,
+  },
+
+  badgeRow: {
+    flexDirection: 'row',
+    gap: Sp.sm,
+    marginTop: Sp.xs,
+  },
+
+  card: {
+    marginHorizontal: Sp.lg,
+    marginBottom: Sp.lg,
+    backgroundColor: Design.bg.card,
+    borderRadius: R.lg,
+    borderWidth: 1,
+    borderColor: Design.border.warm,
+    overflow: 'hidden',
+  },
+
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Sp.md,
+    gap: Sp.md,
+  },
+
+  rowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: Design.border.warm,
+  },
+
+  rowIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: R.sm,
+    backgroundColor: Design.bg.elevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  rowBody: {
+    flex: 1,
+  },
+
+  rowLabel: {
+    fontFamily: Fonts.title,
+    fontSize: 10,
+    color: Design.text.meta,
+    marginBottom: 2,
+    letterSpacing: 0.5,
+  },
+
+  rowValue: {
+    fontFamily: Fonts.title,
+    fontSize: 13,
+    color: Design.text.heading,
+  },
 
   logoutBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: Sp.sm, marginHorizontal: Sp.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Sp.sm,
+    marginHorizontal: Sp.lg,
     backgroundColor: Design.bg.danger,
-    borderRadius: R.md, borderWidth: 1, borderColor: Colors.error + '44',
+    borderRadius: R.md,
+    borderWidth: 1,
+    borderColor: Colors.error + '44',
     padding: Sp.md,
   },
-  logoutText: { fontFamily: Fonts.title, color: Colors.error, fontSize: 14 },
-  version:    { fontFamily: Fonts.title, color: Design.text.meta, fontSize: 11, textAlign: 'center', marginTop: Sp.lg, paddingBottom: Sp.xl },
+
+  logoutText: {
+    fontFamily: Fonts.title,
+    color: Colors.error,
+    fontSize: 14,
+  },
 });

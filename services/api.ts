@@ -11,6 +11,7 @@ interface ChasseUpdatePayload {
 
 const req = async (path: string, options: RequestInit = {}) => {
   const url = `${API_URL}${path}`;
+  console.log(url)
   const res = await fetch(url, {
     credentials: 'include',
     ...options,
