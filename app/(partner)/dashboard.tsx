@@ -19,11 +19,12 @@ const ETAT_COLOR: Record<string, string> = {
 };
 
 // ─── Card chasse ──────────────────────────────────────────────────────────────
-function ChasseCard({ chasse, onPress, onEdit, onDelete }: {
+function ChasseCard({ chasse, onPress, onEdit, onDelete, isDeleting }: {
   chasse: Chasse;
   onPress: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  isDeleting?: boolean;
 }) {
   const occ        = chasse.occurence?.[0];
   const fmt        = (d?: string) => d ? new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '—';
@@ -75,8 +76,11 @@ function ChasseCard({ chasse, onPress, onEdit, onDelete }: {
           <TouchableOpacity style={card.btnEdit} onPress={onEdit} activeOpacity={0.75}>
             <Ionicons name="pencil-outline" size={15} color={Design.text.accent} />
           </TouchableOpacity>
-          <TouchableOpacity style={card.btnDel} onPress={onDelete} activeOpacity={0.75}>
-            <Ionicons name="trash-outline" size={15} color={Colors.error} />
+          <TouchableOpacity style={[card.btnDel, isDeleting && { opacity: 0.6 }]} onPress={onDelete} activeOpacity={0.75} disabled={isDeleting}>
+            {isDeleting
+              ? <ActivityIndicator size="small" color={Colors.error} />
+              : <Ionicons name="trash-outline" size={15} color={Colors.error} />
+            }
           </TouchableOpacity>
         </View>
       </View>
@@ -94,6 +98,7 @@ export default function Dashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [createVisible, setCreateVisible] = useState(false);
   const [editTarget, setEditTarget] = useState<Chasse | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const loadChasses = useCallback(async () => {
     if (!user?.partener?.id_partenaire) return;
@@ -120,11 +125,14 @@ export default function Dashboard() {
           {
             text: 'Supprimer', style: 'destructive',
             onPress: async () => {
+              setDeletingId(chasse.id_chasse);
               try {
                 await chasseService.delete(chasse.id_chasse);
                 await loadChasses();
               } catch (e: any) {
                 Alert.alert('Erreur suppression', e.message ?? 'Échec');
+              } finally {
+                setDeletingId(null);
               }
             },
           },
@@ -205,6 +213,7 @@ export default function Dashboard() {
                         })}
                         onEdit={() => setEditTarget(item)}
                         onDelete={() => handleDelete(item)}
+                        isDeleting={deletingId === item.id_chasse}
                     />
                 )}
                 ItemSeparatorComponent={() => <View style={{ height: Sp.md }} />}

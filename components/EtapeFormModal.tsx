@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, Modal, ScrollView, TouchableOpacity,
-  KeyboardAvoidingView, Platform, Alert, Image,
+  KeyboardAvoidingView, Platform, Alert, Image, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -148,12 +148,15 @@ export default function EtapeFormModal({
         <SafeAreaView style={s.safe}>
           {/* Header */}
           <View style={s.header}>
-            <TouchableOpacity onPress={onClose} style={s.closeBtn}>
-              <Ionicons name="close" size={22} color={Design.text.label} />
+            <TouchableOpacity onPress={onClose} style={s.closeBtn} disabled={loading}>
+              <Ionicons name="close" size={22} color={loading ? Design.text.meta : Design.text.label} />
             </TouchableOpacity>
             <Text style={s.title}>{isCreate ? 'Nouvelle étape' : "Modifier l'étape"}</Text>
-            <TouchableOpacity onPress={handleSave} disabled={loading} style={[s.saveBtn, loading && { opacity: 0.5 }]}>
-              <Text style={s.saveBtnText}>{loading ? '...' : isCreate ? 'Créer' : 'Sauver'}</Text>
+            <TouchableOpacity onPress={handleSave} disabled={loading} style={[s.saveBtn, loading && { opacity: 0.6 }]}>
+              {loading
+                ? <ActivityIndicator size="small" color={Design.text.onSolid} />
+                : <Text style={s.saveBtnText}>{isCreate ? 'Créer' : 'Sauver'}</Text>
+              }
             </TouchableOpacity>
           </View>
 

@@ -35,9 +35,10 @@ interface EtapeRowProps {
     etape: Etape;
     onEdit: () => void;
     onDelete: () => void;
+    isDeleting?: boolean;
 }
 
-function EtapeRow({ etape, onEdit, onDelete }: EtapeRowProps) {
+function EtapeRow({ etape, onEdit, onDelete, isDeleting }: EtapeRowProps) {
     return (
         <View style={s.etapeCard}>
             <View style={s.rankBadge}>
@@ -79,9 +80,12 @@ function EtapeRow({ etape, onEdit, onDelete }: EtapeRowProps) {
                         <Ionicons name="pencil-outline" size={13} color={Design.text.accent} />
                         <Text style={s.btnEditTxt}>Modifier</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={s.btnDel} onPress={onDelete}>
-                        <Ionicons name="trash-outline" size={13} color={Colors.error} />
-                        <Text style={s.btnDelTxt}>Supprimer</Text>
+                    <TouchableOpacity style={[s.btnDel, isDeleting && { opacity: 0.6 }]} onPress={onDelete} disabled={isDeleting}>
+                        {isDeleting
+                            ? <ActivityIndicator size="small" color={Colors.error} />
+                            : <Ionicons name="trash-outline" size={13} color={Colors.error} />
+                        }
+                        <Text style={s.btnDelTxt}>{isDeleting ? 'Suppression...' : 'Supprimer'}</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -98,6 +102,7 @@ export default function ChasseDetail() {
     const [chasse, setChasse] = useState<Chasse | null>(null);
     const [etapes, setEtapes] = useState<Etape[]>([]);
     const [loading, setLoading] = useState(true);
+    const [deletingId, setDeletingId] = useState<number | null>(null);
 
     const [etapeModal, setEtapeModal] = useState<{
         visible: boolean;
@@ -140,12 +145,14 @@ export default function ChasseDetail() {
                     text: 'Supprimer',
                     style: 'destructive',
                     onPress: async () => {
-                        setEtapes(prev => prev.filter(e => e.id_etape !== etape.id_etape));
+                        setDeletingId(etape.id_etape);
                         try {
                             await etapeService.delete(chasseId, etape.id_etape);
+                            setEtapes(prev => prev.filter(e => e.id_etape !== etape.id_etape));
                         } catch (err: any) {
                             Alert.alert('Erreur', err.message ?? 'Suppression échouée');
-                            load();
+                        } finally {
+                            setDeletingId(null);
                         }
                     },
                 },
@@ -253,6 +260,7 @@ export default function ChasseDetail() {
                                 etape={etape}
                                 onEdit={() => setEtapeModal({ visible: true, mode: 'edit', etape })}
                                 onDelete={() => handleDeleteEtape(etape)}
+                                isDeleting={deletingId === etape.id_etape}
                             />
                         ))
                     )

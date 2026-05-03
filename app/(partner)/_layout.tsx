@@ -1,108 +1,24 @@
-import { Tabs, Redirect } from 'expo-router';
-import { Image, Animated } from 'react-native';
-import { useRef } from 'react';
-
 import { Colors } from '../../constants/theme';
-import LoadingScreen from '../../components/LoadingScreen';
-import { useRoleGuard } from '../../hooks/useRoleGuard';
+import RoleTabLayout from '../../components/RoleTabLayout';
 
-const DASHBOARD_ICON = require('../../assets/images/dashboard.png');
-const PROFIL_ICON = require('../../assets/images/profil.png');
-
-function TabIcon({ source, focused }: { source: any; focused: boolean }) {
-    const scale = useRef(new Animated.Value(1)).current;
-
-    Animated.timing(scale, {
-        toValue: focused ? 1.25 : 1,
-        duration: 180,
-        useNativeDriver: true,
-    }).start();
-
-    return (
-        <Animated.View
-            style={{
-                transform: [{ scale }],
-                alignItems: 'center',
-                justifyContent: 'center',
-                shadowColor: Colors.gold,
-                shadowOpacity: focused ? 0.6 : 0,
-                shadowRadius: 8,
-                shadowOffset: { width: 0, height: 3 },
-            }}
-        >
-            <Image
-                source={source}
-                style={{
-                    width: 36,
-                    height: 36,
-                }}
-                resizeMode="contain"
-            />
-        </Animated.View>
-    );
-}
+const TABS = [
+    { name: 'dashboard', title: 'Dashboard', icon: require('../../assets/images/dashboard.png') },
+    { name: 'profil', title: 'Profil', icon: require('../../assets/images/profil.png') },
+];
 
 export default function PartnerLayout() {
-    const { status, user } = useRoleGuard();
-
-    if (status === 'loading') return <LoadingScreen />;
-    if (status === 'unauthenticated') return <Redirect href="/(auth)/login" />;
-    if (user!.role !== 'PARTENAIRE') return <Redirect href="/(app)/chasses" />;
-
     return (
-        <Tabs
-            screenOptions={{
-                headerShown: false,
-
-                tabBarActiveTintColor: Colors.gold,
-                tabBarInactiveTintColor: Colors.textMuted,
-
-                tabBarStyle: {
-                    backgroundColor: '#0B0907',
-                    borderTopColor: '#2A2118',
-                    height: 110,
-                },
-
-                tabBarLabelStyle: {
-                    fontSize: 11,
-                    fontWeight: '600',
-                },
-            }}
-        >
-
-            <Tabs.Screen
-                name="dashboard"
-                options={{
-                    title: 'Dashboard',
-                    tabBarIcon: ({ focused }) => (
-                        <TabIcon source={DASHBOARD_ICON} focused={focused} />
-                    ),
-                }}
-            />
-
-            <Tabs.Screen
-                name="profil"
-                options={{
-                    title: 'Profil',
-                    tabBarIcon: ({ focused }) => (
-                        <TabIcon source={PROFIL_ICON} focused={focused} />
-                    ),
-                }}
-            />
-
-            <Tabs.Screen
-                name="(components)/add-etape"
-                options={{ href: null }}
-            />
-            <Tabs.Screen
-                name="(components)/chasse-detail"
-                options={{ href: null }}
-            />
-            <Tabs.Screen
-                name="(components)/edit-etape"
-                options={{ href: null }}
-            />
-
-        </Tabs>
+        <RoleTabLayout
+            allowedRole="PARTENAIRE"
+            redirectTo="/(app)/chasses"
+            accentColor={Colors.gold}
+            tabBarHeight={110}
+            tabs={TABS}
+            hiddenScreens={[
+                '(components)/add-etape',
+                '(components)/chasse-detail',
+                '(components)/edit-etape',
+            ]}
+        />
     );
 }

@@ -14,7 +14,7 @@ export type TabConfig = {
 };
 
 type RoleTabLayoutProps = {
-    allowedRole: 'USER' | 'ADMIN' | 'PARTENAIRE';
+    allowedRole: 'JOUEUR' | 'ADMIN' | 'PARTENAIRE';
     redirectTo: string;
     accentColor: string;
     tabBarHeight?: number;

@@ -3,8 +3,6 @@ import * as Location from 'expo-location';
 import { Etape } from '../constants/types';
 import { etapeService } from '../services/api';
 
-const DETECTION_RADIUS = 2;
-
 // ─── Haversine ────────────────────────────────────────────────────────────────
 export function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371000; // rayon Terre en mètres
@@ -79,14 +77,23 @@ export function useHuntTracker(chasseId: number, completedEtapeIds: number[] = [
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted' || cancelled) return;
 
-      watchRef.current = await Location.watchPositionAsync(
-        { accuracy: Location.Accuracy.High, distanceInterval: 3 },
+      const sub = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.BestForNavigation,
+          distanceInterval: 1,
+          timeInterval: 1500,
+        },
         (loc) => {
           if (!cancelled) {
             setPosition({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
           }
         }
       );
+      if (cancelled) {
+        sub.remove();
+        return;
+      }
+      watchRef.current = sub;
     };
 
     init();
@@ -111,7 +118,7 @@ export function useHuntTracker(chasseId: number, completedEtapeIds: number[] = [
     );
     const rounded = Math.round(dist);
     setDistance(rounded);
-    setIsInRadius(rounded <= DETECTION_RADIUS);
+    setIsInRadius(dist <= (etape.rayon ?? 30));
   }, [position, etapes, currentIndex]);
 
   const advanceOnly = useCallback(() => {

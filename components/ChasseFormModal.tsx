@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, Modal, ScrollView, TouchableOpacity,
-  KeyboardAvoidingView, Platform, Alert, Image,
+  KeyboardAvoidingView, Platform, Alert, Image, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -79,12 +79,15 @@ export default function ChasseFormModal({ visible, mode, chasse, onClose, onSave
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <SafeAreaView style={s.safe}>
         <View style={s.header}>
-          <TouchableOpacity onPress={onClose} style={s.closeBtn}>
-            <Ionicons name="close" size={22} color={Design.text.label} />
+          <TouchableOpacity onPress={onClose} style={s.closeBtn} disabled={loading}>
+            <Ionicons name="close" size={22} color={loading ? Design.text.meta : Design.text.label} />
           </TouchableOpacity>
           <Text style={s.title}>{title}</Text>
-          <TouchableOpacity onPress={handleSave} disabled={loading} style={[s.saveBtn, loading && { opacity: 0.5 }]}>
-            <Text style={s.saveBtnText}>{loading ? '...' : saveLabel}</Text>
+          <TouchableOpacity onPress={handleSave} disabled={loading} style={[s.saveBtn, loading && { opacity: 0.6 }]}>
+            {loading
+              ? <ActivityIndicator size="small" color={Design.text.onSolid} />
+              : <Text style={s.saveBtnText}>{saveLabel}</Text>
+            }
           </TouchableOpacity>
         </View>
 

@@ -19,6 +19,7 @@ export default function UsersScreen() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [selected, setSelected] = useState<User | null>(null);
+    const [validating, setValidating] = useState(false);
 
     const load = useCallback(async () => {
         try {
@@ -58,21 +59,31 @@ export default function UsersScreen() {
                 {
                     text: 'Activer',
                     onPress: async () => {
+                        setValidating(true);
                         try {
                             await adminService.validatePartenaire(user.partener!.id_partenaire, 'ACTIVE');
                             setSelected(null);
                             await load();
-                        } catch (e: any) { Alert.alert('Erreur', e.message); }
+                        } catch (e: any) {
+                            Alert.alert('Erreur', e.message);
+                        } finally {
+                            setValidating(false);
+                        }
                     },
                 },
                 {
                     text: 'Rejeter', style: 'destructive',
                     onPress: async () => {
+                        setValidating(true);
                         try {
                             await adminService.validatePartenaire(user.partener!.id_partenaire, 'INACTIVE');
                             setSelected(null);
                             await load();
-                        } catch (e: any) { Alert.alert('Erreur', e.message); }
+                        } catch (e: any) {
+                            Alert.alert('Erreur', e.message);
+                        } finally {
+                            setValidating(false);
+                        }
                     },
                 },
             ]
@@ -237,13 +248,19 @@ export default function UsersScreen() {
                                 <>
                                     <Text style={st.modalSection}>Actions</Text>
                                     <View style={st.actionsCol}>
-                                        <TouchableOpacity
-                                            style={st.btnValidate}
+                                                        <TouchableOpacity
+                                            style={[st.btnValidate, validating && { opacity: 0.6 }]}
                                             onPress={() => handleValidatePartner(selected)}
                                             activeOpacity={0.8}
+                                            disabled={validating}
                                         >
-                                            <Ionicons name="shield-checkmark-outline" size={18} color="#fff" />
-                                            <Text style={st.btnValidateText}>Valider / Rejeter le partenaire</Text>
+                                            {validating
+                                                ? <ActivityIndicator size="small" color="#fff" />
+                                                : <Ionicons name="shield-checkmark-outline" size={18} color="#fff" />
+                                            }
+                                            <Text style={st.btnValidateText}>
+                                                {validating ? 'En cours...' : 'Valider / Rejeter le partenaire'}
+                                            </Text>
                                         </TouchableOpacity>
                                     </View>
                                 </>
