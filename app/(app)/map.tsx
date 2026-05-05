@@ -6,10 +6,31 @@ import {
 import MapView, { Marker, Circle, Polyline } from 'react-native-maps';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import LottieView from 'lottie-react-native';
 import { Colors, Sp, R } from '@/constants/theme';
 import { useHuntTracker } from '@/hooks/useHuntTracker';
 import { useHuntStore } from '@/store/huntStore';
 import { chasseService, etapeService } from '@/services/api';
+
+// ─── Toast validation étape ───────────────────────────────────────────────────
+function StepSuccessToast({ onDone }: { onDone: () => void }) {
+  return (
+    <View style={ss.wrap} pointerEvents="none">
+      <LottieView
+        source={require('@/assets/animations/yellowsuccess.json')}
+        autoPlay
+        loop={false}
+        onAnimationFinish={onDone}
+        style={ss.lottie}
+      />
+    </View>
+  );
+}
+
+const ss = StyleSheet.create({
+  wrap:   { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: 90 },
+  lottie: { width: 220, height: 220 },
+});
 
 // ─── Overlay victoire ─────────────────────────────────────────────────────────
 function VictoryOverlay({ onDismiss }: { onDismiss: () => void }) {
@@ -25,8 +46,25 @@ function VictoryOverlay({ onDismiss }: { onDismiss: () => void }) {
 
   return (
     <Animated.View style={[vc.overlay, { opacity }]}>
+      {/* Confettis plein écran */}
+      <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+        <LottieView
+          source={require('@/assets/animations/confetti.json')}
+          autoPlay
+          loop
+          style={{ flex: 1 }}
+        />
+      </View>
+
       <Animated.View style={[vc.card, { transform: [{ scale }] }]}>
-        <Ionicons name="trophy" size={64} color={Colors.gold} />
+        <View style={{ width: 160, height: 160 }}>
+          <LottieView
+            source={require('@/assets/animations/Trophy.json')}
+            autoPlay
+            loop
+            style={{ flex: 1 }}
+          />
+        </View>
         <Text style={vc.title}>Félicitations !</Text>
         <Text style={vc.sub}>Vous avez terminé toutes les étapes</Text>
         <TouchableOpacity style={vc.btn} onPress={onDismiss}>
@@ -47,7 +85,8 @@ const vc = StyleSheet.create({
   card: {
     backgroundColor: Colors.bgCard, borderRadius: R.xl,
     borderWidth: 1, borderColor: Colors.gold + '44',
-    padding: Sp.xxl, alignItems: 'center', gap: 12,
+    paddingHorizontal: Sp.xxl, paddingBottom: Sp.xxl, paddingTop: Sp.lg,
+    alignItems: 'center', gap: 8,
     marginHorizontal: Sp.xl,
   },
   title:   { fontSize: 28, fontWeight: '800', color: Colors.gold },
@@ -66,6 +105,7 @@ export default function MapScreen() {
   const [completedEtapeIds, setCompletedEtapeIds] = useState<number[]>([]);
   const [loadingChasse, setLoadingChasse]         = useState(true);
   const [showVictory, setShowVictory]             = useState(false);
+  const [showStepSuccess, setShowStepSuccess]     = useState(false);
 
   const digPanelY = useRef(new Animated.Value(220)).current;
 
@@ -94,7 +134,9 @@ export default function MapScreen() {
     if (pendingValidation && activeChasseId && tracker.currentEtape) {
       setPendingValidation(false);
       etapeService.validate(activeChasseId, tracker.currentEtape.id_etape).catch(() => {});
+      const isLastStep = tracker.currentIndex === tracker.etapes.length - 1;
       tracker.advanceOnly();
+      if (!isLastStep) setShowStepSuccess(true);
     }
   }, [pendingValidation, activeChasseId, tracker.currentEtape]);
 
@@ -261,6 +303,11 @@ export default function MapScreen() {
           <Text style={st.arBtnText}>Lancer la Réalité Augmentée</Text>
         </TouchableOpacity>
       </Animated.View>
+
+      {/* ─── Toast validation étape ─────────────────────────────────────────── */}
+      {showStepSuccess && (
+        <StepSuccessToast onDone={() => setShowStepSuccess(false)} />
+      )}
 
       {/* ─── Overlay victoire ───────────────────────────────────────────────── */}
       {showVictory && (

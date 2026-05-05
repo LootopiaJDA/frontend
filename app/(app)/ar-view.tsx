@@ -14,7 +14,8 @@ import {
   Animated, Easing, Dimensions, SafeAreaView,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { Magnetometer } from 'expo-sensors';
+import LottieView from 'lottie-react-native';
+import { DeviceMotion } from 'expo-sensors';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -38,68 +39,12 @@ function getBearing(lat1: number, lon1: number, lat2: number, lon2: number): num
   return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
 
-/** Cap boussole depuis le magnétomètre (0-360°, 0 = Nord) */
-function getMagHeading(mx: number, my: number): number {
-  return ((Math.atan2(-my, mx) * 180) / Math.PI + 360) % 360;
-}
-
 /** Différence angulaire signée normalisée entre -180 et 180 */
 function angleDiff(a: number, b: number): number {
   let d = ((a - b + 180) % 360) - 180;
   if (d < -180) d += 360;
   return d;
 }
-
-// ─── Coffre au trésor ─────────────────────────────────────────────────────────
-function TreasureChest({ scale }: { scale: Animated.Value }) {
-  return (
-    <Animated.View style={[ch.wrap, { transform: [{ scale }] }]}>
-      <View style={ch.lid}>
-        <View style={ch.lidBand} />
-        <View style={ch.lockWrap}>
-          <View style={ch.lockCircle} />
-          <View style={ch.lockSlot} />
-        </View>
-        <View style={[ch.rivet, { left: 8, top: 8 }]} />
-        <View style={[ch.rivet, { right: 8, top: 8 }]} />
-      </View>
-      <View style={ch.hinge}>
-        <View style={ch.hingeKnob} />
-        <View style={ch.hingeKnob} />
-        <View style={ch.hingeKnob} />
-      </View>
-      <View style={ch.base}>
-        <View style={ch.band} />
-        <View style={ch.band} />
-        <View style={[ch.rivet, { left: 8, bottom: 8 }]} />
-        <View style={[ch.rivet, { right: 8, bottom: 8 }]} />
-      </View>
-    </Animated.View>
-  );
-}
-
-const ch = StyleSheet.create({
-  wrap:       { alignItems: 'center', width: 160 },
-  lid: {
-    width: 160, height: 55, backgroundColor: '#5C2E0A',
-    borderRadius: 12, borderWidth: 2, borderColor: Colors.gold + '88',
-    borderBottomWidth: 0, alignItems: 'center', justifyContent: 'center', position: 'relative',
-  },
-  lidBand:    { position: 'absolute', height: 10, left: 0, right: 0, backgroundColor: Colors.gold + '55', borderRadius: 2 },
-  lockWrap:   { alignItems: 'center', marginTop: 6 },
-  lockCircle: { width: 18, height: 18, borderRadius: 9, borderWidth: 2.5, borderColor: Colors.gold, backgroundColor: '#3a1a05' },
-  lockSlot:   { width: 7, height: 10, backgroundColor: Colors.gold, borderRadius: 3, marginTop: -4 },
-  rivet:      { position: 'absolute', width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.gold },
-  hinge:      { flexDirection: 'row', justifyContent: 'space-around', width: 120, height: 10, marginBottom: -2 },
-  hingeKnob:  { width: 14, height: 10, backgroundColor: Colors.gold, borderRadius: 2 },
-  base: {
-    width: 160, height: 80, backgroundColor: '#7A3D12',
-    borderRadius: 8, borderWidth: 2, borderColor: Colors.gold + '88',
-    borderTopWidth: 1, justifyContent: 'space-evenly', alignItems: 'center',
-    overflow: 'hidden', position: 'relative',
-  },
-  band: { height: 10, width: '90%', backgroundColor: Colors.gold + '44', borderRadius: 2 },
-});
 
 // ─── Indicateur de direction ──────────────────────────────────────────────────
 function CompassArrow({ diff }: { diff: number }) {
@@ -149,8 +94,8 @@ export default function ArViewScreen() {
   const chestX        = useRef(new Animated.Value(0)).current;
   const glowOpacity   = useRef(new Animated.Value(0)).current;
   const btnOpacity    = useRef(new Animated.Value(0)).current;
-  const flashOpacity  = useRef(new Animated.Value(0)).current;
   const floatLoop     = useRef<Animated.CompositeAnimation | null>(null);
+  const lottieRef     = useRef<LottieView>(null);
 
   // ─── Permissions caméra ───────────────────────────────────────────────────
   useEffect(() => {
@@ -178,11 +123,14 @@ export default function ArViewScreen() {
     setBearing(b);
   }, [userPos, lat, lng]);
 
-  // ─── Magnétomètre → cap boussole ─────────────────────────────────────────
+  // ─── DeviceMotion → cap boussole compensé (fonctionne téléphone vertical) ──
   useEffect(() => {
-    Magnetometer.setUpdateInterval(100);
-    const sub = Magnetometer.addListener(({ x, y }) => {
-      setHeading(getMagHeading(x, y));
+    DeviceMotion.setUpdateInterval(100);
+    const sub = DeviceMotion.addListener(({ rotation }) => {
+      if (rotation) {
+        const deg = ((rotation.alpha * 180) / Math.PI + 360) % 360;
+        setHeading(deg);
+      }
     });
     return () => sub.remove();
   }, []);
@@ -244,20 +192,20 @@ export default function ArViewScreen() {
   }, []);
 
   // ─── Validation ───────────────────────────────────────────────────────────
-  const handleValidate = async () => {
+  const handleValidate = () => {
     if (validating || validated) return;
     setValidating(true);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-    // Flash
-    Animated.sequence([
-      Animated.timing(flashOpacity, { toValue: 0.9, duration: 120, useNativeDriver: true }),
-      Animated.timing(flashOpacity, { toValue: 0,   duration: 400, useNativeDriver: true }),
-    ]).start();
-
     setValidated(true);
     setPendingValidation(true);
-    setTimeout(() => router.navigate({ pathname: '/(app)/map', params: { chasseId } }), 600);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+    // Stoppe le flottement et centre le coffre pour l'ouverture
+    floatLoop.current?.stop();
+    Animated.spring(chestX, { toValue: 0, useNativeDriver: true, tension: 80, friction: 10 }).start();
+    Animated.spring(chestY, { toValue: 0, useNativeDriver: true, tension: 80, friction: 10 }).start();
+
+    // Lance l'animation d'ouverture
+    lottieRef.current?.play();
   };
 
   // ─── Écran de permission ──────────────────────────────────────────────────
@@ -317,7 +265,18 @@ export default function ArViewScreen() {
         >
           {/* Halo */}
           <Animated.View style={[st.glow, { opacity: glowOpacity }]} />
-          <TreasureChest scale={chestScale} />
+          <Animated.View style={{ transform: [{ scale: chestScale }] }}>
+            <LottieView
+              ref={lottieRef}
+              source={require('@/assets/animations/ChestOpening.json')}
+              autoPlay={false}
+              loop={false}
+              style={{ width: 220, height: 220 }}
+              onAnimationFinish={() =>
+                router.navigate({ pathname: '/(app)/map', params: { chasseId } })
+              }
+            />
+          </Animated.View>
           <Text style={st.chestLabel}>Trésor localisé !</Text>
         </Animated.View>
 
@@ -353,8 +312,6 @@ export default function ArViewScreen() {
         </View>
       </SafeAreaView>
 
-      {/* Flash de validation */}
-      <Animated.View style={[st.flash, { opacity: flashOpacity }]} pointerEvents="none" />
     </View>
   );
 }
@@ -450,8 +407,6 @@ const st = StyleSheet.create({
   },
   validateBtnDone: { backgroundColor: '#4ecb8a' },
   validateBtnText: { fontSize: 16, fontWeight: '800', color: Colors.black },
-
-  flash: { ...StyleSheet.absoluteFillObject, backgroundColor: '#fff', zIndex: 200 },
 
   // Écran permission
   permScreen: { flex: 1, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center', gap: Sp.lg, padding: Sp.xl },
