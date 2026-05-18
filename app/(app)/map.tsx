@@ -12,6 +12,37 @@ import { useHuntTracker } from '@/hooks/useHuntTracker';
 import { useHuntStore } from '@/store/huntStore';
 import { chasseService, etapeService } from '@/services/api';
 
+// ─── Score flottant +100 pts ──────────────────────────────────────────────────
+function FloatingPoints({ visible, onDone }: { visible: boolean; onDone: () => void }) {
+  const y       = useRef(new Animated.Value(0)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!visible) return;
+    y.setValue(0);
+    opacity.setValue(0);
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(opacity, { toValue: 1, duration: 150, useNativeDriver: true }),
+        Animated.timing(y, { toValue: -80, duration: 900, useNativeDriver: true }),
+      ]),
+      Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: true }),
+    ]).start(onDone);
+  }, [visible]);
+
+  if (!visible) return null;
+  return (
+    <Animated.View style={[fp.wrap, { opacity, transform: [{ translateY: y }] }]} pointerEvents="none">
+      <Text style={fp.text}>+100 pts</Text>
+    </Animated.View>
+  );
+}
+
+const fp = StyleSheet.create({
+  wrap: { position: 'absolute', alignSelf: 'center', bottom: 180, zIndex: 95 },
+  text: { fontSize: 28, fontWeight: '900', color: '#F9D342', textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 6 },
+});
+
 // ─── Toast validation étape ───────────────────────────────────────────────────
 function StepSuccessToast({ onDone }: { onDone: () => void }) {
   return (
@@ -33,7 +64,7 @@ const ss = StyleSheet.create({
 });
 
 // ─── Overlay victoire ─────────────────────────────────────────────────────────
-function VictoryOverlay({ onDismiss }: { onDismiss: () => void }) {
+function VictoryOverlay({ onDismiss, score }: { onDismiss: () => void; score: number }) {
   const scale   = useRef(new Animated.Value(0.5)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
@@ -66,6 +97,7 @@ function VictoryOverlay({ onDismiss }: { onDismiss: () => void }) {
           />
         </View>
         <Text style={vc.title}>Félicitations !</Text>
+        <Text style={vc.score}>{score} pts</Text>
         <Text style={vc.sub}>Vous avez terminé toutes les étapes</Text>
         <TouchableOpacity style={vc.btn} onPress={onDismiss}>
           <Text style={vc.btnText}>Retour aux chasses</Text>
@@ -90,6 +122,7 @@ const vc = StyleSheet.create({
     marginHorizontal: Sp.xl,
   },
   title:   { fontSize: 28, fontWeight: '800', color: Colors.gold },
+  score:   { fontSize: 36, fontWeight: '900', color: '#F9D342', letterSpacing: 1 },
   sub:     { fontSize: 14, color: Colors.textSecondary, textAlign: 'center' },
   btn:     { marginTop: Sp.md, backgroundColor: Colors.gold, paddingHorizontal: 32, paddingVertical: 14, borderRadius: R.full },
   btnText: { fontSize: 15, fontWeight: '800', color: Colors.black },
@@ -99,18 +132,20 @@ const vc = StyleSheet.create({
 export default function MapScreen() {
   const params = useLocalSearchParams<{ chasseId?: string }>();
   const router = useRouter();
-  const { pendingValidation, setPendingValidation } = useHuntStore();
+  const { pendingValidation, setPendingValidation, sessionScore, addPoints, resetScore } = useHuntStore();
 
   const [activeChasseId, setActiveChasseId]       = useState<number | null>(null);
   const [completedEtapeIds, setCompletedEtapeIds] = useState<number[]>([]);
   const [loadingChasse, setLoadingChasse]         = useState(true);
   const [showVictory, setShowVictory]             = useState(false);
   const [showStepSuccess, setShowStepSuccess]     = useState(false);
+  const [showFloatingPts, setShowFloatingPts]     = useState(false);
 
   const digPanelY = useRef(new Animated.Value(220)).current;
 
   // ─── Résolution de la chasse active + progression ───────────────────────────
   useFocusEffect(useCallback(() => {
+    resetScore();
     setLoadingChasse(true);
     chasseService.getMe()
       .then(data => {
@@ -135,8 +170,12 @@ export default function MapScreen() {
       setPendingValidation(false);
       etapeService.validate(activeChasseId, tracker.currentEtape.id_etape).catch(() => {});
       const isLastStep = tracker.currentIndex === tracker.etapes.length - 1;
+      addPoints(100);
       tracker.advanceOnly();
-      if (!isLastStep) setShowStepSuccess(true);
+      if (!isLastStep) {
+        setShowStepSuccess(true);
+        setShowFloatingPts(true);
+      }
     }
   }, [pendingValidation, activeChasseId, tracker.currentEtape]);
 
@@ -190,7 +229,7 @@ export default function MapScreen() {
     );
   }
 
-  if (loadingChasse || tracker.loading || !tracker.position) {
+  if ((loadingChasse && activeChasseId === null) || tracker.loading || !tracker.position) {
     return (
       <View style={[st.safe, st.center]}>
         <ActivityIndicator size="large" color={Colors.gold} />
@@ -304,6 +343,9 @@ export default function MapScreen() {
         </TouchableOpacity>
       </Animated.View>
 
+      {/* ─── Score flottant ─────────────────────────────────────────────────── */}
+      <FloatingPoints visible={showFloatingPts} onDone={() => setShowFloatingPts(false)} />
+
       {/* ─── Toast validation étape ─────────────────────────────────────────── */}
       {showStepSuccess && (
         <StepSuccessToast onDone={() => setShowStepSuccess(false)} />
@@ -311,10 +353,13 @@ export default function MapScreen() {
 
       {/* ─── Overlay victoire ───────────────────────────────────────────────── */}
       {showVictory && (
-        <VictoryOverlay onDismiss={() => {
-          setShowVictory(false);
-          router.push('/(app)/chasses');
-        }} />
+        <VictoryOverlay
+          score={sessionScore + 200}
+          onDismiss={() => {
+            setShowVictory(false);
+            router.push('/(app)/chasses');
+          }}
+        />
       )}
     </View>
   );

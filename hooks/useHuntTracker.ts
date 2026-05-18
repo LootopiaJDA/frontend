@@ -80,8 +80,8 @@ export function useHuntTracker(chasseId: number, completedEtapeIds: number[] = [
       const sub = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.BestForNavigation,
-          distanceInterval: 1,
-          timeInterval: 1500,
+          distanceInterval: 0,
+          timeInterval: 500,
         },
         (loc) => {
           if (!cancelled) {
