@@ -105,8 +105,7 @@ export default function Dashboard() {
     try {
       const data = await chasseService.getByPartenaire(user.partener.id_partenaire);
       setChasses(data.chasseByPart ?? []);
-    } catch (err) {
-      console.log('Erreur chargement chasses :', err);
+    } catch {
     } finally {
       setLoading(false);
       setRefreshing(false);

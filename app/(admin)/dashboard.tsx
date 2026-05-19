@@ -39,8 +39,7 @@ export default function AdminDashboard() {
                 partenairesEnAttente: partenaires.filter((p: any) => p.statut === 'VERIFICATION').length,
                 partenairesActifs:    partenaires.filter((p: any) => p.statut === 'ACTIVE').length,
             });
-        } catch (err) {
-            console.log('Erreur stats admin:', err);
+        } catch {
         } finally {
             setLoading(false);
         }

@@ -67,8 +67,7 @@ export function useHuntTracker(chasseId: number, completedEtapeIds: number[] = [
             setCurrentIndex(firstPending === -1 ? sorted.length : firstPending);
           }
         }
-      } catch (err) {
-        console.log('Erreur chargement étapes:', err);
+      } catch {
       } finally {
         if (!cancelled) setLoading(false);
       }

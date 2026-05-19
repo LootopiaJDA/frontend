@@ -1,15 +1,17 @@
 import { create } from 'zustand';
 
-/**
- * Store Zustand partagé entre la carte et l'écran AR.
- * Permet à ar-view.tsx de signaler à map.tsx qu'une étape a été validée.
- */
 interface HuntStore {
   pendingValidation: boolean;
   setPendingValidation: (v: boolean) => void;
+  sessionScore: number;
+  addPoints: (pts: number) => void;
+  resetScore: () => void;
 }
 
 export const useHuntStore = create<HuntStore>((set) => ({
   pendingValidation: false,
   setPendingValidation: (v) => set({ pendingValidation: v }),
+  sessionScore: 0,
+  addPoints: (pts) => set((s) => ({ sessionScore: s.sessionScore + pts })),
+  resetScore: () => set({ sessionScore: 0 }),
 }));

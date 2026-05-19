@@ -6,35 +6,189 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { chasseService } from '../../../services/api';
-import { ChasseDetail } from '../../../constants/types';
+import LottieView from 'lottie-react-native';
+import { chasseService, scoreService } from '../../../services/api';
+import { ChasseDetail, ScoreBoard } from '../../../constants/types';
 import { Colors, Sp, R } from '../../../constants/theme';
 import Btn from '../../../components/Btn';
+import { useAuth } from '../../../context/AuthContext';
 
 const MAP_BG = require('../../../assets/images/parchemin-tresor.png');
 
+// ─── Podium ───────────────────────────────────────────────────────────────────
+interface PodiumProps {
+  scores: ScoreBoard[];
+  currentUserId?: number;
+}
+
+function PodiumSection({ scores, currentUserId }: PodiumProps) {
+  const MEDALS = [
+    { color: '#FFD700', bg: '#FFD70022', rank: '1er' },
+    { color: '#C0C0C0', bg: '#C0C0C022', rank: '2ème' },
+    { color: '#CD7F32', bg: '#CD7F3222', rank: '3ème' },
+  ];
+
+  // Entrées avec score > 0 pour le top 3
+  const ranked   = scores.filter(s => s.score > 0).slice(0, 3);
+  // Entrée du joueur courant (même si score=0)
+  const myEntry  = currentUserId ? scores.find(s => s.id_user === currentUserId) : null;
+  const myInTop3 = ranked.some(s => s.id_user === currentUserId);
+
+  return (
+    <View style={pd.wrap}>
+      {/* Animation podium */}
+      <View style={pd.lottiWrap} pointerEvents="none">
+        <LottieView
+          source={require('../../../assets/animations/PrizePodium.json')}
+          autoPlay
+          loop
+          style={pd.lottie}
+        />
+      </View>
+
+      <View style={pd.header}>
+        <View style={pd.sectionLine} />
+        <Text style={pd.sectionTitle}>CLASSEMENT</Text>
+        <View style={pd.sectionLine} />
+      </View>
+
+      {/* Points à gagner */}
+      <View style={pd.pointsCard}>
+        <Ionicons name="trophy-outline" size={16} color={Colors.gold} />
+        <Text style={pd.pointsText}>
+          Récompense : <Text style={pd.pointsBold}>100 pts</Text> par chasse complétée
+        </Text>
+      </View>
+
+      {/* Top 3 */}
+      {ranked.length === 0 ? (
+        <View style={pd.empty}>
+          <Ionicons name="people-outline" size={28} color={Colors.textMuted} />
+          <Text style={pd.emptyText}>Aucun joueur classé pour l'instant</Text>
+          <Text style={pd.emptySubText}>Soyez le premier à terminer cette chasse !</Text>
+        </View>
+      ) : (
+        <View style={pd.rows}>
+          {ranked.map((s, i) => {
+            const medal = MEDALS[i];
+            const isMe  = s.id_user === currentUserId;
+            return (
+              <View key={s.id_score} style={[pd.row, { borderColor: isMe ? Colors.gold + '88' : medal.color + '44' }]}>
+                <View style={[pd.medal, { backgroundColor: medal.bg, borderColor: medal.color + '66' }]}>
+                  <Text style={[pd.medalText, { color: medal.color }]}>{medal.rank}</Text>
+                </View>
+                <View style={pd.playerInfo}>
+                  <Text style={pd.playerName}>
+                    {isMe ? 'Vous' : `Joueur #${s.id_user}`}
+                  </Text>
+                  {isMe && <Text style={pd.playerYouTag}>· votre score</Text>}
+                </View>
+                <View style={pd.scoreWrap}>
+                  <Text style={[pd.scoreVal, { color: isMe ? Colors.gold : medal.color }]}>{s.score * 100}</Text>
+                  <Text style={pd.scorePts}>pts</Text>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      )}
+
+      {/* Entrée du joueur courant hors top 3 */}
+      {myEntry && !myInTop3 && (
+        <View style={pd.myScoreRow}>
+          <Ionicons name="person-circle-outline" size={16} color={Colors.gold} />
+          <Text style={pd.myScoreLabel}>Votre score</Text>
+          <Text style={pd.myScoreVal}>{myEntry.score * 100} pts</Text>
+          {myEntry.score === 0 && (
+            <Text style={pd.myScoreHint}>· terminez la chasse pour marquer !</Text>
+          )}
+        </View>
+      )}
+    </View>
+  );
+}
+
+const pd = StyleSheet.create({
+  wrap:        { gap: Sp.sm },
+  lottiWrap:   { alignItems: 'center', height: 140, marginBottom: -Sp.md },
+  lottie:      { width: 200, height: 200 },
+  header:      { flexDirection: 'row', alignItems: 'center', gap: Sp.md, paddingTop: 50 },
+  sectionLine: { flex: 1, height: 1, backgroundColor: Colors.borderWarm },
+  sectionTitle:{ fontSize: 11, fontWeight: '800', color: Colors.gold, letterSpacing: 2, textAlign: 'center' },
+  pointsCard:  {
+    flexDirection: 'row', alignItems: 'center', gap: Sp.sm,
+    backgroundColor: Colors.bgCard, borderRadius: R.lg,
+    borderWidth: 1, borderColor: Colors.borderWarm,
+    padding: Sp.md, flexWrap: 'wrap',
+  },
+  pointsText:  { fontSize: 14, color: Colors.textPrimary, flex: 1 },
+  pointsBold:  { color: Colors.gold, fontWeight: '800' },
+  myScoreRow:  {
+    flexDirection: 'row', alignItems: 'center', gap: Sp.sm,
+    backgroundColor: Colors.goldGlow, borderRadius: R.lg,
+    borderWidth: 1, borderColor: Colors.gold + '44',
+    padding: Sp.md,
+  },
+  myScoreLabel: { fontSize: 13, color: Colors.gold, fontWeight: '700' },
+  myScoreVal:   { fontSize: 14, color: Colors.gold, fontWeight: '900' },
+  myScoreHint:  { fontSize: 11, color: Colors.textMuted, flex: 1 },
+  playerYouTag: { fontSize: 10, color: Colors.gold, fontWeight: '700' },
+  empty:       {
+    backgroundColor: Colors.bgCard, borderRadius: R.lg, padding: Sp.lg,
+    alignItems: 'center', gap: Sp.sm, borderWidth: 1, borderColor: Colors.borderWarm,
+  },
+  emptyText:    { fontSize: 14, color: Colors.textMuted, fontWeight: '700' },
+  emptySubText: { fontSize: 12, color: Colors.textMuted, textAlign: 'center' },
+  rows:        { gap: Sp.sm },
+  row:         {
+    flexDirection: 'row', alignItems: 'center', gap: Sp.md,
+    backgroundColor: Colors.bgCard, borderRadius: R.lg,
+    borderWidth: 1, padding: Sp.md,
+  },
+  medal:       {
+    width: 44, height: 44, borderRadius: R.sm,
+    borderWidth: 1, alignItems: 'center', justifyContent: 'center',
+  },
+  medalText:   { fontSize: 12, fontWeight: '900' },
+  playerInfo:  { flex: 1 },
+  playerName:  { fontSize: 14, fontWeight: '700', color: Colors.textPrimary },
+  scoreWrap:   { alignItems: 'flex-end' },
+  scoreVal:    { fontSize: 20, fontWeight: '900' },
+  scorePts:    { fontSize: 10, color: Colors.textMuted, fontWeight: '700' },
+});
+
+// ─── Écran principal ──────────────────────────────────────────────────────────
 export default function ChasseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router  = useRouter();
   const chasseId = Number(id);
+  const { user } = useAuth();
 
-  const [chasse, setChasse]             = useState<ChasseDetail | null>(null);
-  const [loading, setLoading]           = useState(true);
-  const [joining, setJoining]           = useState(false);
-  const [alreadyJoined, setAlreadyJoined] = useState(false);
+  const [chasse, setChasse]                 = useState<ChasseDetail | null>(null);
+  const [scores, setScores]                 = useState<ScoreBoard[]>([]);
+  const [loading, setLoading]               = useState(true);
+  const [joining, setJoining]               = useState(false);
+  const [alreadyJoined, setAlreadyJoined]   = useState(false);
+  const [alreadyCompleted, setAlreadyCompleted] = useState(false);
   const [hasOtherActive, setHasOtherActive] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [detail, meData] = await Promise.all([
+      const [detail, meData, allScores] = await Promise.all([
         chasseService.getById(chasseId),
         chasseService.getMe().catch(() => ({ chasses: [] })),
+        scoreService.getAll().catch(() => [] as ScoreBoard[]),
       ]);
       setChasse(detail);
       const uc = meData.chasses ?? [];
+      setAlreadyCompleted(uc.some(u => u.id_chasse === chasseId && u.statut === 'COMPLETED'));
       setAlreadyJoined(uc.some(u => u.id_chasse === chasseId && u.statut === 'IN_PROGRESS'));
       setHasOtherActive(uc.some(u => u.id_chasse !== chasseId && u.statut === 'IN_PROGRESS'));
+      const chasseScores = (allScores as ScoreBoard[])
+        .filter(s => s.id_chasse === chasseId)
+        .sort((a, b) => b.score - a.score);
+      setScores(chasseScores);
     } catch {
       /* silencieux */
     } finally {
@@ -48,9 +202,11 @@ export default function ChasseDetailScreen() {
     setJoining(true);
     try {
       await chasseService.join(chasseId);
+      await scoreService.create(chasseId);
       setAlreadyJoined(true);
     } catch (err: any) {
       if (err.message?.toLowerCase().includes('already') || err.message?.toLowerCase().includes('inscription')) {
+        await scoreService.create(chasseId);
         setAlreadyJoined(true);
       } else {
         Alert.alert('Erreur', err.message ?? 'Impossible de rejoindre la chasse');
@@ -113,12 +269,17 @@ export default function ChasseDetailScreen() {
                   {isActive ? 'Active' : chasse.etat}
                 </Text>
               </View>
-              {alreadyJoined && (
+              {alreadyCompleted ? (
+                <View style={[st.badge, { borderColor: Colors.gold }]}>
+                  <Ionicons name="trophy" size={12} color={Colors.gold} />
+                  <Text style={[st.badgeText, { color: Colors.gold }]}>Terminée</Text>
+                </View>
+              ) : alreadyJoined ? (
                 <View style={[st.badge, { borderColor: Colors.success }]}>
                   <Ionicons name="checkmark-circle" size={12} color={Colors.success} />
                   <Text style={[st.badgeText, { color: Colors.success }]}>Inscrit</Text>
                 </View>
-              )}
+              ) : null}
             </View>
             <Text style={st.coverTitle}>{chasse.name}</Text>
           </View>
@@ -154,6 +315,9 @@ export default function ChasseDetailScreen() {
             </View>
           )}
 
+          {/* ── Podium & Points ── */}
+          <PodiumSection scores={scores} currentUserId={user?.id_user} />
+
           {/* ── Étapes ── */}
           <View style={st.sectionHeader}>
             <View style={st.sectionLine} />
@@ -177,7 +341,12 @@ export default function ChasseDetailScreen() {
                     <Text style={st.etapeNumText}>{i + 1}</Text>
                   </View>
                   <View style={st.etapeInfo}>
-                    <Text style={st.etapeName}>{etape.name}</Text>
+                    <View style={st.etapeTopRow}>
+                      <Text style={st.etapeName}>{etape.name}</Text>
+                      <View style={st.etapePtsBadge}>
+                        <Text style={st.etapePtsText}>+100 pts</Text>
+                      </View>
+                    </View>
                     {etape.address ? (
                       <View style={st.etapeAddrRow}>
                         <Ionicons name="location-outline" size={12} color={Colors.gold} />
@@ -195,7 +364,15 @@ export default function ChasseDetailScreen() {
 
           {/* ── CTA ── */}
           <View style={st.cta}>
-            {!isActive ? (
+            {alreadyCompleted ? (
+              <View style={st.completedBanner}>
+                <Ionicons name="trophy" size={20} color={Colors.gold} />
+                <View style={{ flex: 1 }}>
+                  <Text style={st.completedTitle}>Chasse terminée !</Text>
+                  <Text style={st.completedSub}>Vous avez déjà complété cette chasse et remporté vos points.</Text>
+                </View>
+              </View>
+            ) : !isActive ? (
               <View style={st.infoBanner}>
                 <Ionicons name="time-outline" size={18} color={Colors.parchment} />
                 <Text style={st.infoBannerText}>{"Cette chasse n'est pas encore active"}</Text>
@@ -249,7 +426,6 @@ const st = StyleSheet.create({
   coverGradient: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'transparent',
-    // Gradient simulé : transparent en haut, sombre en bas
     borderBottomWidth: 0,
   },
   coverContent: {
@@ -316,9 +492,16 @@ const st = StyleSheet.create({
     backgroundColor: Colors.goldGlow, borderWidth: 1, borderColor: Colors.gold + '66',
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  etapeNumText: { fontSize: 13, fontWeight: '900', color: Colors.gold },
-  etapeInfo:    { flex: 1, gap: 4 },
-  etapeName:    { fontSize: 16, fontWeight: '700', color: Colors.textPrimary, lineHeight: 22 },
+  etapeNumText:  { fontSize: 13, fontWeight: '900', color: Colors.gold },
+  etapeInfo:     { flex: 1, gap: 4 },
+  etapeTopRow:   { flexDirection: 'row', alignItems: 'center', gap: Sp.sm, flexWrap: 'wrap' },
+  etapeName:     { fontSize: 16, fontWeight: '700', color: Colors.textPrimary, lineHeight: 22, flex: 1 },
+  etapePtsBadge: {
+    backgroundColor: Colors.goldGlow, borderRadius: R.full,
+    paddingHorizontal: 8, paddingVertical: 2,
+    borderWidth: 1, borderColor: Colors.gold + '44',
+  },
+  etapePtsText: { fontSize: 10, color: Colors.gold, fontWeight: '800' },
   etapeAddrRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   etapeAddr:    { fontSize: 12, color: Colors.parchment, flex: 1 },
   etapeDesc:    { fontSize: 13, color: Colors.textSecondary, lineHeight: 19 },
@@ -326,11 +509,6 @@ const st = StyleSheet.create({
   cta: {},
 
   ctaRow: { flexDirection: 'row', gap: Sp.sm, alignItems: 'stretch' },
-  playBtn: {
-    width: 56, backgroundColor: Colors.bgCard, borderRadius: R.md,
-    borderWidth: 1, borderColor: Colors.gold + '66',
-    alignItems: 'center', justifyContent: 'center',
-  },
 
   infoBanner: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Sp.sm,
@@ -345,4 +523,12 @@ const st = StyleSheet.create({
     borderWidth: 1, borderColor: Colors.warning + '55',
   },
   warningText: { flex: 1, fontSize: 14, color: Colors.warning, lineHeight: 20 },
+
+  completedBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: Sp.md,
+    backgroundColor: Colors.gold + '18', borderRadius: R.lg, padding: Sp.lg,
+    borderWidth: 1, borderColor: Colors.gold + '55',
+  },
+  completedTitle: { fontSize: 15, fontWeight: '800', color: Colors.gold },
+  completedSub:   { fontSize: 13, color: Colors.parchment, lineHeight: 18, marginTop: 2 },
 });

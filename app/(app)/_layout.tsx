@@ -15,7 +15,7 @@ export default function AppLayout() {
             redirectTo="/(auth)/login"
             accentColor={Colors.gold}
             tabs={TABS}
-            hiddenScreens={['chasse/[id]', 'ar-view']}
+            hiddenScreens={['chasse/[id]', 'ar-view', 'resultats']}
         />
     );
 }

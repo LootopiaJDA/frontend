@@ -10,7 +10,7 @@ import LottieView from 'lottie-react-native';
 import { Colors, Sp, R } from '@/constants/theme';
 import { useHuntTracker } from '@/hooks/useHuntTracker';
 import { useHuntStore } from '@/store/huntStore';
-import { chasseService, etapeService } from '@/services/api';
+import { chasseService, etapeService, scoreService } from '@/services/api';
 
 // ─── Score flottant +100 pts ──────────────────────────────────────────────────
 function FloatingPoints({ visible, onDone }: { visible: boolean; onDone: () => void }) {
@@ -194,6 +194,7 @@ export default function MapScreen() {
     if (tracker.completed && activeChasseId) {
       setShowVictory(true);
       chasseService.complete(activeChasseId).catch(() => {});
+      scoreService.increment(activeChasseId); // 1 appel = 100 pts affichés
     }
   }, [tracker.completed]);
 
@@ -354,7 +355,7 @@ export default function MapScreen() {
       {/* ─── Overlay victoire ───────────────────────────────────────────────── */}
       {showVictory && (
         <VictoryOverlay
-          score={sessionScore + 200}
+          score={100}
           onDismiss={() => {
             setShowVictory(false);
             router.push('/(app)/chasses');

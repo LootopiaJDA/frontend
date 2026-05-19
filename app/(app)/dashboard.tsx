@@ -68,8 +68,7 @@ export default function DashboardJoueurScreen() {
         try {
             const data = await chasseService.getAll();
             setAllChasses(data.allChasse ?? []);
-        } catch (err) {
-            console.log('Erreur chargement dashboard:', err);
+        } catch {
         } finally {
             setLoading(false);
             setRefreshing(false);

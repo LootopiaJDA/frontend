@@ -39,8 +39,7 @@ export default function UsersScreen() {
             });
 
             setUsers(merged.filter((u: User) => u.role !== 'ADMIN'));
-        } catch (err) {
-            console.log('Erreur chargement users:', err);
+        } catch {
         } finally {
             setLoading(false);
             setRefreshing(false);

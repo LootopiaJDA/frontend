@@ -25,8 +25,7 @@ export default function AdminChassesScreen() {
         try {
             const data = await chasseService.getAll();
             setChasses(data.allChasse ?? []);
-        } catch (err) {
-            console.log('Erreur chargement chasses admin:', err);
+        } catch {
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -333,11 +332,4 @@ const st = StyleSheet.create({
     noEtapes:     { backgroundColor: Design.bg.card, borderRadius: R.md, padding: Sp.lg, alignItems: 'center', borderWidth: 1, borderColor: Design.border.warm, marginHorizontal: Sp.lg },
     noEtapesText: { fontFamily: Fonts.title, color: Design.text.meta, fontSize: 12 },
 
-    infoBox: {
-        flexDirection: 'row', alignItems: 'flex-start', gap: Sp.sm,
-        backgroundColor: Design.bg.elevated, borderRadius: R.md, padding: Sp.md,
-        borderWidth: 1, borderColor: Design.border.warm,
-        margin: Sp.lg,
-    },
-    infoBoxText: { fontFamily: Fonts.title, flex: 1, color: Design.text.meta, fontSize: 12, lineHeight: 18 },
 });

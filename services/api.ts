@@ -1,5 +1,5 @@
 import { API_URL, EP } from '../constants/api';
-import { Chasse, ChasseDetail, Etape, StatutChasse, User, UserChasse } from '../constants/types';
+import { Chasse, ChasseDetail, Etape, ScoreBoard, StatutChasse, User, UserChasse } from '../constants/types';
 
 interface ChasseUpdatePayload {
   name?: string;
@@ -11,7 +11,6 @@ interface ChasseUpdatePayload {
 
 const req = async (path: string, options: RequestInit = {}) => {
   const url = `${API_URL}${path}`;
-  console.log(url)
   const res = await fetch(url, {
     credentials: 'include',
     ...options,
@@ -72,6 +71,12 @@ export const partenaireService = {
 export const adminService = {
   validatePartenaire: (id: number, statut: 'ACTIVE' | 'INACTIVE') =>
       req(`/admin/partenaire/${id}/validate`, { method: 'POST', body: JSON.stringify({ statut }) }),
+};
+
+export const scoreService = {
+  getAll: (): Promise<ScoreBoard[]> => req(EP.SCORES),
+  create: (chasseId: number) => req(EP.SCORE_CREATE(chasseId), { method: 'POST' }).catch(() => {}),
+  increment: (chasseId: number) => req(EP.SCORE_UPDATE(chasseId), { method: 'PATCH' }).catch(() => {}),
 };
 
 export const etapeService = {

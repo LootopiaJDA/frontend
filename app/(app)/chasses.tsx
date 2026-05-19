@@ -14,9 +14,6 @@ import ChasseCard from '@/components/ChasseCard';
 import PageHeader from '@/components/PageHeader';
 import ScreenBackground from '@/components/ScreenBackground';
 
-const COFFRE = require('../../assets/images/coffre.png');
-const LOUPE  = require('../../assets/images/loupe.png');
-
 type SortKey = 'date_desc' | 'date_asc';
 
 const SORT_OPTIONS: { key: SortKey; label: string; icon: string }[] = [
@@ -52,8 +49,7 @@ export default function ChassesScreen() {
             const filter = city !== undefined ? city : cityFilter;
             const data = await chasseService.getAll(filter ?? undefined);
             setChasses(data.allChasse ?? []);
-        } catch (err) {
-            console.log('Erreur chargement chasses:', err);
+        } catch {
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -380,9 +376,6 @@ const st = StyleSheet.create({
     emptyTitle:{ fontSize: 20, fontWeight: '700', color: Colors.textSecondary },
     emptySub:  { fontSize: 18, color: Colors.textSecondary, textAlign: 'center' },
     clearText: { color: Colors.gold, fontSize: 13, fontWeight: '600' },
-    coffreImg: { width: 110, height: 110, opacity: 0.7 },
-    loupeImg:  { width: 80, height: 80, opacity: 0.7 },
-
     backdrop: {
         flex: 1, backgroundColor: 'rgba(0,0,0,0.6)',
         alignItems: 'center', justifyContent: 'center', padding: Sp.xl,

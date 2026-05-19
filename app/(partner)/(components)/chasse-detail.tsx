@@ -123,8 +123,7 @@ export default function ChasseDetail() {
                 .map(normalizeEtape)
                 .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
             setEtapes(normalized);
-        } catch (err) {
-            console.log('Erreur chargement chasse:', err);
+        } catch {
         } finally {
             setLoading(false);
         }

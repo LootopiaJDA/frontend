@@ -1,28 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import {
     View, Text, StyleSheet, ScrollView,
-    TouchableOpacity, Alert, Image,
+    TouchableOpacity, Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { Colors, Design, Fonts, Sp, R } from '@/constants/theme';
-import StatusBadge from '@/components/StatusBadge';
 import PageHeader from '@/components/PageHeader';
 import ScreenBackground from '@/components/ScreenBackground';
-import { chasseService } from '@/services/api';
-
-const PIECE = require('../../assets/images/piece.png');
+import { chasseService, scoreService } from '@/services/api';
+import { UserChasse, ScoreBoard } from '@/constants/types';
 
 interface PlayerStats {
     completed: number;
     inProgress: number;
+    totalPoints: number;
 }
 
 export default function ProfilJoueurScreen() {
     const { user, logout } = useAuth();
     const router = useRouter();
-    const [stats, setStats] = useState<PlayerStats>({ completed: 0, inProgress: 0 });
+    const [stats, setStats] = useState<PlayerStats>({ completed: 0, inProgress: 0, totalPoints: 0 });
+    const [completedHunts, setCompletedHunts] = useState<UserChasse[]>([]);
 
     useEffect(() => {
         if (!user) return;
@@ -31,16 +31,35 @@ export default function ProfilJoueurScreen() {
 
     const fetchStats = async () => {
         try {
-            const { chasses } = await chasseService.getMe();
+            const [{ chasses }, scores] = await Promise.all([
+                chasseService.getMe(),
+                scoreService.getAll().catch(() => [] as ScoreBoard[]),
+            ]);
+
             let completed = 0;
             let inProgress = 0;
+            const done: UserChasse[] = [];
+
             chasses.forEach(uc => {
-                if (uc.statut === 'COMPLETED') completed++;
-                else if (uc.statut === 'IN_PROGRESS') inProgress++;
+                if (uc.statut === 'COMPLETED') {
+                    completed++;
+                    done.push(uc);
+                } else if (uc.statut === 'IN_PROGRESS') {
+                    inProgress++;
+                }
             });
-            setStats({ completed, inProgress });
+
+            const myScores = (scores as ScoreBoard[]).filter(s => s.id_user === user!.id_user);
+            const totalPoints = myScores.reduce((acc, s) => acc + s.score * 100, 0);
+
+            setStats({ completed, inProgress, totalPoints });
+            setCompletedHunts(done.sort((a, b) => {
+                const da = a.completed_at ? new Date(a.completed_at).getTime() : 0;
+                const db = b.completed_at ? new Date(b.completed_at).getTime() : 0;
+                return db - da;
+            }));
         } catch {
-            // Silently fail
+            /* silently fail */
         }
     };
 
@@ -63,8 +82,8 @@ export default function ProfilJoueurScreen() {
     };
 
     const menuItems = [
-        { icon: 'trophy-outline',         label: 'Mes scores & récompenses', onPress: () => {} },
-        { icon: 'map-outline',            label: 'Chasses en cours',         onPress: () => router.push('/(app)/map') },
+        { icon: 'podium-outline',  label: 'Scores & Résultats',  onPress: () => router.push('/(app)/resultats') },
+        { icon: 'map-outline',     label: 'Chasses en cours',    onPress: () => router.push('/(app)/map') },
     ];
 
     return (
@@ -99,10 +118,46 @@ export default function ProfilJoueurScreen() {
                         <Text style={st.statLabel}>En{'\n'}cours</Text>
                     </View>
                     <View style={st.statItem}>
-                        <Text style={st.statVal}>{stats.completed + stats.inProgress}</Text>
-                        <Text style={st.statLabel}>Total{'\n'}rejointes</Text>
+                        <Text style={[st.statVal, st.statValGold]}>{stats.totalPoints}</Text>
+                        <Text style={st.statLabel}>Points{'\n'}gagnés</Text>
                     </View>
                 </View>
+
+                {/* Chasses terminées */}
+                {completedHunts.length > 0 && (
+                    <>
+                        <View style={st.sectionHeader}>
+                            <View style={st.sectionLine} />
+                            <Text style={st.sectionTitle}>CHASSES TERMINÉES</Text>
+                            <View style={st.sectionLine} />
+                        </View>
+
+                        <View style={st.huntsList}>
+                            {completedHunts.map((uc) => (
+                                <View key={uc.id_userchasse} style={st.huntCard}>
+                                    <View style={st.huntIcon}>
+                                        <Ionicons name="trophy" size={18} color={Colors.gold} />
+                                    </View>
+                                    <View style={st.huntInfo}>
+                                        <Text style={st.huntName} numberOfLines={1}>
+                                            {uc.chasse?.name ?? `Chasse #${uc.id_chasse}`}
+                                        </Text>
+                                        {uc.completed_at && (
+                                            <Text style={st.huntDate}>
+                                                Terminée le {new Date(uc.completed_at).toLocaleDateString('fr-FR', {
+                                                    day: 'numeric', month: 'long', year: 'numeric',
+                                                })}
+                                            </Text>
+                                        )}
+                                    </View>
+                                    <View style={st.huntBadge}>
+                                        <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+                                    </View>
+                                </View>
+                            ))}
+                        </View>
+                    </>
+                )}
 
                 {/* Menu */}
                 <View style={st.menuCard}>
@@ -156,7 +211,6 @@ const st = StyleSheet.create({
     avatarText: { fontFamily: Fonts.display, fontSize: 26, color: Design.text.accent },
     username:   { fontFamily: Fonts.display, fontSize: 20, color: Design.text.heading, letterSpacing: 1 },
     email:      { fontFamily: Fonts.title,   fontSize: 12, color: Design.text.accent, letterSpacing: 1 },
-    badgeRow:   { flexDirection: 'row', gap: Sp.sm, marginTop: Sp.xs },
 
     statsRow:   {
         flexDirection: 'row',
@@ -165,11 +219,39 @@ const st = StyleSheet.create({
         borderRadius: R.lg, borderWidth: 1, borderColor: Design.border.warm,
         overflow: 'hidden',
     },
-    statItem:   { flex: 1, alignItems: 'center', padding: Sp.md, gap: 4 },
-    statBorder: { borderLeftWidth: 1, borderRightWidth: 1, borderColor: Design.border.warm },
-    pieceIcon:  { width: 22, height: 22, opacity: 0.85 },
-    statVal:    { fontFamily: Fonts.display, fontSize: 22, color: Design.text.accent },
-    statLabel:  { fontFamily: Fonts.title,   fontSize: 10, color: Design.text.meta, textAlign: 'center', lineHeight: 16 },
+    statItem:    { flex: 1, alignItems: 'center', padding: Sp.md, gap: 4 },
+    statBorder:  { borderLeftWidth: 1, borderRightWidth: 1, borderColor: Design.border.warm },
+    statVal:     { fontFamily: Fonts.display, fontSize: 22, color: Design.text.accent },
+    statValGold: { color: Colors.gold },
+    statLabel:   { fontFamily: Fonts.title, fontSize: 10, color: Design.text.meta, textAlign: 'center', lineHeight: 16 },
+
+    sectionHeader: {
+        flexDirection: 'row', alignItems: 'center', gap: Sp.md,
+        marginHorizontal: Sp.lg, marginBottom: Sp.md,
+    },
+    sectionLine:  { flex: 1, height: 1, backgroundColor: Design.border.warm },
+    sectionTitle: {
+        fontFamily: Fonts.title, fontSize: 10, color: Colors.gold,
+        letterSpacing: 2, textAlign: 'center',
+    },
+
+    huntsList: { marginHorizontal: Sp.lg, marginBottom: Sp.lg, gap: Sp.sm },
+    huntCard:  {
+        flexDirection: 'row', alignItems: 'center', gap: Sp.md,
+        backgroundColor: Design.bg.card, borderRadius: R.lg,
+        borderWidth: 1, borderColor: Design.border.warm,
+        padding: Sp.md,
+    },
+    huntIcon: {
+        width: 36, height: 36, borderRadius: R.sm,
+        backgroundColor: Colors.goldGlow,
+        borderWidth: 1, borderColor: Colors.gold + '44',
+        alignItems: 'center', justifyContent: 'center',
+    },
+    huntInfo:  { flex: 1 },
+    huntName:  { fontFamily: Fonts.title, fontSize: 13, color: Design.text.heading },
+    huntDate:  { fontFamily: Fonts.title, fontSize: 10, color: Design.text.meta, marginTop: 2 },
+    huntBadge: { paddingLeft: Sp.sm },
 
     menuCard:   {
         marginHorizontal: Sp.lg, marginBottom: Sp.lg,
