@@ -18,7 +18,7 @@ import LottieView from 'lottie-react-native';
 import { DeviceMotion } from 'expo-sensors';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Sp, R } from '@/constants/theme';
 import { useHuntStore } from '@/store/huntStore';
@@ -41,7 +41,7 @@ function angleDiff(a: number, b: number): number {
   return d;
 }
 
-type Phase = 'seeking' | 'found' | 'digging' | 'chest' | 'opening' | 'scroll';
+type Phase = 'seeking' | 'found' | 'digging' | 'chest' | 'opening';
 
 // ─── Aiguille de boussole ─────────────────────────────────────────────────────
 const CompassNeedle = React.memo(({ diff }: { diff: number }) => {
@@ -228,12 +228,6 @@ export default function ArViewScreen() {
   const [detectionReady, setDetectionReady] = useState(false);
   const inRangeRef = useRef(false);
 
-  // Grace period : on montre toujours la boussole seeking au moins 2.5s
-  useEffect(() => {
-    const t = setTimeout(() => setDetectionReady(true), 2500);
-    return () => clearTimeout(t);
-  }, []);
-
   // Tremblement
   const shakeX    = useRef(new Animated.Value(0)).current;
   const shakeLoop = useRef<Animated.CompositeAnimation | null>(null);
@@ -252,17 +246,42 @@ export default function ArViewScreen() {
   // Confettis
   const confettiOpacity = useRef(new Animated.Value(0)).current;
 
-  // Parchemin
-  const scrollTranslate = useRef(new Animated.Value(SCREEN_H)).current;
-  const scrollOpacity   = useRef(new Animated.Value(0)).current;
-  const scrollScale     = useRef(new Animated.Value(0.88)).current;
-
   // Bouton
   const btnOpacity = useRef(new Animated.Value(0)).current;
   const btnScale   = useRef(new Animated.Value(0.85)).current;
   const btnY       = useRef(new Animated.Value(50)).current;
 
   const chestRef = useRef<LottieView>(null);
+
+  // Reset complet à chaque focus (ar-view est un tab caché — jamais démonté)
+  useFocusEffect(useCallback(() => {
+    setPhase('seeking');
+    setHeading(null);
+    setBearing(null);
+    setDiff(null);
+    setDetectionReady(false);
+    inRangeRef.current = false;
+
+    shakeLoop.current?.stop();
+    floatLoop.current?.stop();
+
+    shakeX.setValue(0);
+    shovelOpacity.setValue(0);
+    shovelScale.setValue(0.75);
+    chestY.setValue(SCREEN_H * 0.65);
+    chestOpacity.setValue(0);
+    glowOpacity.setValue(0);
+    floatY.setValue(0);
+    confettiOpacity.setValue(0);
+    btnOpacity.setValue(0);
+    btnScale.setValue(0.85);
+    btnY.setValue(50);
+
+    chestRef.current?.reset();
+
+    const t = setTimeout(() => setDetectionReady(true), 2500);
+    return () => clearTimeout(t);
+  }, []));
 
   // ── Permissions ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -411,27 +430,14 @@ export default function ArViewScreen() {
     ]).start(() => chestRef.current?.play());
   }, [phase]);
 
-  // ── Coffre ouvert → parchemin ─────────────────────────────────────────────────
+  // ── Coffre ouvert → valider et retour carte ───────────────────────────────────
   const handleChestOpen = useCallback(() => {
-    setPhase('scroll');
-    Animated.timing(confettiOpacity, { toValue: 0, duration: 2200, useNativeDriver: true }).start();
-  }, []);
-
-  useEffect(() => {
-    if (phase !== 'scroll') return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    Animated.parallel([
-      Animated.spring(scrollTranslate, { toValue: 0, useNativeDriver: true, tension: 50, friction: 12 }),
-      Animated.timing(scrollOpacity,   { toValue: 1, duration: 450, useNativeDriver: true }),
-      Animated.spring(scrollScale,     { toValue: 1, useNativeDriver: true, tension: 50, friction: 12 }),
-    ]).start();
-  }, [phase]);
-
-  // ── Valider ───────────────────────────────────────────────────────────────────
-  const handleContinue = useCallback(() => {
-    setPendingValidation(true);
-    router.back();
-  }, []);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Animated.timing(confettiOpacity, { toValue: 0, duration: 1200, useNativeDriver: true }).start(() => {
+      setPendingValidation(true);
+      router.navigate({ pathname: '/(app)/map', params: { chasseId } });
+    });
+  }, [chasseId]);
 
   // ── Permission ────────────────────────────────────────────────────────────────
   if (!camPermission?.granted) {
@@ -446,11 +452,6 @@ export default function ArViewScreen() {
       </SafeAreaView>
     );
   }
-
-  const hintText =
-    description && description !== 'undefined' && description.trim() !== ''
-      ? description
-      : 'Aucun indice disponible pour cette étape.';
 
   const isDigging = phase === 'digging';
   const isOpening = phase === 'opening';
@@ -581,61 +582,11 @@ export default function ArViewScreen() {
         />
       </Animated.View>
 
-      {/* Parchemin */}
-      <Animated.View
-        style={[
-          StyleSheet.absoluteFillObject, st.scrollOverlay,
-          {
-            opacity: scrollOpacity,
-            transform: [{ translateY: scrollTranslate }, { scale: scrollScale }],
-          },
-        ]}
-        pointerEvents={phase === 'scroll' ? 'auto' : 'none'}
-      >
-        <View style={st.scrollBackdrop} />
-
-        <View style={st.parchment}>
-          {/* Rouleau haut */}
-          <View style={st.roll}>
-            <View style={st.rollCap} />
-            <View style={st.rollBar} />
-            <View style={st.rollCap} />
-          </View>
-
-          {/* Corps */}
-          <View style={st.parchBody}>
-            <Text style={st.parchDeco}>✦   ✦   ✦</Text>
-            <Text style={st.parchTitle}>INDICE</Text>
-            <View style={st.parchLine} />
-            <Text style={st.parchText}>{hintText}</Text>
-            <View style={st.parchLine} />
-            <Text style={st.parchDeco}>✦   ✦   ✦</Text>
-          </View>
-
-          {/* Rouleau bas */}
-          <View style={st.roll}>
-            <View style={st.rollCap} />
-            <View style={st.rollBar} />
-            <View style={st.rollCap} />
-          </View>
-
-          <TouchableOpacity style={st.continueBtn} onPress={handleContinue} activeOpacity={0.85}>
-            <Ionicons name="checkmark-circle" size={20} color={Colors.black} />
-            <Text style={st.continueBtnText}>Valider et continuer</Text>
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
     </View>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-
-const PARCH_BG     = '#F0D99A';
-const PARCH_ROLL   = '#9A6B1A';
-const PARCH_BORDER = '#7A500E';
-const PARCH_INK    = '#2E1A05';
-const PARCH_LINE   = '#9A6B1A99';
 
 const st = StyleSheet.create({
   fill:    { flex: 1 },
@@ -716,74 +667,6 @@ const st = StyleSheet.create({
   },
   mainBtnDim: { backgroundColor: Colors.gold + '70', shadowOpacity: 0 },
   mainBtnText: { fontSize: 19, fontWeight: '900', color: Colors.black, letterSpacing: 0.4 },
-
-  // Parchemin overlay
-  scrollOverlay: {
-    alignItems: 'center', justifyContent: 'center',
-    padding: Sp.lg,
-  },
-  scrollBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(4,2,0,0.78)',
-  },
-  parchment: {
-    width: '100%',
-    borderRadius: R.sm,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.8, shadowRadius: 40,
-    shadowOffset: { width: 0, height: 14 },
-    elevation: 30,
-  },
-
-  // Rouleau
-  roll: {
-    height: 26, flexDirection: 'row', alignItems: 'center',
-    backgroundColor: PARCH_ROLL,
-  },
-  rollCap: {
-    width: 26, height: 26, borderRadius: 13,
-    backgroundColor: PARCH_BORDER,
-  },
-  rollBar: {
-    flex: 1, height: 10,
-    backgroundColor: PARCH_BORDER + 'AA',
-    marginHorizontal: -4,
-  },
-
-  // Corps parchemin
-  parchBody: {
-    backgroundColor: PARCH_BG,
-    borderLeftWidth: 5, borderRightWidth: 5, borderColor: PARCH_ROLL,
-    paddingHorizontal: Sp.xl, paddingVertical: Sp.xl,
-    alignItems: 'center', gap: Sp.md,
-  },
-  parchDeco:  { fontSize: 13, color: PARCH_ROLL, letterSpacing: 5 },
-  parchTitle: {
-    fontSize: 24, fontWeight: '900', color: PARCH_BORDER,
-    letterSpacing: 11,
-  },
-  parchLine: {
-    width: '82%', height: 1.5,
-    backgroundColor: PARCH_LINE,
-  },
-  parchText: {
-    fontSize: 15, color: PARCH_INK,
-    lineHeight: 25, textAlign: 'center',
-    fontStyle: 'italic',
-    paddingHorizontal: Sp.sm,
-  },
-
-  // Bouton valider
-  continueBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-    backgroundColor: Colors.gold,
-    paddingVertical: 16, paddingHorizontal: 32,
-    shadowColor: Colors.gold, shadowOpacity: 0.45,
-    shadowRadius: 14, shadowOffset: { width: 0, height: 3 },
-    elevation: 10,
-  },
-  continueBtnText: { fontSize: 15, fontWeight: '900', color: Colors.black },
 
   // Permission
   permScreen: { flex: 1, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center', gap: Sp.lg, padding: Sp.xl },

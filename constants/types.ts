@@ -110,4 +110,9 @@ export interface ScoreBoard {
   score: number;
   created_at: string;
   updated_at: string;
+  user?: {
+    id_user: number;
+    username: string;
+    userchasses?: Array<{ id_chasse: number; statut: string }>;
+  };
 }

@@ -58,6 +58,7 @@ export const chasseService = {
       req(EP.CHASSE_UPDATE(id), { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: number) => req(EP.CHASSE_DELETE(id), { method: 'DELETE' }),
   join: (chasseId: number) => req(`/chasse/${chasseId}/join`, { method: 'POST' }),
+  leave: (chasseId: number) => req(`/chasse/${chasseId}/leave`, { method: 'PATCH' }),
   complete: (chasseId: number) => req(EP.CHASSE_COMPLETE(chasseId), { method: 'PATCH' }),
   getMe: (): Promise<{ chasses: UserChasse[] }> => req(EP.CHASSE_ME),
 };

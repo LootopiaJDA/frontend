@@ -1,277 +1,202 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
-    View, Text, StyleSheet, ScrollView,
-    ActivityIndicator, TouchableOpacity,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '@/context/AuthContext';
-import { Colors, Design, Fonts, Sp, R } from '@/constants/theme';
-import { chasseService, scoreService } from '@/services/api';
-import { UserChasse, ScoreBoard } from '@/constants/types';
+import LottieView from 'lottie-react-native';
+import { Colors, Sp, R } from '@/constants/theme';
+import { Etape } from '@/constants/types';
 
-interface HuntResult {
-    userChasse: UserChasse;
-    score: number;      // backend score (1 = 100 pts)
-    etapesDone: number;
+function formatElapsed(ms: number): string {
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`;
+  return `${m}m ${String(s).padStart(2, '0')}s`;
 }
 
 export default function ResultatsScreen() {
-    const { user } = useAuth();
-    const router   = useRouter();
+  const { chasseId, score, startedAt, chasseName, etapesJson } = useLocalSearchParams<{
+    chasseId: string;
+    score: string;
+    startedAt: string;
+    chasseName: string;
+    etapesJson: string;
+  }>();
+  const router = useRouter();
 
-    const [results, setResults]   = useState<HuntResult[]>([]);
-    const [loading, setLoading]   = useState(true);
-    const [totalPts, setTotalPts] = useState(0);
+  const etapes: Etape[] = useMemo(() => {
+    try { return JSON.parse(etapesJson ?? '[]'); }
+    catch { return []; }
+  }, [etapesJson]);
 
-    useEffect(() => {
-        if (!user) return;
-        loadData();
-    }, [user]);
+  const scoreNum = Number(score ?? 0);
+  const elapsed  = startedAt ? Date.now() - new Date(startedAt).getTime() : 0;
+  const timeStr  = formatElapsed(elapsed);
 
-    const loadData = async () => {
-        try {
-            const [{ chasses }, scores] = await Promise.all([
-                chasseService.getMe(),
-                scoreService.getAll().catch(() => [] as ScoreBoard[]),
-            ]);
+  return (
+    <View style={st.fill}>
+      <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
 
-            const myScores = (scores as ScoreBoard[]).filter(s => s.id_user === user!.id_user);
-
-            const built: HuntResult[] = chasses.map(uc => {
-                const sb = myScores.find(s => s.id_chasse === uc.id_chasse);
-                return {
-                    userChasse: uc,
-                    score: sb?.score ?? 0,
-                    etapesDone: uc.UserChasseEtape?.length ?? 0,
-                };
-            }).sort((a, b) => {
-                // Completées d'abord, puis par date décroissante
-                if (a.userChasse.statut === 'COMPLETED' && b.userChasse.statut !== 'COMPLETED') return -1;
-                if (b.userChasse.statut === 'COMPLETED' && a.userChasse.statut !== 'COMPLETED') return 1;
-                const da = a.userChasse.completed_at ?? a.userChasse.started_at;
-                const db = b.userChasse.completed_at ?? b.userChasse.started_at;
-                return new Date(db).getTime() - new Date(da).getTime();
-            });
-
-            setResults(built);
-            setTotalPts(myScores.reduce((acc, s) => acc + s.score * 100, 0));
-        } catch {
-            /* silently fail */
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const completed   = results.filter(r => r.userChasse.statut === 'COMPLETED');
-    const inProgress  = results.filter(r => r.userChasse.statut === 'IN_PROGRESS');
-
-    if (loading) {
-        return (
-            <SafeAreaView style={st.safe}>
-                <View style={st.center}>
-                    <ActivityIndicator size="large" color={Colors.gold} />
-                </View>
-            </SafeAreaView>
-        );
-    }
-
-    return (
-        <SafeAreaView style={st.safe}>
-            <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
-
-                {/* Header */}
-                <View style={st.header}>
-                    <TouchableOpacity style={st.backBtn} onPress={() => router.back()}>
-                        <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
-                    </TouchableOpacity>
-                    <View style={st.headerText}>
-                        <Text style={st.title}>Scores & Résultats</Text>
-                        <Text style={st.subtitle}>{user?.username}</Text>
-                    </View>
-                </View>
-
-                {/* Résumé global */}
-                <View style={st.summaryCard}>
-                    <View style={st.summaryItem}>
-                        <Text style={st.summaryVal}>{totalPts}</Text>
-                        <Text style={st.summaryLabel}>Points{'\n'}totaux</Text>
-                    </View>
-                    <View style={[st.summaryItem, st.summaryBorder]}>
-                        <Text style={st.summaryVal}>{completed.length}</Text>
-                        <Text style={st.summaryLabel}>Chasses{'\n'}terminées</Text>
-                    </View>
-                    <View style={st.summaryItem}>
-                        <Text style={st.summaryVal}>{results.reduce((a, r) => a + r.etapesDone, 0)}</Text>
-                        <Text style={st.summaryLabel}>Étapes{'\n'}validées</Text>
-                    </View>
-                </View>
-
-                {/* Chasses terminées */}
-                {completed.length > 0 && (
-                    <>
-                        <SectionHeader icon="trophy" label={`Terminées (${completed.length})`} color={Colors.gold} />
-                        <View style={st.list}>
-                            {completed.map(r => (
-                                <ResultCard key={r.userChasse.id_userchasse} result={r} />
-                            ))}
-                        </View>
-                    </>
-                )}
-
-                {/* Chasses en cours */}
-                {inProgress.length > 0 && (
-                    <>
-                        <SectionHeader icon="walk" label={`En cours (${inProgress.length})`} color={Colors.parchment} />
-                        <View style={st.list}>
-                            {inProgress.map(r => (
-                                <ResultCard key={r.userChasse.id_userchasse} result={r} />
-                            ))}
-                        </View>
-                    </>
-                )}
-
-                {results.length === 0 && (
-                    <View style={st.empty}>
-                        <Ionicons name="map-outline" size={52} color={Colors.textMuted} />
-                        <Text style={st.emptyTitle}>Aucune chasse</Text>
-                        <Text style={st.emptySub}>Rejoignez une chasse pour voir vos résultats ici.</Text>
-                    </View>
-                )}
-
-            </ScrollView>
+        {/* ─── Header trophée ───────────────────────────────────────────────── */}
+        <SafeAreaView edges={['top']}>
+          <View style={st.header}>
+            <LottieView
+              source={require('@/assets/animations/Trophy.json')}
+              autoPlay loop
+              style={st.trophy}
+            />
+            <Text style={st.title}>Chasse terminée !</Text>
+            {chasseName ? <Text style={st.subtitle}>{chasseName}</Text> : null}
+          </View>
         </SafeAreaView>
-    );
-}
 
-// ─── Sous-composants ──────────────────────────────────────────────────────────
-function SectionHeader({ icon, label, color }: { icon: string; label: string; color: string }) {
-    return (
-        <View style={sh.row}>
-            <View style={[sh.icon, { backgroundColor: color + '22', borderColor: color + '44' }]}>
-                <Ionicons name={icon as any} size={14} color={color} />
-            </View>
-            <Text style={[sh.label, { color }]}>{label}</Text>
-            <View style={[sh.line, { backgroundColor: color + '33' }]} />
+        {/* ─── Stats ────────────────────────────────────────────────────────── */}
+        <View style={st.statsRow}>
+          <View style={st.statCard}>
+            <Ionicons name="time-outline" size={22} color={Colors.gold} />
+            <Text style={st.statValue}>{timeStr}</Text>
+            <Text style={st.statLabel}>TEMPS</Text>
+          </View>
+          <View style={st.statCard}>
+            <Ionicons name="star" size={22} color={Colors.gold} />
+            <Text style={st.statValue}>{scoreNum}</Text>
+            <Text style={st.statLabel}>POINTS</Text>
+          </View>
+          <View style={st.statCard}>
+            <Ionicons name="flag" size={22} color={Colors.gold} />
+            <Text style={st.statValue}>{etapes.length}</Text>
+            <Text style={st.statLabel}>ÉTAPES</Text>
+          </View>
         </View>
-    );
-}
 
-const sh = StyleSheet.create({
-    row:   { flexDirection: 'row', alignItems: 'center', gap: Sp.sm, marginHorizontal: Sp.lg, marginBottom: Sp.sm, marginTop: Sp.md },
-    icon:  { width: 24, height: 24, borderRadius: R.xs, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-    label: { fontFamily: Fonts.title, fontSize: 11, letterSpacing: 1.5 },
-    line:  { flex: 1, height: 1 },
-});
+        {/* ─── Parcours ─────────────────────────────────────────────────────── */}
+        <View style={st.section}>
+          <View style={st.sectionHead}>
+            <View style={st.sectionLine} />
+            <Text style={st.sectionTitle}>PARCOURS VALIDÉ</Text>
+            <View style={st.sectionLine} />
+          </View>
 
-function ResultCard({ result }: { result: HuntResult }) {
-    const { userChasse, score, etapesDone } = result;
-    const isDone = userChasse.statut === 'COMPLETED';
-    const pts    = score * 100;
-
-    return (
-        <View style={rc.card}>
-            {/* Icône statut */}
-            <View style={[rc.iconWrap, { backgroundColor: isDone ? Colors.success + '22' : Colors.gold + '22' }]}>
-                <Ionicons
-                    name={isDone ? 'checkmark-circle' : 'time-outline'}
-                    size={22}
-                    color={isDone ? Colors.success : Colors.gold}
-                />
-            </View>
-
-            {/* Infos */}
-            <View style={rc.body}>
-                <Text style={rc.name} numberOfLines={1}>
-                    {userChasse.chasse?.name ?? `Chasse #${userChasse.id_chasse}`}
-                </Text>
-
-                <View style={rc.metaRow}>
-                    <Ionicons name="flag-outline" size={11} color={Colors.textMuted} />
-                    <Text style={rc.meta}>{etapesDone} étape{etapesDone !== 1 ? 's' : ''} validée{etapesDone !== 1 ? 's' : ''}</Text>
-
-                    {userChasse.completed_at && (
-                        <>
-                            <Text style={rc.dot}>·</Text>
-                            <Ionicons name="calendar-outline" size={11} color={Colors.textMuted} />
-                            <Text style={rc.meta}>
-                                {new Date(userChasse.completed_at).toLocaleDateString('fr-FR', {
-                                    day: 'numeric', month: 'short', year: 'numeric',
-                                })}
-                            </Text>
-                        </>
-                    )}
+          {etapes.map((etape) => (
+            <View key={etape.id_etape} style={st.etapeCard}>
+              <View style={st.etapeHeader}>
+                <View style={st.etapeBadge}>
+                  <Ionicons name="checkmark" size={14} color="#fff" />
                 </View>
-            </View>
+                <Text style={st.etapeName} numberOfLines={2}>{etape.name}</Text>
+                <Text style={st.etapePoints}>+100 pts</Text>
+              </View>
 
-            {/* Score */}
-            <View style={rc.scoreWrap}>
-                {isDone ? (
-                    <>
-                        <Text style={rc.scoreVal}>{pts}</Text>
-                        <Text style={rc.scorePts}>pts</Text>
-                    </>
-                ) : (
-                    <Text style={rc.inProgress}>En cours</Text>
-                )}
+              {etape.image ? (
+                <Image source={{ uri: etape.image }} style={st.etapeImg} resizeMode="cover" />
+              ) : null}
+
+              {etape.description ? (
+                <View style={st.indiceBox}>
+                  <Text style={st.indiceLabel}>INDICE</Text>
+                  <Text style={st.indiceText}>{etape.description}</Text>
+                </View>
+              ) : null}
             </View>
+          ))}
         </View>
-    );
-}
 
-const rc = StyleSheet.create({
-    card: {
-        flexDirection: 'row', alignItems: 'center', gap: Sp.md,
-        backgroundColor: Design.bg.card, borderRadius: R.lg,
-        borderWidth: 1, borderColor: Design.border.warm,
-        padding: Sp.md,
-    },
-    iconWrap:   { width: 44, height: 44, borderRadius: R.md, alignItems: 'center', justifyContent: 'center' },
-    body:       { flex: 1, gap: 4 },
-    name:       { fontFamily: Fonts.title, fontSize: 13, color: Design.text.heading },
-    metaRow:    { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
-    meta:       { fontFamily: Fonts.title, fontSize: 10, color: Design.text.meta },
-    dot:        { color: Design.text.meta, fontSize: 10 },
-    scoreWrap:  { alignItems: 'flex-end', minWidth: 52 },
-    scoreVal:   { fontFamily: Fonts.display, fontSize: 18, color: Colors.gold },
-    scorePts:   { fontFamily: Fonts.title, fontSize: 9, color: Colors.textMuted },
-    inProgress: { fontFamily: Fonts.title, fontSize: 10, color: Colors.parchment },
-});
+        {/* ─── Actions ──────────────────────────────────────────────────────── */}
+        <View style={st.actions}>
+          {chasseId ? (
+            <TouchableOpacity
+              style={st.btnPrimary}
+              onPress={() => router.push({ pathname: '/(app)/chasse/[id]', params: { id: chasseId } })}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="trophy-outline" size={18} color={Colors.black} />
+              <Text style={st.btnPrimaryText}>Voir le classement</Text>
+            </TouchableOpacity>
+          ) : null}
+          <TouchableOpacity
+            style={st.btnSecondary}
+            onPress={() => router.navigate('/(app)/chasses')}
+            activeOpacity={0.85}
+          >
+            <Text style={st.btnSecondaryText}>Retour aux chasses</Text>
+          </TouchableOpacity>
+        </View>
+
+      </ScrollView>
+    </View>
+  );
+}
 
 const st = StyleSheet.create({
-    safe:   { flex: 1, backgroundColor: Design.bg.screen },
-    scroll: { paddingBottom: 60 },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  fill:   { flex: 1, backgroundColor: Colors.bg },
+  scroll: { paddingBottom: 60 },
 
-    header: {
-        flexDirection: 'row', alignItems: 'center', gap: Sp.md,
-        paddingHorizontal: Sp.lg, paddingTop: Sp.md, paddingBottom: Sp.lg,
-    },
-    backBtn: {
-        width: 38, height: 38, borderRadius: R.sm,
-        backgroundColor: Design.bg.elevated, borderWidth: 1, borderColor: Design.border.default,
-        alignItems: 'center', justifyContent: 'center',
-    },
-    headerText: { flex: 1 },
-    title:      { fontFamily: Fonts.display, fontSize: 18, color: Design.text.heading, letterSpacing: 1 },
-    subtitle:   { fontFamily: Fonts.title, fontSize: 11, color: Design.text.accent, letterSpacing: 1 },
+  header: { alignItems: 'center', paddingHorizontal: Sp.lg, paddingTop: Sp.md, gap: Sp.xs },
+  trophy: { width: 150, height: 150 },
+  title:  { fontSize: 28, fontWeight: '900', color: Colors.gold, textAlign: 'center' },
+  subtitle: { fontSize: 14, color: Colors.textMuted, textAlign: 'center', marginBottom: Sp.sm },
 
-    summaryCard: {
-        flexDirection: 'row',
-        marginHorizontal: Sp.lg, marginBottom: Sp.md,
-        backgroundColor: Design.bg.card,
-        borderRadius: R.lg, borderWidth: 1, borderColor: Design.border.warm,
-        overflow: 'hidden',
-    },
-    summaryItem:   { flex: 1, alignItems: 'center', padding: Sp.md, gap: 4 },
-    summaryBorder: { borderLeftWidth: 1, borderRightWidth: 1, borderColor: Design.border.warm },
-    summaryVal:    { fontFamily: Fonts.display, fontSize: 22, color: Colors.gold },
-    summaryLabel:  { fontFamily: Fonts.title, fontSize: 10, color: Design.text.meta, textAlign: 'center', lineHeight: 16 },
+  statsRow: {
+    flexDirection: 'row', gap: Sp.sm,
+    paddingHorizontal: Sp.lg, paddingTop: Sp.md,
+  },
+  statCard: {
+    flex: 1, backgroundColor: Colors.bgCard,
+    borderRadius: R.lg, borderWidth: 1, borderColor: Colors.borderWarm,
+    padding: Sp.md, alignItems: 'center', gap: Sp.xs,
+  },
+  statValue: { fontSize: 16, fontWeight: '900', color: Colors.textPrimary },
+  statLabel: { fontSize: 9, color: Colors.textMuted, letterSpacing: 1, fontWeight: '700' },
 
-    list:  { paddingHorizontal: Sp.lg, gap: Sp.sm },
+  section: { padding: Sp.lg, gap: Sp.md },
+  sectionHead: { flexDirection: 'row', alignItems: 'center', gap: Sp.md },
+  sectionLine:  { flex: 1, height: 1, backgroundColor: Colors.borderWarm },
+  sectionTitle: { fontSize: 11, fontWeight: '800', color: Colors.gold, letterSpacing: 2 },
 
-    empty:      { alignItems: 'center', gap: Sp.md, paddingTop: 80, paddingHorizontal: Sp.xl },
-    emptyTitle: { fontFamily: Fonts.display, fontSize: 18, color: Design.text.heading },
-    emptySub:   { fontFamily: Fonts.title, fontSize: 13, color: Design.text.meta, textAlign: 'center', lineHeight: 20 },
+  etapeCard: {
+    backgroundColor: Colors.bgCard,
+    borderRadius: R.lg, borderWidth: 1, borderColor: Colors.borderWarm,
+    overflow: 'hidden', marginBottom: Sp.sm,
+  },
+  etapeHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: Sp.sm,
+    padding: Sp.md,
+  },
+  etapeBadge: {
+    width: 26, height: 26, borderRadius: 13,
+    backgroundColor: '#4ecb8a',
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  etapeName:   { flex: 1, fontSize: 15, fontWeight: '700', color: Colors.textPrimary },
+  etapePoints: { fontSize: 12, fontWeight: '800', color: Colors.gold },
+  etapeImg:    { width: '100%', height: 160 },
+  indiceBox: {
+    backgroundColor: Colors.bgElevated,
+    padding: Sp.md, gap: 6,
+    borderTopWidth: 1, borderTopColor: Colors.border,
+  },
+  indiceLabel: { fontSize: 9, fontWeight: '800', color: Colors.gold, letterSpacing: 1.5 },
+  indiceText:  { fontSize: 14, color: Colors.textSecondary, lineHeight: 22, fontStyle: 'italic' },
+
+  actions: {
+    paddingHorizontal: Sp.lg,
+    paddingBottom: Sp.xl,
+    gap: Sp.sm,
+  },
+  btnPrimary: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Sp.sm,
+    backgroundColor: Colors.gold, borderRadius: R.full,
+    paddingVertical: 16,
+  },
+  btnPrimaryText: { fontSize: 15, fontWeight: '800', color: Colors.black },
+  btnSecondary: {
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: Colors.bgCard, borderRadius: R.full,
+    borderWidth: 1, borderColor: Colors.border,
+    paddingVertical: 14,
+  },
+  btnSecondaryText: { fontSize: 14, fontWeight: '600', color: Colors.textSecondary },
 });

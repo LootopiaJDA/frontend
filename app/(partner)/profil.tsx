@@ -88,25 +88,6 @@ export default function PartnerProfil() {
               </View>
           )}
 
-          {/* MENU (optionnel comme admin si besoin d’évoluer) */}
-          <View style={st.card}>
-            <TouchableOpacity
-                style={st.row}
-                onPress={() => router.push('/(app)/chasses')}
-            >
-              <View style={st.rowIcon}>
-                <Ionicons name="map-outline" size={16} color={Design.text.label} />
-              </View>
-
-              <View style={st.rowBody}>
-                <Text style={st.rowLabel}>Navigation</Text>
-                <Text style={st.rowValue}>Voir les chasses publiques</Text>
-              </View>
-
-              <Ionicons name="chevron-forward" size={16} color={Design.text.meta} />
-            </TouchableOpacity>
-          </View>
-
           {/* LOGOUT */}
           <TouchableOpacity
               style={st.logoutBtn}

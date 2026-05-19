@@ -8,7 +8,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { chasseService } from '@/services/api';
-import { Chasse } from '@/constants/types';
+import { Chasse, UserChasse } from '@/constants/types';
 import { Colors, Fonts, Sp, R } from '@/constants/theme';
 import ChasseCard from '@/components/ChasseCard';
 import PageHeader from '@/components/PageHeader';
@@ -29,6 +29,7 @@ interface CityResult {
 export default function ChassesScreen() {
     const router = useRouter();
     const [chasses, setChasses]             = useState<Chasse[]>([]);
+    const [userStatusMap, setUserStatusMap] = useState<Record<number, string>>({});
     const [loading, setLoading]             = useState(true);
     const [refreshing, setRefreshing]       = useState(false);
     const [search, setSearch]               = useState('');
@@ -47,8 +48,18 @@ export default function ChassesScreen() {
     const load = useCallback(async (city?: string | null) => {
         try {
             const filter = city !== undefined ? city : cityFilter;
-            const data = await chasseService.getAll(filter ?? undefined);
+            const [data, meData] = await Promise.all([
+                chasseService.getAll(filter ?? undefined),
+                chasseService.getMe().catch(() => ({ chasses: [] as UserChasse[] })),
+            ]);
             setChasses(data.allChasse ?? []);
+            const map: Record<number, string> = {};
+            (meData.chasses ?? []).forEach(uc => {
+                if (!map[uc.id_chasse] || uc.statut === 'IN_PROGRESS') {
+                    map[uc.id_chasse] = uc.statut;
+                }
+            });
+            setUserStatusMap(map);
         } catch {
         } finally {
             setLoading(false);
@@ -229,6 +240,7 @@ export default function ChassesScreen() {
                 renderItem={({ item }) => (
                     <ChasseCard
                         chasse={item}
+                        userStatus={userStatusMap[item.id_chasse] as any ?? null}
                         onPress={() => router.push({ pathname: '/(app)/chasse/[id]', params: { id: item.id_chasse } })}
                     />
                 )}

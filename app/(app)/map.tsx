@@ -5,7 +5,7 @@ import {
   ScrollView, Image, Dimensions,
 } from 'react-native';
 import MapView, { Marker, Circle, Polyline } from 'react-native-maps';
-import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect, Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
 import { Colors, Sp, R } from '@/constants/theme';
@@ -105,7 +105,7 @@ function VictoryOverlay({ onDismiss, score }: { onDismiss: () => void; score: nu
         <Text style={vc.score}>{score} pts</Text>
         <Text style={vc.sub}>Vous avez terminé toutes les étapes</Text>
         <TouchableOpacity style={vc.btn} onPress={onDismiss}>
-          <Text style={vc.btnText}>Retour aux chasses</Text>
+          <Text style={vc.btnText}>Voir le résumé</Text>
         </TouchableOpacity>
       </Animated.View>
     </Animated.View>
@@ -171,6 +171,106 @@ const hc = StyleSheet.create({
   desc:      { fontSize: 13, color: Colors.textMuted, lineHeight: 20 },
 });
 
+// ─── Popup parchemin indice ───────────────────────────────────────────────────
+const P_BG     = '#F0D99A';
+const P_ROLL   = '#9A6B1A';
+const P_BORDER = '#7A500E';
+const P_INK    = '#2E1A05';
+const P_LINE   = '#9A6B1A99';
+
+function HintPopup({ etape, onClose }: { etape: Etape; onClose: () => void }) {
+  const opacity    = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(60)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity,    { toValue: 1, duration: 260, useNativeDriver: true }),
+      Animated.spring(translateY, { toValue: 0, useNativeDriver: true, tension: 65, friction: 11 }),
+    ]).start();
+  }, []);
+
+  const hint =
+    etape.description && etape.description.trim() !== '' && etape.description !== 'undefined'
+      ? etape.description
+      : 'Aucun indice disponible.';
+
+  return (
+    <Animated.View style={[ph.overlay, { opacity }]}>
+      <Animated.View style={[ph.container, { transform: [{ translateY }] }]}>
+        {/* Rouleau haut */}
+        <View style={ph.roll}>
+          <View style={ph.rollCap} /><View style={ph.rollBar} /><View style={ph.rollCap} />
+        </View>
+
+        {/* Corps */}
+        <View style={ph.body}>
+          <Text style={ph.deco}>✦   ✦   ✦</Text>
+          <Text style={ph.title}>INDICE DÉVOILÉ</Text>
+          <View style={ph.line} />
+          <Text style={ph.etapeName}>{etape.name}</Text>
+          <Text style={ph.hint}>{hint}</Text>
+          <View style={ph.line} />
+          <Text style={ph.deco}>✦   ✦   ✦</Text>
+        </View>
+
+        {/* Rouleau bas */}
+        <View style={ph.roll}>
+          <View style={ph.rollCap} /><View style={ph.rollBar} /><View style={ph.rollCap} />
+        </View>
+
+        <TouchableOpacity style={ph.btn} onPress={onClose} activeOpacity={0.85}>
+          <Ionicons name="checkmark-circle" size={20} color={P_INK} />
+          <Text style={ph.btnText}>Continuer</Text>
+        </TouchableOpacity>
+      </Animated.View>
+    </Animated.View>
+  );
+}
+
+const ph = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(4,2,0,0.84)',
+    alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: Sp.lg,
+    zIndex: 85,
+  },
+  container: {
+    width: '100%',
+    borderRadius: R.sm,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.85, shadowRadius: 40,
+    shadowOffset: { width: 0, height: 14 },
+    elevation: 30,
+  },
+  roll: {
+    height: 26, flexDirection: 'row', alignItems: 'center',
+    backgroundColor: P_ROLL,
+  },
+  rollCap: { width: 26, height: 26, borderRadius: 13, backgroundColor: P_BORDER },
+  rollBar: { flex: 1, height: 10, backgroundColor: P_BORDER + 'AA', marginHorizontal: -4 },
+  body: {
+    backgroundColor: P_BG,
+    borderLeftWidth: 5, borderRightWidth: 5, borderColor: P_ROLL,
+    paddingHorizontal: Sp.xl, paddingVertical: Sp.xl,
+    alignItems: 'center', gap: Sp.md,
+  },
+  deco:      { fontSize: 13, color: P_ROLL, letterSpacing: 5 },
+  title:     { fontSize: 19, fontWeight: '900', color: P_BORDER, letterSpacing: 7 },
+  line:      { width: '82%', height: 1.5, backgroundColor: P_LINE },
+  etapeName: { fontSize: 14, fontWeight: '800', color: P_INK, textAlign: 'center' },
+  hint:      { fontSize: 15, color: P_INK, lineHeight: 25, textAlign: 'center', fontStyle: 'italic', paddingHorizontal: Sp.sm },
+  btn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    backgroundColor: Colors.gold,
+    paddingVertical: 16,
+    shadowColor: Colors.gold, shadowOpacity: 0.45, shadowRadius: 14, shadowOffset: { width: 0, height: 3 },
+    elevation: 10,
+  },
+  btnText: { fontSize: 15, fontWeight: '900', color: P_INK },
+});
+
 // ─── Écran carte ──────────────────────────────────────────────────────────────
 export default function MapScreen() {
   const params = useLocalSearchParams<{ chasseId?: string }>();
@@ -183,14 +283,18 @@ export default function MapScreen() {
   const [showVictory, setShowVictory]             = useState(false);
   const [showStepSuccess, setShowStepSuccess]     = useState(false);
   const [showFloatingPts, setShowFloatingPts]     = useState(false);
+  const [showHintPopup, setShowHintPopup]         = useState(false);
+  const [hintEtape, setHintEtape]                 = useState<Etape | null>(null);
+  const [startedAt, setStartedAt]                 = useState<string | null>(null);
+  const [chasseName, setChasseName]               = useState('');
 
   const digPanelY = useRef(new Animated.Value(220)).current;
+  const prevChasseIdRef = useRef<number | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const historyX = useRef(new Animated.Value(PANEL_W)).current;
 
   // ─── Résolution de la chasse active + progression ───────────────────────────
   useFocusEffect(useCallback(() => {
-    resetScore();
     setLoadingChasse(true);
     chasseService.getMe()
       .then(data => {
@@ -198,28 +302,43 @@ export default function MapScreen() {
         const active = (data.chasses ?? []).find(
           uc => uc.statut === 'IN_PROGRESS' && (!id || uc.id_chasse === id)
         ) ?? (id ? (data.chasses ?? []).find(uc => uc.id_chasse === id) : null);
-        setActiveChasseId(active ? active.id_chasse : null);
+        const chasseId = active ? active.id_chasse : null;
+        setActiveChasseId(chasseId);
+        setStartedAt(active?.started_at ?? null);
+        setChasseName(active?.chasse?.name ?? '');
         const done = (active?.UserChasseEtape ?? []).map(uce => uce.id_etape);
         setCompletedEtapeIds(done);
+        // Ensure score entry exists for this hunt
+        if (chasseId) scoreService.create(chasseId);
       })
       .catch(() => { setActiveChasseId(null); setCompletedEtapeIds([]); })
       .finally(() => setLoadingChasse(false));
   }, [params.chasseId]));
 
+  // Reset session score only when a NEW hunt starts (not on every map focus)
+  useEffect(() => {
+    if (activeChasseId !== null && activeChasseId !== prevChasseIdRef.current) {
+      prevChasseIdRef.current = activeChasseId;
+      resetScore();
+    }
+  }, [activeChasseId]);
+
   const tracker = useHuntTracker(activeChasseId ?? 0, completedEtapeIds);
 
   // ─── Retour depuis l'écran AR : valider l'étape puis avancer ─────────────────
-  // useEffect (pas useFocusEffect) pour réagir dès que les deps sont prêtes
   useEffect(() => {
     if (pendingValidation && activeChasseId && tracker.currentEtape) {
       setPendingValidation(false);
-      etapeService.validate(activeChasseId, tracker.currentEtape.id_etape).catch(() => {});
+      const validated = tracker.currentEtape;
+      etapeService.validate(activeChasseId, validated.id_etape).catch(() => {});
+      scoreService.increment(activeChasseId);
       const isLastStep = tracker.currentIndex === tracker.etapes.length - 1;
       addPoints(100);
       tracker.advanceOnly();
+      setShowFloatingPts(true);
       if (!isLastStep) {
-        setShowStepSuccess(true);
-        setShowFloatingPts(true);
+        setHintEtape(validated);
+        setShowHintPopup(true);
       }
     }
   }, [pendingValidation, activeChasseId, tracker.currentEtape]);
@@ -239,9 +358,18 @@ export default function MapScreen() {
     if (tracker.completed && activeChasseId) {
       setShowVictory(true);
       chasseService.complete(activeChasseId).catch(() => {});
-      scoreService.increment(activeChasseId); // 1 appel = 100 pts affichés
     }
   }, [tracker.completed]);
+
+  const handleBack = useCallback(() => {
+    if (router.canGoBack()) {
+      router.back();
+    } else if (activeChasseId) {
+      router.navigate({ pathname: '/(app)/chasse/[id]', params: { id: String(activeChasseId) } });
+    } else {
+      router.navigate('/(app)/chasses');
+    }
+  }, [activeChasseId]);
 
   const openHistory = useCallback(() => {
     setHistoryOpen(true);
@@ -301,6 +429,9 @@ export default function MapScreen() {
 
   return (
     <View style={st.fill}>
+      {/* ─── Immersion : cache la barre d'onglets ──────────────────────────── */}
+      <Tabs.Screen options={{ tabBarStyle: { display: 'none' } }} />
+
       {/* ─── Carte ──────────────────────────────────────────────────────────── */}
       <MapView
         style={StyleSheet.absoluteFillObject}
@@ -339,7 +470,7 @@ export default function MapScreen() {
               {isCurrent && (
                 <Circle
                   center={coord}
-                  radius={etape.rayon ?? 30}
+                  radius={etape.rayon ?? 15}
                   strokeColor={Colors.gold + '99'}
                   fillColor={Colors.gold + '20'}
                   strokeWidth={2}
@@ -349,6 +480,14 @@ export default function MapScreen() {
           );
         })}
       </MapView>
+
+      {/* ─── Bouton retour ──────────────────────────────────────────────────── */}
+      <SafeAreaView style={st.backWrap} pointerEvents="box-none">
+        <TouchableOpacity style={st.backBtn} onPress={handleBack} activeOpacity={0.85}>
+          <Ionicons name="chevron-back" size={18} color={Colors.textPrimary} />
+          <Text style={st.backBtnLabel}>Retour</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
 
       {/* ─── HUD ────────────────────────────────────────────────────────────── */}
       {currentEtape && (
@@ -408,13 +547,30 @@ export default function MapScreen() {
         <StepSuccessToast onDone={() => setShowStepSuccess(false)} />
       )}
 
+      {/* ─── Popup parchemin indice ──────────────────────────────────────────── */}
+      {showHintPopup && hintEtape && (
+        <HintPopup
+          etape={hintEtape}
+          onClose={() => { setShowHintPopup(false); setHintEtape(null); }}
+        />
+      )}
+
       {/* ─── Overlay victoire ───────────────────────────────────────────────── */}
       {showVictory && (
         <VictoryOverlay
-          score={100}
+          score={sessionScore}
           onDismiss={() => {
             setShowVictory(false);
-            router.push('/(app)/chasses');
+            router.push({
+              pathname: '/(app)/resultats',
+              params: {
+                chasseId:   String(activeChasseId ?? ''),
+                score:      String(sessionScore),
+                startedAt:  startedAt ?? new Date().toISOString(),
+                chasseName: chasseName,
+                etapesJson: JSON.stringify(tracker.etapes),
+              },
+            });
           }}
         />
       )}
@@ -471,6 +627,17 @@ const st = StyleSheet.create({
   emptySub:   { fontSize: 14, color: Colors.textMuted, textAlign: 'center', lineHeight: 22 },
   emptyBtn:   { marginTop: Sp.sm, backgroundColor: Colors.gold, paddingHorizontal: 24, paddingVertical: 12, borderRadius: R.full },
   emptyBtnText: { fontWeight: '700', color: Colors.black, fontSize: 14 },
+
+  backWrap: { position: 'absolute', top: 0, left: 0, zIndex: 30 },
+  backBtn: {
+    margin: Sp.md,
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    backgroundColor: Colors.bg + 'EE',
+    borderRadius: R.full, borderWidth: 1, borderColor: Colors.border,
+    paddingHorizontal: Sp.sm + 4, paddingVertical: Sp.sm,
+    elevation: 8, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
+  },
+  backBtnLabel: { fontSize: 13, fontWeight: '700', color: Colors.textPrimary },
 
   hudWrap: { position: 'absolute', top: 0, left: 0, right: 0 },
   hud: {

@@ -5,7 +5,7 @@ import { etapeService } from '../services/api';
 
 // ─── Haversine ────────────────────────────────────────────────────────────────
 export function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371000; // rayon Terre en mètres
+  const R = 6371000;
   const toRad = (deg: number) => (deg * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
@@ -19,6 +19,7 @@ export function haversine(lat1: number, lon1: number, lat2: number, lon2: number
 export interface GeoPosition {
   latitude: number;
   longitude: number;
+  accuracy?: number | null;
 }
 
 export interface HuntTrackerState {
@@ -26,14 +27,17 @@ export interface HuntTrackerState {
   currentEtape: Etape | null;
   currentIndex: number;
   position: GeoPosition | null;
-  distance: number | null; // mètres, arrondi
+  distance: number | null;
   isInRadius: boolean;
   loading: boolean;
   completed: boolean;
   reachCurrentEtape: () => Promise<void>;
-  /** Avance à l'étape suivante sans appeler l'API (utilisé après validation AR) */
   advanceOnly: () => void;
 }
+
+// Rayon de détection par défaut (mètres).
+// Les GPS téléphone ont une précision de ~5–15 m — en dessous de 15 m on risque de ne jamais détecter.
+const DEFAULT_RADIUS = 15;
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 export function useHuntTracker(chasseId: number, completedEtapeIds: number[] = []): HuntTrackerState {
@@ -61,7 +65,6 @@ export function useHuntTracker(chasseId: number, completedEtapeIds: number[] = [
         const sorted = [...data].sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
         if (!cancelled) {
           setEtapes(sorted);
-          // Restaure la progression : premier index non encore validé
           if (completedEtapeIds.length > 0) {
             const firstPending = sorted.findIndex(e => !completedEtapeIds.includes(e.id_etape));
             setCurrentIndex(firstPending === -1 ? sorted.length : firstPending);
@@ -72,26 +75,32 @@ export function useHuntTracker(chasseId: number, completedEtapeIds: number[] = [
         if (!cancelled) setLoading(false);
       }
 
-      // GPS
+      // GPS — demande d'abord la permission, puis active les services de localisation
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted' || cancelled) return;
 
+      // Essaie d'activer les services GPS natifs (Android) — sans bloquer si refusé
+      try { await Location.enableNetworkProviderAsync(); } catch {}
+
       const sub = await Location.watchPositionAsync(
         {
-          accuracy: Location.Accuracy.BestForNavigation,
-          distanceInterval: 0,
-          timeInterval: 500,
+          // High utilise GPS + réseau : plus rapide à acquérir et plus fiable que BestForNavigation
+          accuracy: Location.Accuracy.High,
+          distanceInterval: 3,   // mise à jour tous les 3 m de déplacement réel
+          timeInterval: 2000,    // au plus toutes les 2 s
         },
         (loc) => {
           if (!cancelled) {
-            setPosition({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+            setPosition({
+              latitude:  loc.coords.latitude,
+              longitude: loc.coords.longitude,
+              accuracy:  loc.coords.accuracy,
+            });
           }
         }
       );
-      if (cancelled) {
-        sub.remove();
-        return;
-      }
+
+      if (cancelled) { sub.remove(); return; }
       watchRef.current = sub;
     };
 
@@ -115,9 +124,15 @@ export function useHuntTracker(chasseId: number, completedEtapeIds: number[] = [
       parseFloat(etape.lat),
       parseFloat(etape.long)
     );
-    const rounded = Math.round(dist);
-    setDistance(rounded);
-    setIsInRadius(dist <= (etape.rayon ?? 3));
+
+    const radius = etape.rayon ?? DEFAULT_RADIUS;
+
+    // Si la précision GPS est mauvaise, élargit légèrement le rayon de détection
+    const gpsError = position.accuracy ?? 0;
+    const effectiveRadius = Math.max(radius, radius + Math.min(gpsError * 0.5, 10));
+
+    setDistance(Math.round(dist));
+    setIsInRadius(dist <= effectiveRadius);
   }, [position, etapes, currentIndex]);
 
   const advanceOnly = useCallback(() => {

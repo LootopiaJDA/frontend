@@ -50,7 +50,7 @@ export default function ProfilJoueurScreen() {
             });
 
             const myScores = (scores as ScoreBoard[]).filter(s => s.id_user === user!.id_user);
-            const totalPoints = myScores.reduce((acc, s) => acc + s.score * 100, 0);
+            const totalPoints = myScores.reduce((acc, s) => acc + s.score, 0);
 
             setStats({ completed, inProgress, totalPoints });
             setCompletedHunts(done.sort((a, b) => {

@@ -28,8 +28,10 @@ function PodiumSection({ scores, currentUserId }: PodiumProps) {
     { color: '#CD7F32', bg: '#CD7F3222', rank: '3ème' },
   ];
 
-  // Entrées avec score > 0 pour le top 3
-  const ranked   = scores.filter(s => s.score > 0).slice(0, 3);
+  // Top 3 : uniquement les joueurs ayant COMPLETED cette chasse
+  const ranked   = scores
+    .filter(s => s.user?.userchasses?.some(uc => uc.id_chasse === s.id_chasse && uc.statut === 'COMPLETED'))
+    .slice(0, 3);
   // Entrée du joueur courant (même si score=0)
   const myEntry  = currentUserId ? scores.find(s => s.id_user === currentUserId) : null;
   const myInTop3 = ranked.some(s => s.id_user === currentUserId);
@@ -79,12 +81,12 @@ function PodiumSection({ scores, currentUserId }: PodiumProps) {
                 </View>
                 <View style={pd.playerInfo}>
                   <Text style={pd.playerName}>
-                    {isMe ? 'Vous' : `Joueur #${s.id_user}`}
+                    {isMe ? 'Vous' : (s.user?.username ?? `Joueur #${s.id_user}`)}
                   </Text>
                   {isMe && <Text style={pd.playerYouTag}>· votre score</Text>}
                 </View>
                 <View style={pd.scoreWrap}>
-                  <Text style={[pd.scoreVal, { color: isMe ? Colors.gold : medal.color }]}>{s.score * 100}</Text>
+                  <Text style={[pd.scoreVal, { color: isMe ? Colors.gold : medal.color }]}>{s.score}</Text>
                   <Text style={pd.scorePts}>pts</Text>
                 </View>
               </View>
@@ -98,7 +100,7 @@ function PodiumSection({ scores, currentUserId }: PodiumProps) {
         <View style={pd.myScoreRow}>
           <Ionicons name="person-circle-outline" size={16} color={Colors.gold} />
           <Text style={pd.myScoreLabel}>Votre score</Text>
-          <Text style={pd.myScoreVal}>{myEntry.score * 100} pts</Text>
+          <Text style={pd.myScoreVal}>{myEntry.score} pts</Text>
           {myEntry.score === 0 && (
             <Text style={pd.myScoreHint}>· terminez la chasse pour marquer !</Text>
           )}
@@ -204,16 +206,61 @@ export default function ChasseDetailScreen() {
       await chasseService.join(chasseId);
       await scoreService.create(chasseId);
       setAlreadyJoined(true);
+      setAlreadyCompleted(false);
     } catch (err: any) {
-      if (err.message?.toLowerCase().includes('already') || err.message?.toLowerCase().includes('inscription')) {
-        await scoreService.create(chasseId);
-        setAlreadyJoined(true);
-      } else {
-        Alert.alert('Erreur', err.message ?? 'Impossible de rejoindre la chasse');
-      }
+      Alert.alert('Erreur', err.message ?? 'Impossible de rejoindre la chasse');
     } finally {
       setJoining(false);
     }
+  };
+
+  const handleReplay = () => {
+    Alert.alert(
+      'Rejouer la chasse',
+      'Voulez-vous rejouer cette chasse depuis le début ? Votre score précédent sera remis à zéro.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Rejouer',
+          onPress: async () => {
+            setJoining(true);
+            try {
+              await chasseService.join(chasseId);
+              await scoreService.create(chasseId);
+              setAlreadyCompleted(false);
+              setAlreadyJoined(true);
+            } catch (err: any) {
+              Alert.alert('Erreur', err.message ?? 'Impossible de rejoindre la chasse');
+            } finally {
+              setJoining(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleLeave = () => {
+    Alert.alert(
+      'Se désinscrire',
+      'Voulez-vous vous désinscrire de cette chasse ? Votre progression sera perdue et vous pourrez vous réinscrire plus tard.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Se désinscrire',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await chasseService.leave(chasseId);
+              setAlreadyJoined(false);
+              setAlreadyCompleted(false);
+            } catch (err: any) {
+              Alert.alert('Erreur', err.message ?? 'Impossible de se désinscrire');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handlePlay = () => router.push({ pathname: '/(app)/map', params: { chasseId } });
@@ -365,12 +412,24 @@ export default function ChasseDetailScreen() {
           {/* ── CTA ── */}
           <View style={st.cta}>
             {alreadyCompleted ? (
-              <View style={st.completedBanner}>
-                <Ionicons name="trophy" size={20} color={Colors.gold} />
-                <View style={{ flex: 1 }}>
-                  <Text style={st.completedTitle}>Chasse terminée !</Text>
-                  <Text style={st.completedSub}>Vous avez déjà complété cette chasse et remporté vos points.</Text>
+              <View style={st.ctaCol}>
+                <View style={st.completedBanner}>
+                  <Ionicons name="trophy" size={20} color={Colors.gold} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={st.completedTitle}>Chasse terminée !</Text>
+                    <Text style={st.completedSub}>Vous avez déjà complété cette chasse.</Text>
+                  </View>
                 </View>
+                {hasOtherActive ? (
+                  <View style={st.warningBanner}>
+                    <Ionicons name="warning-outline" size={18} color={Colors.warning} />
+                    <Text style={st.warningText}>
+                      {"Terminez votre chasse en cours avant de rejouer celle-ci."}
+                    </Text>
+                  </View>
+                ) : (
+                  <Btn label="Rejouer la chasse" onPress={handleReplay} loading={joining} />
+                )}
               </View>
             ) : !isActive ? (
               <View style={st.infoBanner}>
@@ -378,7 +437,13 @@ export default function ChasseDetailScreen() {
                 <Text style={st.infoBannerText}>{"Cette chasse n'est pas encore active"}</Text>
               </View>
             ) : alreadyJoined ? (
-              <Btn label="Jouer sur la carte" onPress={handlePlay} />
+              <View style={st.ctaCol}>
+                <Btn label="Jouer sur la carte" onPress={handlePlay} />
+                <TouchableOpacity style={st.leaveBtn} onPress={handleLeave} activeOpacity={0.8}>
+                  <Ionicons name="exit-outline" size={16} color={Colors.error} />
+                  <Text style={st.leaveBtnText}>Se désinscrire</Text>
+                </TouchableOpacity>
+              </View>
             ) : hasOtherActive ? (
               <View style={st.warningBanner}>
                 <Ionicons name="warning-outline" size={18} color={Colors.warning} />
@@ -509,6 +574,15 @@ const st = StyleSheet.create({
   cta: {},
 
   ctaRow: { flexDirection: 'row', gap: Sp.sm, alignItems: 'stretch' },
+  ctaCol: { gap: Sp.sm },
+  leaveBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Sp.sm,
+    backgroundColor: Colors.errorBg,
+    borderRadius: R.full,
+    borderWidth: 1, borderColor: Colors.error + '55',
+    paddingVertical: 13,
+  },
+  leaveBtnText: { fontSize: 14, fontWeight: '700', color: Colors.error },
 
   infoBanner: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Sp.sm,
