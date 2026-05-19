@@ -2,17 +2,74 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
   Animated, SafeAreaView, ActivityIndicator,
+  ScrollView, Image, Dimensions,
 } from 'react-native';
 import MapView, { Marker, Circle, Polyline } from 'react-native-maps';
-import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect, Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import LottieView from 'lottie-react-native';
 import { Colors, Sp, R } from '@/constants/theme';
 import { useHuntTracker } from '@/hooks/useHuntTracker';
 import { useHuntStore } from '@/store/huntStore';
-import { chasseService, etapeService } from '@/services/api';
+import { chasseService, etapeService, scoreService } from '@/services/api';
+import { Etape } from '@/constants/types';
+
+const SCREEN_W = Dimensions.get('window').width;
+const PANEL_W  = SCREEN_W * 0.82;
+
+// ─── Score flottant +100 pts ──────────────────────────────────────────────────
+function FloatingPoints({ visible, onDone }: { visible: boolean; onDone: () => void }) {
+  const y       = useRef(new Animated.Value(0)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!visible) return;
+    y.setValue(0);
+    opacity.setValue(0);
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(opacity, { toValue: 1, duration: 150, useNativeDriver: true }),
+        Animated.timing(y, { toValue: -80, duration: 900, useNativeDriver: true }),
+      ]),
+      Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: true }),
+    ]).start(onDone);
+  }, [visible]);
+
+  if (!visible) return null;
+  return (
+    <Animated.View style={[fp.wrap, { opacity, transform: [{ translateY: y }] }]} pointerEvents="none">
+      <Text style={fp.text}>+100 pts</Text>
+    </Animated.View>
+  );
+}
+
+const fp = StyleSheet.create({
+  wrap: { position: 'absolute', alignSelf: 'center', bottom: 180, zIndex: 95 },
+  text: { fontSize: 28, fontWeight: '900', color: '#F9D342', textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 6 },
+});
+
+// ─── Toast validation étape ───────────────────────────────────────────────────
+function StepSuccessToast({ onDone }: { onDone: () => void }) {
+  return (
+    <View style={ss.wrap} pointerEvents="none">
+      <LottieView
+        source={require('@/assets/animations/yellowsuccess.json')}
+        autoPlay
+        loop={false}
+        onAnimationFinish={onDone}
+        style={ss.lottie}
+      />
+    </View>
+  );
+}
+
+const ss = StyleSheet.create({
+  wrap:   { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: 90 },
+  lottie: { width: 220, height: 220 },
+});
 
 // ─── Overlay victoire ─────────────────────────────────────────────────────────
-function VictoryOverlay({ onDismiss }: { onDismiss: () => void }) {
+function VictoryOverlay({ onDismiss, score }: { onDismiss: () => void; score: number }) {
   const scale   = useRef(new Animated.Value(0.5)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
@@ -25,12 +82,30 @@ function VictoryOverlay({ onDismiss }: { onDismiss: () => void }) {
 
   return (
     <Animated.View style={[vc.overlay, { opacity }]}>
+      {/* Confettis plein écran */}
+      <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+        <LottieView
+          source={require('@/assets/animations/confetti.json')}
+          autoPlay
+          loop
+          style={{ flex: 1 }}
+        />
+      </View>
+
       <Animated.View style={[vc.card, { transform: [{ scale }] }]}>
-        <Ionicons name="trophy" size={64} color={Colors.gold} />
+        <View style={{ width: 160, height: 160 }}>
+          <LottieView
+            source={require('@/assets/animations/Trophy.json')}
+            autoPlay
+            loop
+            style={{ flex: 1 }}
+          />
+        </View>
         <Text style={vc.title}>Félicitations !</Text>
+        <Text style={vc.score}>{score} pts</Text>
         <Text style={vc.sub}>Vous avez terminé toutes les étapes</Text>
         <TouchableOpacity style={vc.btn} onPress={onDismiss}>
-          <Text style={vc.btnText}>Retour aux chasses</Text>
+          <Text style={vc.btnText}>Voir le résumé</Text>
         </TouchableOpacity>
       </Animated.View>
     </Animated.View>
@@ -47,27 +122,176 @@ const vc = StyleSheet.create({
   card: {
     backgroundColor: Colors.bgCard, borderRadius: R.xl,
     borderWidth: 1, borderColor: Colors.gold + '44',
-    padding: Sp.xxl, alignItems: 'center', gap: 12,
+    paddingHorizontal: Sp.xxl, paddingBottom: Sp.xxl, paddingTop: Sp.lg,
+    alignItems: 'center', gap: 8,
     marginHorizontal: Sp.xl,
   },
   title:   { fontSize: 28, fontWeight: '800', color: Colors.gold },
+  score:   { fontSize: 36, fontWeight: '900', color: '#F9D342', letterSpacing: 1 },
   sub:     { fontSize: 14, color: Colors.textSecondary, textAlign: 'center' },
   btn:     { marginTop: Sp.md, backgroundColor: Colors.gold, paddingHorizontal: 32, paddingVertical: 14, borderRadius: R.full },
   btnText: { fontSize: 15, fontWeight: '800', color: Colors.black },
+});
+
+// ─── Historique des indices validés ──────────────────────────────────────────
+function HistoryCard({ etape, index }: { etape: Etape; index: number }) {
+  return (
+    <View style={hc.card}>
+      <View style={hc.header}>
+        <View style={hc.badge}>
+          <Text style={hc.badgeText}>{index + 1}</Text>
+        </View>
+        <Text style={hc.name} numberOfLines={2}>{etape.name}</Text>
+      </View>
+      {etape.image ? (
+        <Image source={{ uri: etape.image }} style={hc.img} resizeMode="cover" />
+      ) : null}
+      {etape.description ? (
+        <Text style={hc.desc}>{etape.description}</Text>
+      ) : null}
+    </View>
+  );
+}
+
+const hc = StyleSheet.create({
+  card: {
+    backgroundColor: Colors.bgElevated,
+    borderRadius: R.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Sp.md,
+    gap: Sp.sm,
+    marginBottom: Sp.md,
+  },
+  header:    { flexDirection: 'row', alignItems: 'center', gap: Sp.sm },
+  badge:     { width: 28, height: 28, borderRadius: 14, backgroundColor: '#4ecb8a', alignItems: 'center', justifyContent: 'center' },
+  badgeText: { fontSize: 13, fontWeight: '800', color: '#fff' },
+  name:      { flex: 1, fontSize: 14, fontWeight: '700', color: Colors.textPrimary },
+  img:       { width: '100%', height: 120, borderRadius: R.md },
+  desc:      { fontSize: 13, color: Colors.textMuted, lineHeight: 20 },
+});
+
+// ─── Popup parchemin indice ───────────────────────────────────────────────────
+const P_BG     = '#F0D99A';
+const P_ROLL   = '#9A6B1A';
+const P_BORDER = '#7A500E';
+const P_INK    = '#2E1A05';
+const P_LINE   = '#9A6B1A99';
+
+function HintPopup({ etape, onClose }: { etape: Etape; onClose: () => void }) {
+  const opacity    = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(60)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity,    { toValue: 1, duration: 260, useNativeDriver: true }),
+      Animated.spring(translateY, { toValue: 0, useNativeDriver: true, tension: 65, friction: 11 }),
+    ]).start();
+  }, []);
+
+  const hint =
+    etape.description && etape.description.trim() !== '' && etape.description !== 'undefined'
+      ? etape.description
+      : 'Aucun indice disponible.';
+
+  return (
+    <Animated.View style={[ph.overlay, { opacity }]}>
+      <Animated.View style={[ph.container, { transform: [{ translateY }] }]}>
+        {/* Rouleau haut */}
+        <View style={ph.roll}>
+          <View style={ph.rollCap} /><View style={ph.rollBar} /><View style={ph.rollCap} />
+        </View>
+
+        {/* Corps */}
+        <View style={ph.body}>
+          <Text style={ph.deco}>✦   ✦   ✦</Text>
+          <Text style={ph.title}>INDICE DÉVOILÉ</Text>
+          <View style={ph.line} />
+          <Text style={ph.etapeName}>{etape.name}</Text>
+          <Text style={ph.hint}>{hint}</Text>
+          <View style={ph.line} />
+          <Text style={ph.deco}>✦   ✦   ✦</Text>
+        </View>
+
+        {/* Rouleau bas */}
+        <View style={ph.roll}>
+          <View style={ph.rollCap} /><View style={ph.rollBar} /><View style={ph.rollCap} />
+        </View>
+
+        <TouchableOpacity style={ph.btn} onPress={onClose} activeOpacity={0.85}>
+          <Ionicons name="checkmark-circle" size={20} color={P_INK} />
+          <Text style={ph.btnText}>Continuer</Text>
+        </TouchableOpacity>
+      </Animated.View>
+    </Animated.View>
+  );
+}
+
+const ph = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(4,2,0,0.84)',
+    alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: Sp.lg,
+    zIndex: 85,
+  },
+  container: {
+    width: '100%',
+    borderRadius: R.sm,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.85, shadowRadius: 40,
+    shadowOffset: { width: 0, height: 14 },
+    elevation: 30,
+  },
+  roll: {
+    height: 26, flexDirection: 'row', alignItems: 'center',
+    backgroundColor: P_ROLL,
+  },
+  rollCap: { width: 26, height: 26, borderRadius: 13, backgroundColor: P_BORDER },
+  rollBar: { flex: 1, height: 10, backgroundColor: P_BORDER + 'AA', marginHorizontal: -4 },
+  body: {
+    backgroundColor: P_BG,
+    borderLeftWidth: 5, borderRightWidth: 5, borderColor: P_ROLL,
+    paddingHorizontal: Sp.xl, paddingVertical: Sp.xl,
+    alignItems: 'center', gap: Sp.md,
+  },
+  deco:      { fontSize: 13, color: P_ROLL, letterSpacing: 5 },
+  title:     { fontSize: 19, fontWeight: '900', color: P_BORDER, letterSpacing: 7 },
+  line:      { width: '82%', height: 1.5, backgroundColor: P_LINE },
+  etapeName: { fontSize: 14, fontWeight: '800', color: P_INK, textAlign: 'center' },
+  hint:      { fontSize: 15, color: P_INK, lineHeight: 25, textAlign: 'center', fontStyle: 'italic', paddingHorizontal: Sp.sm },
+  btn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    backgroundColor: Colors.gold,
+    paddingVertical: 16,
+    shadowColor: Colors.gold, shadowOpacity: 0.45, shadowRadius: 14, shadowOffset: { width: 0, height: 3 },
+    elevation: 10,
+  },
+  btnText: { fontSize: 15, fontWeight: '900', color: P_INK },
 });
 
 // ─── Écran carte ──────────────────────────────────────────────────────────────
 export default function MapScreen() {
   const params = useLocalSearchParams<{ chasseId?: string }>();
   const router = useRouter();
-  const { pendingValidation, setPendingValidation } = useHuntStore();
+  const { pendingValidation, setPendingValidation, sessionScore, addPoints, resetScore } = useHuntStore();
 
   const [activeChasseId, setActiveChasseId]       = useState<number | null>(null);
   const [completedEtapeIds, setCompletedEtapeIds] = useState<number[]>([]);
   const [loadingChasse, setLoadingChasse]         = useState(true);
   const [showVictory, setShowVictory]             = useState(false);
+  const [showStepSuccess, setShowStepSuccess]     = useState(false);
+  const [showFloatingPts, setShowFloatingPts]     = useState(false);
+  const [showHintPopup, setShowHintPopup]         = useState(false);
+  const [hintEtape, setHintEtape]                 = useState<Etape | null>(null);
+  const [startedAt, setStartedAt]                 = useState<string | null>(null);
+  const [chasseName, setChasseName]               = useState('');
 
   const digPanelY = useRef(new Animated.Value(220)).current;
+  const prevChasseIdRef = useRef<number | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const historyX = useRef(new Animated.Value(PANEL_W)).current;
 
   // ─── Résolution de la chasse active + progression ───────────────────────────
   useFocusEffect(useCallback(() => {
@@ -78,23 +302,44 @@ export default function MapScreen() {
         const active = (data.chasses ?? []).find(
           uc => uc.statut === 'IN_PROGRESS' && (!id || uc.id_chasse === id)
         ) ?? (id ? (data.chasses ?? []).find(uc => uc.id_chasse === id) : null);
-        setActiveChasseId(active ? active.id_chasse : null);
+        const chasseId = active ? active.id_chasse : null;
+        setActiveChasseId(chasseId);
+        setStartedAt(active?.started_at ?? null);
+        setChasseName(active?.chasse?.name ?? '');
         const done = (active?.UserChasseEtape ?? []).map(uce => uce.id_etape);
         setCompletedEtapeIds(done);
+        // Ensure score entry exists for this hunt
+        if (chasseId) scoreService.create(chasseId);
       })
       .catch(() => { setActiveChasseId(null); setCompletedEtapeIds([]); })
       .finally(() => setLoadingChasse(false));
   }, [params.chasseId]));
 
+  // Reset session score only when a NEW hunt starts (not on every map focus)
+  useEffect(() => {
+    if (activeChasseId !== null && activeChasseId !== prevChasseIdRef.current) {
+      prevChasseIdRef.current = activeChasseId;
+      resetScore();
+    }
+  }, [activeChasseId]);
+
   const tracker = useHuntTracker(activeChasseId ?? 0, completedEtapeIds);
 
   // ─── Retour depuis l'écran AR : valider l'étape puis avancer ─────────────────
-  // useEffect (pas useFocusEffect) pour réagir dès que les deps sont prêtes
   useEffect(() => {
     if (pendingValidation && activeChasseId && tracker.currentEtape) {
       setPendingValidation(false);
-      etapeService.validate(activeChasseId, tracker.currentEtape.id_etape).catch(() => {});
+      const validated = tracker.currentEtape;
+      etapeService.validate(activeChasseId, validated.id_etape).catch(() => {});
+      scoreService.increment(activeChasseId);
+      const isLastStep = tracker.currentIndex === tracker.etapes.length - 1;
+      addPoints(100);
       tracker.advanceOnly();
+      setShowFloatingPts(true);
+      if (!isLastStep) {
+        setHintEtape(validated);
+        setShowHintPopup(true);
+      }
     }
   }, [pendingValidation, activeChasseId, tracker.currentEtape]);
 
@@ -116,16 +361,37 @@ export default function MapScreen() {
     }
   }, [tracker.completed]);
 
+  const handleBack = useCallback(() => {
+    if (router.canGoBack()) {
+      router.back();
+    } else if (activeChasseId) {
+      router.navigate({ pathname: '/(app)/chasse/[id]', params: { id: String(activeChasseId) } });
+    } else {
+      router.navigate('/(app)/chasses');
+    }
+  }, [activeChasseId]);
+
+  const openHistory = useCallback(() => {
+    setHistoryOpen(true);
+    Animated.spring(historyX, { toValue: 0, useNativeDriver: true, tension: 70, friction: 12 }).start();
+  }, []);
+
+  const closeHistory = useCallback(() => {
+    Animated.timing(historyX, { toValue: PANEL_W, duration: 250, useNativeDriver: true }).start(() => setHistoryOpen(false));
+  }, []);
+
+  const completedEtapes = tracker.etapes.slice(0, tracker.currentIndex);
+
   const handleLaunchAR = () => {
     if (!tracker.currentEtape || !activeChasseId) return;
     router.push({
       pathname: '/(app)/ar-view',
       params: {
-        chasseId: String(activeChasseId),
-        etapeId: String(tracker.currentEtape.id_etape),
-        etapeName: tracker.currentEtape.name ?? `Étape ${tracker.currentIndex + 1}`,
-        lat: tracker.currentEtape.lat,
-        lng: tracker.currentEtape.long,
+        chasseId:    String(activeChasseId),
+        etapeName:   tracker.currentEtape.name ?? `Étape ${tracker.currentIndex + 1}`,
+        lat:         tracker.currentEtape.lat,
+        lng:         tracker.currentEtape.long,
+        description: tracker.currentEtape.description ?? '',
       },
     });
   };
@@ -148,7 +414,7 @@ export default function MapScreen() {
     );
   }
 
-  if (loadingChasse || tracker.loading || !tracker.position) {
+  if ((loadingChasse && activeChasseId === null) || tracker.loading || !tracker.position) {
     return (
       <View style={[st.safe, st.center]}>
         <ActivityIndicator size="large" color={Colors.gold} />
@@ -163,6 +429,9 @@ export default function MapScreen() {
 
   return (
     <View style={st.fill}>
+      {/* ─── Immersion : cache la barre d'onglets ──────────────────────────── */}
+      <Tabs.Screen options={{ tabBarStyle: { display: 'none' } }} />
+
       {/* ─── Carte ──────────────────────────────────────────────────────────── */}
       <MapView
         style={StyleSheet.absoluteFillObject}
@@ -201,7 +470,7 @@ export default function MapScreen() {
               {isCurrent && (
                 <Circle
                   center={coord}
-                  radius={etape.rayon ?? 30}
+                  radius={etape.rayon ?? 15}
                   strokeColor={Colors.gold + '99'}
                   fillColor={Colors.gold + '20'}
                   strokeWidth={2}
@@ -211,6 +480,14 @@ export default function MapScreen() {
           );
         })}
       </MapView>
+
+      {/* ─── Bouton retour ──────────────────────────────────────────────────── */}
+      <SafeAreaView style={st.backWrap} pointerEvents="box-none">
+        <TouchableOpacity style={st.backBtn} onPress={handleBack} activeOpacity={0.85}>
+          <Ionicons name="chevron-back" size={18} color={Colors.textPrimary} />
+          <Text style={st.backBtnLabel}>Retour</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
 
       {/* ─── HUD ────────────────────────────────────────────────────────────── */}
       {currentEtape && (
@@ -257,18 +534,76 @@ export default function MapScreen() {
           onPress={handleLaunchAR}
           activeOpacity={0.85}
         >
-          <Ionicons name="cube-outline" size={20} color={Colors.black} />
-          <Text style={st.arBtnText}>Lancer la Réalité Augmentée</Text>
+          <Ionicons name="search" size={20} color={Colors.black} />
+          <Text style={st.arBtnText}>Indice trouvé !</Text>
         </TouchableOpacity>
       </Animated.View>
 
+      {/* ─── Score flottant ─────────────────────────────────────────────────── */}
+      <FloatingPoints visible={showFloatingPts} onDone={() => setShowFloatingPts(false)} />
+
+      {/* ─── Toast validation étape ─────────────────────────────────────────── */}
+      {showStepSuccess && (
+        <StepSuccessToast onDone={() => setShowStepSuccess(false)} />
+      )}
+
+      {/* ─── Popup parchemin indice ──────────────────────────────────────────── */}
+      {showHintPopup && hintEtape && (
+        <HintPopup
+          etape={hintEtape}
+          onClose={() => { setShowHintPopup(false); setHintEtape(null); }}
+        />
+      )}
+
       {/* ─── Overlay victoire ───────────────────────────────────────────────── */}
       {showVictory && (
-        <VictoryOverlay onDismiss={() => {
-          setShowVictory(false);
-          router.push('/(app)/chasses');
-        }} />
+        <VictoryOverlay
+          score={sessionScore}
+          onDismiss={() => {
+            setShowVictory(false);
+            router.push({
+              pathname: '/(app)/resultats',
+              params: {
+                chasseId:   String(activeChasseId ?? ''),
+                score:      String(sessionScore),
+                startedAt:  startedAt ?? new Date().toISOString(),
+                chasseName: chasseName,
+                etapesJson: JSON.stringify(tracker.etapes),
+              },
+            });
+          }}
+        />
       )}
+
+      {/* ─── FAB historique ─────────────────────────────────────────────────── */}
+      {tracker.currentIndex > 0 && (
+        <TouchableOpacity style={st.historyFab} onPress={openHistory} activeOpacity={0.85}>
+          <Ionicons name="time-outline" size={18} color={Colors.gold} />
+          <Text style={st.historyFabText}>Indices</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* ─── Backdrop historique ─────────────────────────────────────────────── */}
+      {historyOpen && (
+        <TouchableOpacity style={st.historyBackdrop} activeOpacity={1} onPress={closeHistory} />
+      )}
+
+      {/* ─── Panel historique glissant ───────────────────────────────────────── */}
+      <Animated.View style={[st.historyPanel, { transform: [{ translateX: historyX }] }]} pointerEvents={historyOpen ? 'auto' : 'none'}>
+        <SafeAreaView style={{ flex: 1 }}>
+          <View style={st.historyHeader}>
+            <Text style={st.historyTitle}>Indices validés</Text>
+            <TouchableOpacity onPress={closeHistory} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Ionicons name="close" size={22} color={Colors.textPrimary} />
+            </TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={{ padding: Sp.md, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+            {completedEtapes.map((etape, i) => (
+              <HistoryCard key={etape.id_etape} etape={etape} index={i} />
+            ))}
+          </ScrollView>
+        </SafeAreaView>
+      </Animated.View>
     </View>
   );
 }
@@ -292,6 +627,17 @@ const st = StyleSheet.create({
   emptySub:   { fontSize: 14, color: Colors.textMuted, textAlign: 'center', lineHeight: 22 },
   emptyBtn:   { marginTop: Sp.sm, backgroundColor: Colors.gold, paddingHorizontal: 24, paddingVertical: 12, borderRadius: R.full },
   emptyBtnText: { fontWeight: '700', color: Colors.black, fontSize: 14 },
+
+  backWrap: { position: 'absolute', top: 0, left: 0, zIndex: 30 },
+  backBtn: {
+    margin: Sp.md,
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    backgroundColor: Colors.bg + 'EE',
+    borderRadius: R.full, borderWidth: 1, borderColor: Colors.border,
+    paddingHorizontal: Sp.sm + 4, paddingVertical: Sp.sm,
+    elevation: 8, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
+  },
+  backBtnLabel: { fontSize: 13, fontWeight: '700', color: Colors.textPrimary },
 
   hudWrap: { position: 'absolute', top: 0, left: 0, right: 0 },
   hud: {
@@ -332,4 +678,35 @@ const st = StyleSheet.create({
     paddingHorizontal: 28, paddingVertical: 14, marginTop: 4,
   },
   arBtnText: { fontSize: 15, fontWeight: '800', color: Colors.black },
+
+  historyFab: {
+    position: 'absolute', top: 110, right: Sp.md,
+    backgroundColor: Colors.bg + 'EE',
+    borderRadius: R.full, borderWidth: 1, borderColor: Colors.gold + '55',
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: Sp.sm + 4, paddingVertical: Sp.sm,
+    elevation: 8,
+    shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 2 },
+  },
+  historyFabText: { fontSize: 13, fontWeight: '700', color: Colors.gold },
+
+  historyBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    zIndex: 40,
+  },
+  historyPanel: {
+    position: 'absolute', top: 0, right: 0, bottom: 0,
+    width: PANEL_W,
+    backgroundColor: Colors.bg,
+    borderLeftWidth: 1, borderLeftColor: Colors.border,
+    zIndex: 50, elevation: 16,
+    shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: -4, height: 0 },
+  },
+  historyHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: Sp.md, paddingVertical: Sp.md,
+    borderBottomWidth: 1, borderBottomColor: Colors.border,
+  },
+  historyTitle: { fontSize: 17, fontWeight: '800', color: Colors.textPrimary },
 });

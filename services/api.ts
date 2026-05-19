@@ -1,5 +1,5 @@
 import { API_URL, EP } from '../constants/api';
-import { Chasse, ChasseDetail, Etape, StatutChasse, User, UserChasse } from '../constants/types';
+import { Chasse, ChasseDetail, Etape, ScoreBoard, StatutChasse, User, UserChasse } from '../constants/types';
 
 interface ChasseUpdatePayload {
   name?: string;
@@ -58,6 +58,7 @@ export const chasseService = {
       req(EP.CHASSE_UPDATE(id), { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: number) => req(EP.CHASSE_DELETE(id), { method: 'DELETE' }),
   join: (chasseId: number) => req(`/chasse/${chasseId}/join`, { method: 'POST' }),
+  leave: (chasseId: number) => req(`/chasse/${chasseId}/leave`, { method: 'PATCH' }),
   complete: (chasseId: number) => req(EP.CHASSE_COMPLETE(chasseId), { method: 'PATCH' }),
   getMe: (): Promise<{ chasses: UserChasse[] }> => req(EP.CHASSE_ME),
 };
@@ -71,6 +72,12 @@ export const partenaireService = {
 export const adminService = {
   validatePartenaire: (id: number, statut: 'ACTIVE' | 'INACTIVE') =>
       req(`/admin/partenaire/${id}/validate`, { method: 'POST', body: JSON.stringify({ statut }) }),
+};
+
+export const scoreService = {
+  getAll: (): Promise<ScoreBoard[]> => req(EP.SCORES),
+  create: (chasseId: number) => req(EP.SCORE_CREATE(chasseId), { method: 'POST' }).catch(() => {}),
+  increment: (chasseId: number) => req(EP.SCORE_UPDATE(chasseId), { method: 'PATCH' }).catch(() => {}),
 };
 
 export const etapeService = {

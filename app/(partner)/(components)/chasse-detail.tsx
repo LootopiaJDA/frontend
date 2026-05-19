@@ -8,15 +8,15 @@ import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { chasseService, etapeService } from '../../../services/api';
 import { Chasse, Etape } from '../../../constants/types';
-import { Colors, Sp, R } from '../../../constants/theme';
+import { Colors, Design, Sp, R } from '../../../constants/theme';
 import Btn from '../../../components/Btn';
 import ChasseMapView from '../../../components/ChasseMapView';
 import EtapeFormModal from '../../../components/EtapeFormModal';
 
 const ETAT_COLOR: Record<string, string> = {
     PENDING: Colors.gold,
-    ACTIVE: '#4caf50',
-    COMPLETED: Colors.textMuted,
+    ACTIVE: Design.status.ACTIVE.color,
+    COMPLETED: Design.text.meta,
 };
 
 /**
@@ -35,9 +35,10 @@ interface EtapeRowProps {
     etape: Etape;
     onEdit: () => void;
     onDelete: () => void;
+    isDeleting?: boolean;
 }
 
-function EtapeRow({ etape, onEdit, onDelete }: EtapeRowProps) {
+function EtapeRow({ etape, onEdit, onDelete, isDeleting }: EtapeRowProps) {
     return (
         <View style={s.etapeCard}>
             <View style={s.rankBadge}>
@@ -48,7 +49,7 @@ function EtapeRow({ etape, onEdit, onDelete }: EtapeRowProps) {
                 <Image source={{ uri: etape.image }} style={s.etapeImg} resizeMode="cover" />
             ) : (
                 <View style={s.etapeImgPlaceholder}>
-                    <Ionicons name="image-outline" size={28} color={Colors.textMuted} />
+                    <Ionicons name="image-outline" size={28} color={Design.text.meta} />
                 </View>
             )}
 
@@ -57,7 +58,7 @@ function EtapeRow({ etape, onEdit, onDelete }: EtapeRowProps) {
 
                 {!!etape.address && (
                     <View style={s.inlineRow}>
-                        <Ionicons name="location-outline" size={12} color={Colors.textMuted} />
+                        <Ionicons name="location-outline" size={12} color={Design.text.meta} />
                         <Text style={s.etapeAddr}>{etape.address}</Text>
                     </View>
                 )}
@@ -67,7 +68,7 @@ function EtapeRow({ etape, onEdit, onDelete }: EtapeRowProps) {
                 )}
 
                 <View style={s.inlineRow}>
-                    <Ionicons name="navigate-outline" size={12} color={Colors.textMuted} />
+                    <Ionicons name="navigate-outline" size={12} color={Design.text.meta} />
                     <Text style={s.etapeMeta}>
                         {parseFloat(etape.lat).toFixed(5)}, {parseFloat(etape.long).toFixed(5)}
                         {etape.rayon ? `  ·  r=${etape.rayon}m` : ''}
@@ -76,12 +77,15 @@ function EtapeRow({ etape, onEdit, onDelete }: EtapeRowProps) {
 
                 <View style={s.actionsRow}>
                     <TouchableOpacity style={s.btnEdit} onPress={onEdit}>
-                        <Ionicons name="pencil-outline" size={13} color={Colors.gold} />
+                        <Ionicons name="pencil-outline" size={13} color={Design.text.accent} />
                         <Text style={s.btnEditTxt}>Modifier</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={s.btnDel} onPress={onDelete}>
-                        <Ionicons name="trash-outline" size={13} color={Colors.error} />
-                        <Text style={s.btnDelTxt}>Supprimer</Text>
+                    <TouchableOpacity style={[s.btnDel, isDeleting && { opacity: 0.6 }]} onPress={onDelete} disabled={isDeleting}>
+                        {isDeleting
+                            ? <ActivityIndicator size="small" color={Colors.error} />
+                            : <Ionicons name="trash-outline" size={13} color={Colors.error} />
+                        }
+                        <Text style={s.btnDelTxt}>{isDeleting ? 'Suppression...' : 'Supprimer'}</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -98,6 +102,7 @@ export default function ChasseDetail() {
     const [chasse, setChasse] = useState<Chasse | null>(null);
     const [etapes, setEtapes] = useState<Etape[]>([]);
     const [loading, setLoading] = useState(true);
+    const [deletingId, setDeletingId] = useState<number | null>(null);
 
     const [etapeModal, setEtapeModal] = useState<{
         visible: boolean;
@@ -118,8 +123,7 @@ export default function ChasseDetail() {
                 .map(normalizeEtape)
                 .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
             setEtapes(normalized);
-        } catch (err) {
-            console.log('Erreur chargement chasse:', err);
+        } catch {
         } finally {
             setLoading(false);
         }
@@ -140,12 +144,14 @@ export default function ChasseDetail() {
                     text: 'Supprimer',
                     style: 'destructive',
                     onPress: async () => {
-                        setEtapes(prev => prev.filter(e => e.id_etape !== etape.id_etape));
+                        setDeletingId(etape.id_etape);
                         try {
                             await etapeService.delete(chasseId, etape.id_etape);
+                            setEtapes(prev => prev.filter(e => e.id_etape !== etape.id_etape));
                         } catch (err: any) {
                             Alert.alert('Erreur', err.message ?? 'Suppression échouée');
-                            load();
+                        } finally {
+                            setDeletingId(null);
                         }
                     },
                 },
@@ -165,7 +171,7 @@ export default function ChasseDetail() {
     if (!chasse) {
         return (
             <View style={s.center}>
-                <Ionicons name="alert-circle-outline" size={40} color={Colors.textMuted} />
+                <Ionicons name="alert-circle-outline" size={40} color={Design.text.meta} />
                 <Text style={s.notFound}>Chasse introuvable</Text>
             </View>
         );
@@ -173,7 +179,7 @@ export default function ChasseDetail() {
 
     const occ = chasse.occurence?.[0];
     const fmt = (d?: string) => d ? new Date(d).toLocaleDateString('fr-FR') : '—';
-    const etatColor = ETAT_COLOR[chasse.etat] ?? Colors.textMuted;
+    const etatColor = ETAT_COLOR[chasse.etat] ?? Design.text.meta;
 
     return (
         <SafeAreaView style={s.container}>
@@ -187,7 +193,7 @@ export default function ChasseDetail() {
 
                     {/* Back */}
                     <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
-                        <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
+                        <Ionicons name="chevron-back" size={20} color={Design.text.heading} />
                     </TouchableOpacity>
 
                     {/* Hero */}
@@ -208,16 +214,16 @@ export default function ChasseDetail() {
 
                         {chasse.localisation ? (
                             <View style={s.inlineRow}>
-                                <Ionicons name="location-outline" size={14} color={Colors.textMuted} />
+                                <Ionicons name="location-outline" size={14} color={Design.text.meta} />
                                 <Text style={s.meta}>{chasse.localisation}</Text>
                             </View>
                         ) : null}
 
                         {occ ? (
                             <View style={s.inlineRow}>
-                                <Ionicons name="calendar-outline" size={14} color={Colors.textMuted} />
+                                <Ionicons name="calendar-outline" size={14} color={Design.text.meta} />
                                 <Text style={s.meta}>{fmt(occ.date_start)} → {fmt(occ.date_end)}</Text>
-                                <Ionicons name="people-outline" size={14} color={Colors.textMuted} style={{ marginLeft: 8 }} />
+                                <Ionicons name="people-outline" size={14} color={Design.text.meta} style={{ marginLeft: 8 }} />
                                 <Text style={s.meta}>{occ.limit_user} places</Text>
                             </View>
                         ) : null}
@@ -242,7 +248,7 @@ export default function ChasseDetail() {
 
                     {etapes.length === 0 ? (
                         <View style={s.emptyEtapes}>
-                            <Ionicons name="flag-outline" size={36} color={Colors.textMuted} />
+                            <Ionicons name="flag-outline" size={36} color={Design.text.meta} />
                             <Text style={s.emptyTxt}>{"Aucune étape pour l'instant"}</Text>
                         </View>
                     ) : (
@@ -253,6 +259,7 @@ export default function ChasseDetail() {
                                 etape={etape}
                                 onEdit={() => setEtapeModal({ visible: true, mode: 'edit', etape })}
                                 onDelete={() => handleDeleteEtape(etape)}
+                                isDeleting={deletingId === etape.id_etape}
                             />
                         ))
                     )
@@ -274,16 +281,16 @@ export default function ChasseDetail() {
 }
 
 const s = StyleSheet.create({
-    container: { flex: 1, backgroundColor: Colors.bg },
+    container: { flex: 1, backgroundColor: Design.bg.screen },
     scroll: { paddingBottom: 60 },
     inner: { padding: Sp.lg },
 
     center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 10 },
-    notFound: { color: Colors.textSecondary, fontSize: 15 },
+    notFound: { color: Design.text.label, fontSize: 15 },
 
     backBtn: {
         width: 38, height: 38, borderRadius: R.sm,
-        backgroundColor: Colors.bgElevated, borderWidth: 1, borderColor: Colors.border,
+        backgroundColor: Design.bg.elevated, borderWidth: 1, borderColor: Design.border.default,
         alignItems: 'center', justifyContent: 'center', marginBottom: Sp.md,
     },
 
@@ -292,58 +299,58 @@ const s = StyleSheet.create({
 
     infoBlock: { gap: 8, marginBottom: Sp.lg },
     inlineRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    title: { flex: 1, fontSize: 22, fontWeight: '800', color: Colors.textPrimary },
-    meta: { fontSize: 13, color: Colors.textMuted },
+    title: { flex: 1, fontSize: 22, fontWeight: '800', color: Design.text.heading },
+    meta: { fontSize: 13, color: Design.text.meta },
     badge: { borderWidth: 1, borderRadius: R.sm, paddingHorizontal: 8, paddingVertical: 3 },
     badgeTxt: { fontSize: 11, fontWeight: '700' },
 
     sectionLabel: {
-        fontSize: 10, fontWeight: '700', color: Colors.gold,
+        fontSize: 10, fontWeight: '700', color: Design.text.accent,
         letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: Sp.md,
     },
 
     emptyEtapes: { alignItems: 'center', gap: 8, paddingVertical: Sp.xl },
-    emptyTxt: { fontSize: 14, color: Colors.textMuted },
+    emptyTxt: { fontSize: 14, color: Design.text.meta },
 
     etapeCard: {
-        backgroundColor: Colors.bgCard, borderRadius: R.lg,
-        overflow: 'hidden', borderWidth: 1, borderColor: Colors.border, marginBottom: Sp.md,
+        backgroundColor: Design.bg.card, borderRadius: R.lg,
+        overflow: 'hidden', borderWidth: 1, borderColor: Design.border.default, marginBottom: Sp.md,
     },
     rankBadge: {
         position: 'absolute', top: Sp.sm, left: Sp.sm, zIndex: 10,
-        width: 28, height: 28, borderRadius: 14, backgroundColor: Colors.gold,
+        width: 28, height: 28, borderRadius: 14, backgroundColor: Design.button.primary.bg,
         alignItems: 'center', justifyContent: 'center',
     },
-    rankTxt: { fontSize: 12, fontWeight: '800', color: Colors.black },
+    rankTxt: { fontSize: 12, fontWeight: '800', color: Design.text.onSolid },
     etapeImg: { width: '100%', height: 150 },
     etapeImgPlaceholder: {
-        width: '100%', height: 80, backgroundColor: Colors.bgElevated,
+        width: '100%', height: 80, backgroundColor: Design.bg.elevated,
         alignItems: 'center', justifyContent: 'center',
     },
     etapeBody: { padding: Sp.md, gap: 5 },
-    etapeName: { fontSize: 15, fontWeight: '700', color: Colors.textPrimary },
-    etapeAddr: { fontSize: 12, color: Colors.textMuted, flex: 1 },
-    etapeDesc: { fontSize: 13, color: Colors.textSecondary, lineHeight: 18 },
-    etapeMeta: { fontSize: 11, color: Colors.textMuted, flex: 1 },
+    etapeName: { fontSize: 15, fontWeight: '700', color: Design.text.heading },
+    etapeAddr: { fontSize: 12, color: Design.text.meta, flex: 1 },
+    etapeDesc: { fontSize: 13, color: Design.text.label, lineHeight: 18 },
+    etapeMeta: { fontSize: 11, color: Design.text.meta, flex: 1 },
 
     actionsBlock: { gap: Sp.md, marginTop: Sp.lg },
     testBtn: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
         borderWidth: 1, borderColor: Colors.gold + '55',
-        backgroundColor: Colors.goldGlow, borderRadius: R.md, paddingVertical: 14,
+        backgroundColor: Design.bg.gold, borderRadius: R.md, paddingVertical: 14,
     },
-    testBtnText: { fontSize: 14, fontWeight: '700', color: Colors.gold },
+    testBtnText: { fontSize: 14, fontWeight: '700', color: Design.text.accent },
     actionsRow: { flexDirection: 'row', gap: Sp.sm, marginTop: Sp.sm },
     btnEdit: {
         flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
         gap: 5, borderRadius: R.md, borderWidth: 1,
-        borderColor: Colors.gold + '55', backgroundColor: Colors.goldGlow, paddingVertical: 8,
+        borderColor: Colors.gold + '55', backgroundColor: Design.bg.gold, paddingVertical: 8,
     },
-    btnEditTxt: { color: Colors.gold, fontSize: 12, fontWeight: '700' },
+    btnEditTxt: { color: Design.text.accent, fontSize: 12, fontWeight: '700' },
     btnDel: {
         flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
         gap: 5, borderRadius: R.md, borderWidth: 1,
-        borderColor: Colors.error + '55', backgroundColor: Colors.errorBg, paddingVertical: 8,
+        borderColor: Colors.error + '55', backgroundColor: Design.bg.danger, paddingVertical: 8,
     },
     btnDelTxt: { color: Colors.error, fontSize: 12, fontWeight: '700' },
 });

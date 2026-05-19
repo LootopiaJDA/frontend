@@ -8,14 +8,11 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { chasseService } from '@/services/api';
-import { Chasse } from '@/constants/types';
+import { Chasse, UserChasse } from '@/constants/types';
 import { Colors, Fonts, Sp, R } from '@/constants/theme';
 import ChasseCard from '@/components/ChasseCard';
 import PageHeader from '@/components/PageHeader';
 import ScreenBackground from '@/components/ScreenBackground';
-
-const COFFRE = require('../../assets/images/coffre.svg');
-const LOUPE  = require('../../assets/images/loupe.png');
 
 type SortKey = 'date_desc' | 'date_asc';
 
@@ -32,6 +29,7 @@ interface CityResult {
 export default function ChassesScreen() {
     const router = useRouter();
     const [chasses, setChasses]             = useState<Chasse[]>([]);
+    const [userStatusMap, setUserStatusMap] = useState<Record<number, string>>({});
     const [loading, setLoading]             = useState(true);
     const [refreshing, setRefreshing]       = useState(false);
     const [search, setSearch]               = useState('');
@@ -50,10 +48,19 @@ export default function ChassesScreen() {
     const load = useCallback(async (city?: string | null) => {
         try {
             const filter = city !== undefined ? city : cityFilter;
-            const data = await chasseService.getAll(filter ?? undefined);
+            const [data, meData] = await Promise.all([
+                chasseService.getAll(filter ?? undefined),
+                chasseService.getMe().catch(() => ({ chasses: [] as UserChasse[] })),
+            ]);
             setChasses(data.allChasse ?? []);
-        } catch (err) {
-            console.log('Erreur chargement chasses:', err);
+            const map: Record<number, string> = {};
+            (meData.chasses ?? []).forEach(uc => {
+                if (!map[uc.id_chasse] || uc.statut === 'IN_PROGRESS') {
+                    map[uc.id_chasse] = uc.statut;
+                }
+            });
+            setUserStatusMap(map);
+        } catch {
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -233,13 +240,13 @@ export default function ChassesScreen() {
                 renderItem={({ item }) => (
                     <ChasseCard
                         chasse={item}
+                        userStatus={userStatusMap[item.id_chasse] as any ?? null}
                         onPress={() => router.push({ pathname: '/(app)/chasse/[id]', params: { id: item.id_chasse } })}
                     />
                 )}
                 ItemSeparatorComponent={() => <View style={{ height: Sp.md }} />}
                 ListEmptyComponent={
                     <View style={st.empty}>
-                        <Image source={search ? LOUPE : COFFRE} style={search ? st.loupeImg : st.coffreImg} resizeMode="contain" />
                         <Text style={st.emptyTitle}>
                             {search ? 'Aucun résultat' : cityFilter ? `Aucune chasse à ${cityFilter}` : 'Aucune chasse disponible'}
                         </Text>
@@ -378,12 +385,9 @@ const st = StyleSheet.create({
 
     list:      { paddingHorizontal: Sp.lg, paddingBottom: 100 },
     empty:     { alignItems: 'center', gap: Sp.md, paddingTop: 80 },
-    emptyTitle:{ fontSize: 16, fontWeight: '700', color: Colors.textSecondary },
-    emptySub:  { fontSize: 13, color: Colors.textMuted, textAlign: 'center' },
+    emptyTitle:{ fontSize: 20, fontWeight: '700', color: Colors.textSecondary },
+    emptySub:  { fontSize: 18, color: Colors.textSecondary, textAlign: 'center' },
     clearText: { color: Colors.gold, fontSize: 13, fontWeight: '600' },
-    coffreImg: { width: 110, height: 110, opacity: 0.7 },
-    loupeImg:  { width: 80, height: 80, opacity: 0.7 },
-
     backdrop: {
         flex: 1, backgroundColor: 'rgba(0,0,0,0.6)',
         alignItems: 'center', justifyContent: 'center', padding: Sp.xl,

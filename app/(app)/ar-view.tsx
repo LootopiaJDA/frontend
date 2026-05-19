@@ -1,36 +1,33 @@
 /**
- * ar-view.tsx — Réalité augmentée GPS + boussole
+ * ar-view.tsx — AR chasse au trésor
  *
- * Principe :
- *  1. Caméra en fond d'écran (expo-camera)
- *  2. Magnétomètre (expo-sensors) → cap boussole en temps réel
- *  3. Calcul du bearing GPS user → étape
- *  4. Quand le téléphone pointe vers l'étape (< 30°), le coffre apparaît
- *  5. Validation → retour carte
+ * seeking : boussole + flèches → trouve le bon angle
+ * found   : pelle animée + bouton "Creuser"
+ * digging : tremblement d'écran
+ * chest   : coffre flottant + bouton "Ouvrir"
+ * opening : coffre s'ouvre + confettis
+ * scroll  : parchemin avec indice
  */
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  Animated, Easing, Dimensions, SafeAreaView,
+  Animated, Dimensions, SafeAreaView, ActivityIndicator,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { Magnetometer } from 'expo-sensors';
+import LottieView from 'lottie-react-native';
+import { DeviceMotion } from 'expo-sensors';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Sp, R } from '@/constants/theme';
 import { useHuntStore } from '@/store/huntStore';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
-const FOV_DEG = 60; // champ de vision horizontal estimé (degrés)
 
-// ─── Maths AR ─────────────────────────────────────────────────────────────────
-
-/** Bearing GPS de (lat1,lon1) vers (lat2,lon2), retourne 0-360° */
 function getBearing(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const toRad = (d: number) => (d * Math.PI) / 180;
-  const dLon = toRad(lon2 - lon1);
+  const dLon  = toRad(lon2 - lon1);
   const y = Math.sin(dLon) * Math.cos(toRad(lat2));
   const x =
     Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
@@ -38,126 +35,260 @@ function getBearing(lat1: number, lon1: number, lat2: number, lon2: number): num
   return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
 
-/** Cap boussole depuis le magnétomètre (0-360°, 0 = Nord) */
-function getMagHeading(mx: number, my: number): number {
-  return ((Math.atan2(-my, mx) * 180) / Math.PI + 360) % 360;
-}
-
-/** Différence angulaire signée normalisée entre -180 et 180 */
 function angleDiff(a: number, b: number): number {
   let d = ((a - b + 180) % 360) - 180;
   if (d < -180) d += 360;
   return d;
 }
 
-// ─── Coffre au trésor ─────────────────────────────────────────────────────────
-function TreasureChest({ scale }: { scale: Animated.Value }) {
-  return (
-    <Animated.View style={[ch.wrap, { transform: [{ scale }] }]}>
-      <View style={ch.lid}>
-        <View style={ch.lidBand} />
-        <View style={ch.lockWrap}>
-          <View style={ch.lockCircle} />
-          <View style={ch.lockSlot} />
-        </View>
-        <View style={[ch.rivet, { left: 8, top: 8 }]} />
-        <View style={[ch.rivet, { right: 8, top: 8 }]} />
-      </View>
-      <View style={ch.hinge}>
-        <View style={ch.hingeKnob} />
-        <View style={ch.hingeKnob} />
-        <View style={ch.hingeKnob} />
-      </View>
-      <View style={ch.base}>
-        <View style={ch.band} />
-        <View style={ch.band} />
-        <View style={[ch.rivet, { left: 8, bottom: 8 }]} />
-        <View style={[ch.rivet, { right: 8, bottom: 8 }]} />
-      </View>
-    </Animated.View>
-  );
-}
+type Phase = 'seeking' | 'found' | 'digging' | 'chest' | 'opening';
 
-const ch = StyleSheet.create({
-  wrap:       { alignItems: 'center', width: 160 },
-  lid: {
-    width: 160, height: 55, backgroundColor: '#5C2E0A',
-    borderRadius: 12, borderWidth: 2, borderColor: Colors.gold + '88',
-    borderBottomWidth: 0, alignItems: 'center', justifyContent: 'center', position: 'relative',
-  },
-  lidBand:    { position: 'absolute', height: 10, left: 0, right: 0, backgroundColor: Colors.gold + '55', borderRadius: 2 },
-  lockWrap:   { alignItems: 'center', marginTop: 6 },
-  lockCircle: { width: 18, height: 18, borderRadius: 9, borderWidth: 2.5, borderColor: Colors.gold, backgroundColor: '#3a1a05' },
-  lockSlot:   { width: 7, height: 10, backgroundColor: Colors.gold, borderRadius: 3, marginTop: -4 },
-  rivet:      { position: 'absolute', width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.gold },
-  hinge:      { flexDirection: 'row', justifyContent: 'space-around', width: 120, height: 10, marginBottom: -2 },
-  hingeKnob:  { width: 14, height: 10, backgroundColor: Colors.gold, borderRadius: 2 },
-  base: {
-    width: 160, height: 80, backgroundColor: '#7A3D12',
-    borderRadius: 8, borderWidth: 2, borderColor: Colors.gold + '88',
-    borderTopWidth: 1, justifyContent: 'space-evenly', alignItems: 'center',
-    overflow: 'hidden', position: 'relative',
-  },
-  band: { height: 10, width: '90%', backgroundColor: Colors.gold + '44', borderRadius: 2 },
+// ─── Aiguille de boussole ─────────────────────────────────────────────────────
+const CompassNeedle = React.memo(({ diff }: { diff: number }) => {
+  const inRange = Math.abs(diff) < 30;
+  const color   = inRange ? '#4ecb8a' : Colors.gold;
+  const rot     = Math.max(-80, Math.min(80, diff));
+  return (
+    <View style={{ alignItems: 'center', transform: [{ rotate: `${rot}deg` }] }}>
+      <View style={{
+        width: 0, height: 0,
+        borderLeftWidth: 13, borderRightWidth: 13, borderBottomWidth: 30,
+        borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: color,
+      }} />
+      <View style={{ width: 4, height: 48, backgroundColor: color, borderRadius: 2 }} />
+      <View style={{
+        width: 0, height: 0,
+        borderLeftWidth: 8, borderRightWidth: 8, borderTopWidth: 16,
+        borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: color + '44',
+      }} />
+    </View>
+  );
 });
 
-// ─── Indicateur de direction ──────────────────────────────────────────────────
-function CompassArrow({ diff }: { diff: number }) {
-  const clamp = Math.max(-90, Math.min(90, diff));
+// ─── Flèches latérales pulsantes ─────────────────────────────────────────────
+function SideArrows({ side }: { side: 'left' | 'right' }) {
+  const a1 = useRef(new Animated.Value(0.2)).current;
+  const a2 = useRef(new Animated.Value(0.2)).current;
+
+  useEffect(() => {
+    const makeLoop = (val: Animated.Value, delay: number) =>
+      Animated.loop(Animated.sequence([
+        Animated.delay(delay),
+        Animated.timing(val, { toValue: 1,   duration: 380, useNativeDriver: true }),
+        Animated.timing(val, { toValue: 0.2, duration: 380, useNativeDriver: true }),
+      ]));
+    const l1 = makeLoop(a1, 0);
+    const l2 = makeLoop(a2, 220);
+    l1.start(); l2.start();
+    return () => { l1.stop(); l2.stop(); };
+  }, []);
+
+  const icon = side === 'left' ? 'chevron-back' : 'chevron-forward';
+  const pair = side === 'left' ? [a2, a1] : [a1, a2];
+
   return (
-    <View style={ca.wrap}>
-      <Ionicons
-        name="arrow-up"
-        size={28}
-        color={Math.abs(diff) < 15 ? '#4ecb8a' : Colors.gold}
-        style={{ transform: [{ rotate: `${clamp}deg` }] }}
-      />
-      <Text style={[ca.label, Math.abs(diff) < 15 && ca.labelOk]}>
-        {Math.abs(diff) < 15 ? 'Dans la bonne direction !' : diff > 0 ? 'Tournez à droite' : 'Tournez à gauche'}
-      </Text>
+    <View style={[sa.wrap, side === 'left' ? sa.left : sa.right]}>
+      <Animated.View style={{ opacity: pair[0] }}>
+        <Ionicons name={icon} size={46} color={Colors.gold} />
+      </Animated.View>
+      <Animated.View style={{ opacity: pair[1], marginHorizontal: -12 }}>
+        <Ionicons name={icon} size={46} color={Colors.gold} />
+      </Animated.View>
     </View>
   );
 }
 
-const ca = StyleSheet.create({
-  wrap:     { alignItems: 'center', gap: 6 },
-  label:    { fontSize: 13, fontWeight: '700', color: Colors.gold, letterSpacing: 0.5 },
-  labelOk:  { color: '#4ecb8a' },
+const sa = StyleSheet.create({
+  wrap:  { position: 'absolute', flexDirection: 'row', alignItems: 'center', top: '35%' },
+  left:  { left: Sp.sm },
+  right: { right: Sp.sm },
 });
 
-// ─── Écran AR principal ───────────────────────────────────────────────────────
+// ─── UI boussole — phase seeking ──────────────────────────────────────────────
+function SeekingUI({ diff }: { diff: number | null }) {
+  const inRange   = diff !== null && Math.abs(diff) < 30;
+  const proximity = diff !== null ? Math.max(0, 1 - Math.abs(diff) / 90) : 0;
+
+  const ringPulse = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    const anim = Animated.loop(Animated.sequence([
+      Animated.timing(ringPulse, { toValue: inRange ? 1.2 : 1.06, duration: 650, useNativeDriver: true }),
+      Animated.timing(ringPulse, { toValue: 1,                     duration: 650, useNativeDriver: true }),
+    ]));
+    anim.start();
+    return () => anim.stop();
+  }, [inRange]);
+
+  if (diff === null) {
+    return (
+      <View style={se.loading}>
+        <ActivityIndicator color={Colors.gold} size="large" />
+        <Text style={se.loadingText}>Localisation en cours...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={se.container}>
+      {/* Flèches côté gauche / droit */}
+      {diff < -22 && !inRange && <SideArrows side="left" />}
+      {diff >  22 && !inRange && <SideArrows side="right" />}
+
+      {/* Boussole */}
+      <View style={se.compassArea}>
+        <Animated.View style={[se.outerRing, {
+          borderColor: inRange ? '#4ecb8a55' : Colors.gold + '33',
+          transform: [{ scale: ringPulse }],
+        }]} />
+        <View style={[se.innerRing, { borderColor: inRange ? '#4ecb8a99' : Colors.gold + '66' }]} />
+        <CompassNeedle diff={diff} />
+      </View>
+
+      {/* Carte statut */}
+      <View style={[se.card, inRange && se.cardGreen]}>
+        <Text style={[se.cardText, inRange && se.cardTextGreen]}>
+          {inRange
+            ? '✦  Vous y êtes !'
+            : diff < 0
+              ? '◀  Tournez à gauche'
+              : 'Tournez à droite  ▶'}
+        </Text>
+
+        {/* Barre de proximité */}
+        <View style={se.barTrack}>
+          <View style={[se.barFill, {
+            flex: proximity,
+            backgroundColor: inRange ? '#4ecb8a' : Colors.gold,
+          }]} />
+          <View style={{ flex: Math.max(0, 1 - proximity) }} />
+        </View>
+
+        <Text style={se.barLabel}>
+          {inRange ? 'Trésor localisé — prêt à creuser !' : 'Cherchez le trésor...'}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+const se = StyleSheet.create({
+  container: {
+    position: 'absolute', left: 0, right: 0,
+    top: SCREEN_H * 0.12, bottom: 130,
+    alignItems: 'center', justifyContent: 'space-between',
+  },
+  loading: {
+    position: 'absolute', left: 0, right: 0,
+    top: '38%', alignItems: 'center', gap: Sp.md,
+  },
+  loadingText: { color: Colors.textMuted, fontSize: 14, fontWeight: '600' },
+
+  compassArea: { width: 190, height: 190, alignItems: 'center', justifyContent: 'center' },
+  outerRing: {
+    position: 'absolute', width: 190, height: 190, borderRadius: 95,
+    borderWidth: 2,
+  },
+  innerRing: {
+    position: 'absolute', width: 144, height: 144, borderRadius: 72,
+    borderWidth: 1.5,
+  },
+
+  card: {
+    width: SCREEN_W - Sp.xl * 2,
+    backgroundColor: 'rgba(8,5,0,0.78)',
+    borderRadius: R.xl, borderWidth: 1, borderColor: Colors.gold + '40',
+    padding: Sp.lg, alignItems: 'center', gap: Sp.sm,
+  },
+  cardGreen: { borderColor: '#4ecb8a44' },
+  cardText:      { fontSize: 16, fontWeight: '800', color: Colors.gold, letterSpacing: 0.4 },
+  cardTextGreen: { color: '#4ecb8a' },
+
+  barTrack: {
+    width: '100%', height: 5, borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    flexDirection: 'row', overflow: 'hidden',
+  },
+  barFill:  { borderRadius: 3 },
+  barLabel: { fontSize: 11, color: Colors.textMuted, letterSpacing: 0.8, fontWeight: '600' },
+});
+
+// ─── Écran principal ──────────────────────────────────────────────────────────
 export default function ArViewScreen() {
-  const { chasseId, etapeId, etapeName, lat, lng } = useLocalSearchParams<{
-    chasseId: string; etapeId: string; etapeName: string; lat: string; lng: string;
+  const { chasseId, etapeName, lat, lng, description } = useLocalSearchParams<{
+    chasseId: string; etapeName: string; lat: string; lng: string; description?: string;
   }>();
   const router = useRouter();
   const { setPendingValidation } = useHuntStore();
 
   const [camPermission, requestCamPermission] = useCameraPermissions();
-  const [heading, setHeading]           = useState<number | null>(null);
-  const [userPos, setUserPos]           = useState<{ lat: number; lng: number } | null>(null);
-  const [bearing, setBearing]           = useState<number | null>(null);
-  const [diff, setDiff]                 = useState<number>(180);
-  const [chestVisible, setChestVisible] = useState(false);
-  const [validating, setValidating]     = useState(false);
-  const [validated, setValidated]       = useState(false);
+  const [phase,          setPhase]          = useState<Phase>('seeking');
+  const [heading,        setHeading]        = useState<number | null>(null);
+  const [bearing,        setBearing]        = useState<number | null>(null);
+  const [diff,           setDiff]           = useState<number | null>(null);
+  const [detectionReady, setDetectionReady] = useState(false);
+  const inRangeRef = useRef(false);
 
-  // Animations
-  const chestOpacity  = useRef(new Animated.Value(0)).current;
-  const chestScale    = useRef(new Animated.Value(0.5)).current;
-  const chestY        = useRef(new Animated.Value(0)).current;
-  const chestX        = useRef(new Animated.Value(0)).current;
-  const glowOpacity   = useRef(new Animated.Value(0)).current;
-  const btnOpacity    = useRef(new Animated.Value(0)).current;
-  const flashOpacity  = useRef(new Animated.Value(0)).current;
-  const floatLoop     = useRef<Animated.CompositeAnimation | null>(null);
+  // Tremblement
+  const shakeX    = useRef(new Animated.Value(0)).current;
+  const shakeLoop = useRef<Animated.CompositeAnimation | null>(null);
 
-  // ─── Permissions caméra ───────────────────────────────────────────────────
+  // Pelle
+  const shovelOpacity = useRef(new Animated.Value(0)).current;
+  const shovelScale   = useRef(new Animated.Value(0.75)).current;
+
+  // Coffre
+  const chestY       = useRef(new Animated.Value(SCREEN_H * 0.65)).current;
+  const chestOpacity = useRef(new Animated.Value(0)).current;
+  const glowOpacity  = useRef(new Animated.Value(0)).current;
+  const floatY       = useRef(new Animated.Value(0)).current;
+  const floatLoop    = useRef<Animated.CompositeAnimation | null>(null);
+
+  // Confettis
+  const confettiOpacity = useRef(new Animated.Value(0)).current;
+
+  // Bouton
+  const btnOpacity = useRef(new Animated.Value(0)).current;
+  const btnScale   = useRef(new Animated.Value(0.85)).current;
+  const btnY       = useRef(new Animated.Value(50)).current;
+
+  const chestRef = useRef<LottieView>(null);
+
+  // Reset complet à chaque focus (ar-view est un tab caché — jamais démonté)
+  useFocusEffect(useCallback(() => {
+    setPhase('seeking');
+    setHeading(null);
+    setBearing(null);
+    setDiff(null);
+    setDetectionReady(false);
+    inRangeRef.current = false;
+
+    shakeLoop.current?.stop();
+    floatLoop.current?.stop();
+
+    shakeX.setValue(0);
+    shovelOpacity.setValue(0);
+    shovelScale.setValue(0.75);
+    chestY.setValue(SCREEN_H * 0.65);
+    chestOpacity.setValue(0);
+    glowOpacity.setValue(0);
+    floatY.setValue(0);
+    confettiOpacity.setValue(0);
+    btnOpacity.setValue(0);
+    btnScale.setValue(0.85);
+    btnY.setValue(50);
+
+    chestRef.current?.reset();
+
+    const t = setTimeout(() => setDetectionReady(true), 2500);
+    return () => clearTimeout(t);
+  }, []));
+
+  // ── Permissions ───────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!camPermission?.granted) requestCamPermission();
   }, []);
 
-  // ─── Position GPS utilisateur ─────────────────────────────────────────────
+  // ── GPS ───────────────────────────────────────────────────────────────────────
   useEffect(() => {
     let sub: Location.LocationSubscription | null = null;
     (async () => {
@@ -165,102 +296,150 @@ export default function ArViewScreen() {
       if (status !== 'granted') return;
       sub = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.High, distanceInterval: 2 },
-        (loc) => setUserPos({ lat: loc.coords.latitude, lng: loc.coords.longitude }),
+        loc => {
+          if (!lat || !lng) return;
+          setBearing(getBearing(
+            loc.coords.latitude, loc.coords.longitude,
+            parseFloat(lat), parseFloat(lng),
+          ));
+        },
       );
     })();
     return () => { sub?.remove(); };
-  }, []);
+  }, [lat, lng]);
 
-  // ─── Calcul du bearing GPS vers l'étape ──────────────────────────────────
+  // ── Boussole ──────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!userPos || !lat || !lng) return;
-    const b = getBearing(userPos.lat, userPos.lng, parseFloat(lat), parseFloat(lng));
-    setBearing(b);
-  }, [userPos, lat, lng]);
-
-  // ─── Magnétomètre → cap boussole ─────────────────────────────────────────
-  useEffect(() => {
-    Magnetometer.setUpdateInterval(100);
-    const sub = Magnetometer.addListener(({ x, y }) => {
-      setHeading(getMagHeading(x, y));
+    DeviceMotion.setUpdateInterval(100);
+    const sub = DeviceMotion.addListener(({ rotation }) => {
+      if (rotation) setHeading(((rotation.alpha * 180) / Math.PI + 360) % 360);
     });
     return () => sub.remove();
   }, []);
 
-  // ─── Calcul diff heading/bearing → position du coffre ────────────────────
+  // ── Calcul diff + zone ────────────────────────────────────────────────────────
   useEffect(() => {
     if (heading === null || bearing === null) return;
     const d = angleDiff(heading, bearing);
     setDiff(d);
 
-    // Position horizontale du coffre (décalage selon l'angle)
-    const xOffset = (d / FOV_DEG) * SCREEN_W * 0.8;
-    Animated.spring(chestX, { toValue: xOffset, useNativeDriver: true, tension: 60, friction: 8 }).start();
+    if (phase !== 'seeking' && phase !== 'found') return;
+    if (!detectionReady) return; // grace period — boussole seeking toujours visible d'abord
 
-    // Coffre visible si < 30°
-    const visible = Math.abs(d) < 30;
-    if (visible && !chestVisible) {
-      setChestVisible(true);
-      showChest();
-    } else if (!visible && chestVisible && !validated) {
-      hideChest();
-      setChestVisible(false);
+    const nowInRange = Math.abs(d) < 30;
+    const was = inRangeRef.current;
+
+    if (nowInRange && !was) {
+      inRangeRef.current = true;
+      if (phase === 'seeking') {
+        setPhase('found');
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }
+    } else if (!nowInRange && was && phase === 'found' && Math.abs(d) > 45) {
+      inRangeRef.current = false;
+      setPhase('seeking');
     }
-  }, [heading, bearing]);
+  }, [heading, bearing, phase]);
 
-  // ─── Animation apparition coffre ─────────────────────────────────────────
-  const showChest = useCallback(() => {
+  // ── Pelle : entrée / sortie zone ──────────────────────────────────────────────
+  useEffect(() => {
+    if (phase === 'found') {
+      Animated.parallel([
+        Animated.spring(shovelOpacity, { toValue: 1, useNativeDriver: true, tension: 60, friction: 8 }),
+        Animated.spring(shovelScale,   { toValue: 1, useNativeDriver: true, tension: 55, friction: 8 }),
+        Animated.spring(btnOpacity,    { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
+        Animated.spring(btnScale,      { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
+        Animated.spring(btnY,          { toValue: 0, useNativeDriver: true, tension: 55, friction: 10 }),
+      ]).start();
+    } else if (phase === 'seeking') {
+      Animated.parallel([
+        Animated.timing(shovelOpacity, { toValue: 0, duration: 280, useNativeDriver: true }),
+        Animated.timing(btnOpacity,    { toValue: 0, duration: 200, useNativeDriver: true }),
+        Animated.timing(btnY,          { toValue: 50, duration: 200, useNativeDriver: true }),
+      ]).start();
+      Animated.spring(shovelScale, { toValue: 0.75, useNativeDriver: true, tension: 120 }).start();
+    }
+  }, [phase]);
+
+  // ── "Creuser" ─────────────────────────────────────────────────────────────────
+  const handleDig = useCallback(() => {
+    if (phase !== 'found') return;
+    setPhase('digging');
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+
+    Animated.parallel([
+      Animated.timing(btnOpacity,    { toValue: 0, duration: 200, useNativeDriver: true }),
+      Animated.timing(shovelOpacity, { toValue: 0, duration: 350, useNativeDriver: true }),
+    ]).start();
+    Animated.spring(shovelScale, { toValue: 1.12, useNativeDriver: true, tension: 200 }).start();
+
+    // Tremblement
+    shakeLoop.current = Animated.loop(Animated.sequence([
+      Animated.timing(shakeX, { toValue:  13, duration: 55, useNativeDriver: true }),
+      Animated.timing(shakeX, { toValue: -13, duration: 55, useNativeDriver: true }),
+      Animated.timing(shakeX, { toValue:   8, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeX, { toValue:  -8, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeX, { toValue:   4, duration: 45, useNativeDriver: true }),
+      Animated.timing(shakeX, { toValue:   0, duration: 45, useNativeDriver: true }),
+      Animated.delay(90),
+    ]));
+    shakeLoop.current.start();
+
+    setTimeout(() => {
+      shakeLoop.current?.stop();
+      Animated.timing(shakeX, { toValue: 0, duration: 180, useNativeDriver: true })
+        .start(() => setPhase('chest'));
+    }, 2800);
+  }, [phase]);
+
+  // ── Phase "chest" ─────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (phase !== 'chest') return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     Animated.parallel([
-      Animated.spring(chestOpacity, { toValue: 1, useNativeDriver: true, tension: 60, friction: 8 }),
-      Animated.spring(chestScale,   { toValue: 1, useNativeDriver: true, tension: 55, friction: 7 }),
-      Animated.timing(glowOpacity,  { toValue: 1, duration: 400, useNativeDriver: true }),
+      Animated.spring(chestY,       { toValue: 0, useNativeDriver: true, tension: 42, friction: 9 }),
+      Animated.timing(chestOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.timing(glowOpacity,  { toValue: 1, duration: 900, useNativeDriver: true }),
     ]).start(() => {
-      // Float loop
-      floatLoop.current = Animated.loop(
-        Animated.sequence([
-          Animated.timing(chestY, { toValue: -12, duration: 1600, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-          Animated.timing(chestY, { toValue: 0,   duration: 1600, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        ])
-      );
+      floatLoop.current = Animated.loop(Animated.sequence([
+        Animated.timing(floatY, { toValue: -13, duration: 1800, useNativeDriver: true }),
+        Animated.timing(floatY, { toValue:   0, duration: 1800, useNativeDriver: true }),
+      ]));
       floatLoop.current.start();
 
-      // Bouton valider
-      setTimeout(() => {
-        Animated.timing(btnOpacity, { toValue: 1, duration: 400, useNativeDriver: true }).start();
-      }, 500);
+      Animated.parallel([
+        Animated.spring(btnOpacity, { toValue: 1, useNativeDriver: true, tension: 70 }),
+        Animated.spring(btnScale,   { toValue: 1, useNativeDriver: true, tension: 70 }),
+        Animated.spring(btnY,       { toValue: 0, useNativeDriver: true, tension: 60, friction: 9 }),
+      ]).start();
     });
-  }, []);
+  }, [phase]);
 
-  const hideChest = useCallback(() => {
+  // ── "Ouvrir" ──────────────────────────────────────────────────────────────────
+  const handleOpen = useCallback(() => {
+    if (phase !== 'chest') return;
+    setPhase('opening');
     floatLoop.current?.stop();
-    Animated.parallel([
-      Animated.timing(chestOpacity, { toValue: 0, duration: 300, useNativeDriver: true }),
-      Animated.timing(glowOpacity,  { toValue: 0, duration: 300, useNativeDriver: true }),
-      Animated.timing(btnOpacity,   { toValue: 0, duration: 200, useNativeDriver: true }),
-    ]).start();
-    Animated.spring(chestScale, { toValue: 0.5, useNativeDriver: true, tension: 80 }).start();
-  }, []);
-
-  // ─── Validation ───────────────────────────────────────────────────────────
-  const handleValidate = async () => {
-    if (validating || validated) return;
-    setValidating(true);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-    // Flash
-    Animated.sequence([
-      Animated.timing(flashOpacity, { toValue: 0.9, duration: 120, useNativeDriver: true }),
-      Animated.timing(flashOpacity, { toValue: 0,   duration: 400, useNativeDriver: true }),
-    ]).start();
+    Animated.parallel([
+      Animated.timing(floatY,          { toValue: 0, duration: 200, useNativeDriver: true }),
+      Animated.timing(btnOpacity,      { toValue: 0, duration: 200, useNativeDriver: true }),
+      Animated.timing(confettiOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
+    ]).start(() => chestRef.current?.play());
+  }, [phase]);
 
-    setValidated(true);
-    setPendingValidation(true);
-    setTimeout(() => router.navigate({ pathname: '/(app)/map', params: { chasseId } }), 600);
-  };
+  // ── Coffre ouvert → valider et retour carte ───────────────────────────────────
+  const handleChestOpen = useCallback(() => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Animated.timing(confettiOpacity, { toValue: 0, duration: 1200, useNativeDriver: true }).start(() => {
+      setPendingValidation(true);
+      router.navigate({ pathname: '/(app)/map', params: { chasseId } });
+    });
+  }, [chasseId]);
 
-  // ─── Écran de permission ──────────────────────────────────────────────────
+  // ── Permission ────────────────────────────────────────────────────────────────
   if (!camPermission?.granted) {
     return (
       <SafeAreaView style={st.permScreen}>
@@ -274,104 +453,150 @@ export default function ArViewScreen() {
     );
   }
 
-  const proximityPct = Math.max(0, 1 - Math.abs(diff) / 30);
+  const isDigging = phase === 'digging';
+  const isOpening = phase === 'opening';
 
   return (
     <View style={st.fill}>
-      {/* ─── Caméra en fond ─────────────────────────────────────────────── */}
       <CameraView style={StyleSheet.absoluteFillObject} facing="back" />
-
-      {/* ─── Vignette sombre sur les bords ──────────────────────────────── */}
       <View style={st.vignette} pointerEvents="none" />
 
-      <SafeAreaView style={st.overlay}>
-        {/* Header */}
-        <View style={st.header}>
-          <TouchableOpacity style={st.closeBtn} onPress={() => router.navigate({ pathname: '/(app)/map', params: { chasseId } })}>
-            <Ionicons name="close" size={20} color="#fff" />
-          </TouchableOpacity>
-          <View style={st.headerCenter}>
-            <Text style={st.headerTitle}>RÉALITÉ AUGMENTÉE</Text>
-            <Text style={st.headerSub}>{etapeName}</Text>
-          </View>
-          <View style={{ width: 36 }} />
-        </View>
-
-        {/* Réticule central */}
-        <View style={st.reticleWrap} pointerEvents="none">
-          <View style={[st.reticle, { borderColor: proximityPct > 0.5 ? '#4ecb8a' : Colors.gold + '88' }]}>
-            <View style={[st.reticleDot, { backgroundColor: proximityPct > 0.5 ? '#4ecb8a' : Colors.gold }]} />
-          </View>
-        </View>
-
-        {/* Coffre AR — positionné selon l'angle boussole */}
-        <Animated.View
-          style={[st.chestContainer, {
-            opacity: chestOpacity,
-            transform: [
-              { translateX: chestX },
-              { translateY: chestY },
-            ],
-          }]}
-          pointerEvents="none"
-        >
-          {/* Halo */}
-          <Animated.View style={[st.glow, { opacity: glowOpacity }]} />
-          <TreasureChest scale={chestScale} />
-          <Text style={st.chestLabel}>Trésor localisé !</Text>
-        </Animated.View>
-
-        {/* Indicateur de direction (bas) */}
-        <View style={st.bottom}>
-          {!chestVisible && heading !== null && (
-            <View style={st.compassCard}>
-              <CompassArrow diff={diff} />
-              <Text style={st.compassHint}>
-                Pointez votre téléphone vers le trésor
+      {/* Wrapper de tremblement */}
+      <Animated.View
+        style={[StyleSheet.absoluteFillObject, { transform: [{ translateX: shakeX }] }]}
+        pointerEvents="box-none"
+      >
+        <SafeAreaView style={st.overlay}>
+          {/* Header */}
+          <View style={st.header}>
+            <TouchableOpacity
+              style={st.closeBtn}
+              onPress={() => router.back()}
+            >
+              <Ionicons name="close" size={20} color="#fff" />
+            </TouchableOpacity>
+            <View style={st.headerCenter}>
+              <Text style={st.headerTitle}>
+                {phase === 'seeking' ? 'CHERCHEZ LE TRÉSOR' : 'RÉALITÉ AUGMENTÉE'}
               </Text>
+              <Text style={st.headerSub}>{etapeName}</Text>
             </View>
+            <View style={{ width: 36 }} />
+          </View>
+
+          {/* Boussole — phase seeking seulement */}
+          {phase === 'seeking' && <SeekingUI diff={diff} />}
+
+          {/* Pelle — found et digging */}
+          {(phase === 'found' || phase === 'digging') && (
+            <Animated.View
+              style={[st.shovelWrap, {
+                opacity: shovelOpacity,
+                transform: [{ scale: shovelScale }],
+              }]}
+              pointerEvents="none"
+            >
+              <LottieView
+                source={require('@/assets/animations/seeds.json')}
+                autoPlay loop
+                style={{ width: SCREEN_W * 0.80, height: SCREEN_W * 0.80 }}
+              />
+              <Text style={st.shovelHint}>
+                {isDigging ? 'Creusage en cours...' : 'Creusez ici !'}
+              </Text>
+            </Animated.View>
           )}
 
-          {/* Bouton valider */}
-          <Animated.View style={[st.btnWrap, { opacity: btnOpacity }]}>
-            <TouchableOpacity
-              style={[st.validateBtn, validated && st.validateBtnDone]}
-              onPress={handleValidate}
-              disabled={validating || validated}
-              activeOpacity={0.85}
+          {/* Coffre — chest et opening */}
+          {(phase === 'chest' || phase === 'opening') && (
+            <Animated.View
+              style={[st.chestWrap, {
+                opacity: chestOpacity,
+                transform: [{ translateY: chestY }, { translateY: floatY }],
+              }]}
+              pointerEvents="none"
             >
-              <Ionicons
-                name={validated ? 'checkmark-circle' : 'checkmark-done-outline'}
-                size={22}
-                color={Colors.black}
+              <Animated.View style={[st.glow, { opacity: glowOpacity }]} />
+              <LottieView
+                ref={chestRef}
+                source={require('@/assets/animations/ChestOpening.json')}
+                autoPlay={false}
+                loop={false}
+                style={{ width: 270, height: 270 }}
+                onAnimationFinish={handleChestOpen}
               />
-              <Text style={st.validateBtnText}>
-                {validated ? 'Étape validée !' : 'Valider cette étape'}
-              </Text>
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
-      </SafeAreaView>
+              {phase === 'chest' && (
+                <View style={st.chestBadge}>
+                  <Text style={st.chestBadgeText}>Trésor déterré !</Text>
+                </View>
+              )}
+            </Animated.View>
+          )}
 
-      {/* Flash de validation */}
-      <Animated.View style={[st.flash, { opacity: flashOpacity }]} pointerEvents="none" />
+          {/* Boutons */}
+          {(phase === 'found' || phase === 'digging' || phase === 'chest' || phase === 'opening') && (
+            <Animated.View style={[st.bottomZone, {
+              opacity: btnOpacity,
+              transform: [{ scale: btnScale }, { translateY: btnY }],
+            }]}>
+              {(phase === 'found' || phase === 'digging') && (
+                <TouchableOpacity
+                  style={[st.mainBtn, isDigging && st.mainBtnDim]}
+                  onPress={handleDig}
+                  disabled={isDigging}
+                  activeOpacity={0.82}
+                >
+                  <Ionicons name="hammer-outline" size={22} color={Colors.black} />
+                  <Text style={st.mainBtnText}>
+                    {isDigging ? 'Creusage...' : 'Creuser'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {(phase === 'chest' || phase === 'opening') && (
+                <TouchableOpacity
+                  style={[st.mainBtn, isOpening && st.mainBtnDim]}
+                  onPress={handleOpen}
+                  disabled={isOpening}
+                  activeOpacity={0.82}
+                >
+                  <Ionicons name="lock-open-outline" size={22} color={Colors.black} />
+                  <Text style={st.mainBtnText}>
+                    {isOpening ? 'Ouverture...' : 'Ouvrir'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </Animated.View>
+          )}
+        </SafeAreaView>
+      </Animated.View>
+
+      {/* Confettis */}
+      <Animated.View
+        style={[StyleSheet.absoluteFillObject, { opacity: confettiOpacity }]}
+        pointerEvents="none"
+      >
+        <LottieView
+          source={require('@/assets/animations/confetti.json')}
+          autoPlay loop style={{ flex: 1 }}
+        />
+      </Animated.View>
+
     </View>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
+
 const st = StyleSheet.create({
-  fill: { flex: 1 },
+  fill:    { flex: 1 },
+  overlay: { flex: 1 },
 
   vignette: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'transparent',
-    // Dégradé simulé via bordures sombres
-    borderWidth: 60,
-    borderColor: 'rgba(0,0,0,0.35)',
+    borderWidth: 50,
+    borderColor: 'rgba(0,0,0,0.32)',
   },
-
-  overlay: { flex: 1 },
 
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -379,81 +604,71 @@ const st = StyleSheet.create({
   },
   closeBtn: {
     width: 36, height: 36, borderRadius: R.full,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.55)',
     alignItems: 'center', justifyContent: 'center',
   },
   headerCenter: { alignItems: 'center' },
-  headerTitle:  { fontSize: 11, fontWeight: '800', color: '#fff', letterSpacing: 2 },
-  headerSub:    { fontSize: 13, color: Colors.gold, fontWeight: '600', marginTop: 2 },
+  headerTitle: {
+    fontSize: 10, fontWeight: '800', color: '#fff',
+    letterSpacing: 2.5, opacity: 0.9,
+  },
+  headerSub: { fontSize: 13, color: Colors.gold, fontWeight: '700', marginTop: 2 },
 
-  // Réticule central
-  reticleWrap: {
+  // Pelle
+  shovelWrap: {
     position: 'absolute',
-    top: SCREEN_H / 2 - 40,
-    left: SCREEN_W / 2 - 40,
+    top: SCREEN_H * 0.08,
+    left: 0, right: 0,
+    alignItems: 'center', gap: 10,
   },
-  reticle: {
-    width: 80, height: 80, borderRadius: 40,
-    borderWidth: 2,
-    alignItems: 'center', justifyContent: 'center',
+  shovelHint: {
+    fontSize: 16, fontWeight: '800', color: '#fff',
+    textShadowColor: 'rgba(0,0,0,0.95)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 8,
+    letterSpacing: 0.3,
   },
-  reticleDot: { width: 8, height: 8, borderRadius: 4 },
 
   // Coffre
-  chestContainer: {
+  chestWrap: {
     position: 'absolute',
-    top: SCREEN_H * 0.25,
-    left: SCREEN_W / 2 - 80,
-    alignItems: 'center',
-    gap: 12,
+    top: SCREEN_H * 0.10,
+    left: 0, right: 0,
+    alignItems: 'center', gap: 8,
   },
   glow: {
     position: 'absolute',
-    width: 220, height: 220, borderRadius: 110,
-    top: -30, left: -30,
-    backgroundColor: Colors.gold + '25',
+    width: 290, height: 290, borderRadius: 145,
+    backgroundColor: Colors.gold + '18',
     shadowColor: Colors.gold,
-    shadowOpacity: 0.8,
-    shadowRadius: 40,
+    shadowOpacity: 1, shadowRadius: 80,
     shadowOffset: { width: 0, height: 0 },
   },
-  chestLabel: { fontSize: 16, fontWeight: '800', color: Colors.gold, textShadowColor: '#000', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
-
-  // Bas de l'écran
-  bottom: {
-    position: 'absolute',
-    bottom: 40,
-    left: Sp.lg,
-    right: Sp.lg,
-    gap: Sp.md,
+  chestBadge: {
+    backgroundColor: 'rgba(10,6,0,0.72)',
+    borderRadius: R.full, borderWidth: 1, borderColor: Colors.gold + '55',
+    paddingHorizontal: Sp.lg, paddingVertical: Sp.sm, marginTop: 4,
+  },
+  chestBadgeText: {
+    fontSize: 15, fontWeight: '800', color: Colors.gold, letterSpacing: 0.5,
   },
 
-  compassCard: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: R.xl,
-    borderWidth: 1,
-    borderColor: Colors.gold + '44',
-    padding: Sp.lg,
-    alignItems: 'center',
-    gap: Sp.sm,
+  // Boutons
+  bottomZone: {
+    position: 'absolute', bottom: 40, left: Sp.xl, right: Sp.xl,
   },
-  compassHint: { fontSize: 12, color: 'rgba(255,255,255,0.7)', textAlign: 'center' },
-
-  btnWrap: {},
-  validateBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+  mainBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12,
     backgroundColor: Colors.gold, borderRadius: R.full,
-    paddingVertical: 16, paddingHorizontal: 32,
-    shadowColor: Colors.gold, shadowOpacity: 0.5,
-    shadowRadius: 20, shadowOffset: { width: 0, height: 4 },
-    elevation: 10,
+    paddingVertical: 18, paddingHorizontal: 40,
+    shadowColor: Colors.gold, shadowOpacity: 0.55,
+    shadowRadius: 30, shadowOffset: { width: 0, height: 6 },
+    elevation: 18,
   },
-  validateBtnDone: { backgroundColor: '#4ecb8a' },
-  validateBtnText: { fontSize: 16, fontWeight: '800', color: Colors.black },
+  mainBtnDim: { backgroundColor: Colors.gold + '70', shadowOpacity: 0 },
+  mainBtnText: { fontSize: 19, fontWeight: '900', color: Colors.black, letterSpacing: 0.4 },
 
-  flash: { ...StyleSheet.absoluteFillObject, backgroundColor: '#fff', zIndex: 200 },
-
-  // Écran permission
+  // Permission
   permScreen: { flex: 1, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center', gap: Sp.lg, padding: Sp.xl },
   permTitle:   { fontSize: 22, fontWeight: '800', color: Colors.textPrimary },
   permSub:     { fontSize: 14, color: Colors.textMuted, textAlign: 'center', lineHeight: 22 },

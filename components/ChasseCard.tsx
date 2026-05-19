@@ -7,9 +7,10 @@ import { Colors, Fonts, Sp, R } from "../constants/theme";
 const CROIX   = require("../assets/images/croix.png");
 const COFFRE  = require("../assets/images/coffre.png");
 
-type Props = { chasse: Chasse; onPress?: () => void };
+type UserStatus = 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED' | null;
+type Props = { chasse: Chasse; onPress?: () => void; userStatus?: UserStatus };
 
-export default function ChasseCard({ chasse, onPress }: Props) {
+export default function ChasseCard({ chasse, onPress, userStatus }: Props) {
   const occ = chasse.occurence?.[0];
   const dateStr = occ
     ? new Date(occ.date_start).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
@@ -31,11 +32,25 @@ export default function ChasseCard({ chasse, onPress }: Props) {
           )}
           <View style={s.photoShadow} />
 
-          {/* Badge statut */}
+          {/* Badge statut chasse */}
           <View style={[s.badge, isActive ? s.badgeOn : s.badgeOff]}>
             <View style={[s.dot, { backgroundColor: isActive ? Colors.success : Colors.warning }]} />
             <Text style={s.badgeText}>{isActive ? "Active" : "Bientôt"}</Text>
           </View>
+
+          {/* Badge statut joueur */}
+          {userStatus === 'IN_PROGRESS' && (
+            <View style={[s.userBadge, s.userBadgeProgress]}>
+              <View style={[s.dot, { backgroundColor: Colors.success }]} />
+              <Text style={s.badgeText}>En cours</Text>
+            </View>
+          )}
+          {userStatus === 'COMPLETED' && (
+            <View style={[s.userBadge, s.userBadgeDone]}>
+              <Ionicons name="trophy" size={10} color={Colors.gold} />
+              <Text style={[s.badgeText, { color: Colors.gold }]}>Terminé</Text>
+            </View>
+          )}
 
           {/* Titre */}
           <View style={s.titleBar}>
@@ -105,6 +120,15 @@ const s = StyleSheet.create({
   badgeOff: { backgroundColor: "rgba(4,2,0,0.82)", borderColor: Colors.warning + "55" },
   dot:  { width: 6, height: 6, borderRadius: 3 },
   badgeText: { fontSize: 11, fontWeight: "700", color: Colors.textPrimary },
+
+  userBadge: {
+    position: "absolute", top: Sp.sm, left: Sp.sm,
+    flexDirection: "row", alignItems: "center", gap: 5,
+    borderRadius: R.full, paddingHorizontal: 10, paddingVertical: 5,
+    borderWidth: 1, backgroundColor: "rgba(4,2,0,0.82)",
+  },
+  userBadgeProgress: { borderColor: Colors.success + "66" },
+  userBadgeDone:     { borderColor: Colors.gold + "66" },
 
   titleBar: {
     position: "absolute", bottom: 0, left: 0, right: 0,

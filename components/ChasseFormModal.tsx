@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, Modal, ScrollView, TouchableOpacity,
-  KeyboardAvoidingView, Platform, SafeAreaView, Alert, Image,
+  KeyboardAvoidingView, Platform, Alert, Image, ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Chasse } from '../constants/types';
 import { chasseService } from '../services/api';
-import { Colors, Sp, R } from '../constants/theme';
+import { Colors, Design, Sp, R } from '../constants/theme';
 import Input from './Input';
 import CityAutocomplete from './CityAutocomplete';
 import { useChasseForm, ChasseEtat } from '../hooks/useChasseForm';
@@ -47,6 +48,7 @@ export default function ChasseFormModal({ visible, mode, chasse, onClose, onSave
         await chasseService.create(buildCreateFormData(image!));
         onSaved();
         onClose();
+        Alert.alert('Chasse créée !', `"${form.name}" a bien été créée.`);
       } catch (err: any) {
         Alert.alert('Erreur', err.message ?? 'Création échouée');
       } finally {
@@ -60,6 +62,7 @@ export default function ChasseFormModal({ visible, mode, chasse, onClose, onSave
         await chasseService.update(chasse.id_chasse, buildUpdatePayload());
         onSaved();
         onClose();
+        Alert.alert('Sauvegardée !', 'Les modifications ont été enregistrées.');
       } catch (err: any) {
         Alert.alert('Erreur', err.message ?? 'Mise à jour échouée');
       } finally {
@@ -76,12 +79,15 @@ export default function ChasseFormModal({ visible, mode, chasse, onClose, onSave
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <SafeAreaView style={s.safe}>
         <View style={s.header}>
-          <TouchableOpacity onPress={onClose} style={s.closeBtn}>
-            <Ionicons name="close" size={22} color={Colors.textSecondary} />
+          <TouchableOpacity onPress={onClose} style={s.closeBtn} disabled={loading}>
+            <Ionicons name="close" size={22} color={loading ? Design.text.meta : Design.text.label} />
           </TouchableOpacity>
           <Text style={s.title}>{title}</Text>
-          <TouchableOpacity onPress={handleSave} disabled={loading} style={[s.saveBtn, loading && { opacity: 0.5 }]}>
-            <Text style={s.saveBtnText}>{loading ? '...' : saveLabel}</Text>
+          <TouchableOpacity onPress={handleSave} disabled={loading} style={[s.saveBtn, loading && { opacity: 0.6 }]}>
+            {loading
+              ? <ActivityIndicator size="small" color={Design.text.onSolid} />
+              : <Text style={s.saveBtnText}>{saveLabel}</Text>
+            }
           </TouchableOpacity>
         </View>
 
@@ -105,7 +111,7 @@ export default function ChasseFormModal({ visible, mode, chasse, onClose, onSave
                 </>
               ) : (
                 <View style={s.imagePlaceholder}>
-                  <Ionicons name="image-outline" size={32} color={Colors.textMuted} />
+                  <Ionicons name="image-outline" size={32} color={Design.text.meta} />
                   <Text style={s.imagePlaceholderText}>Galerie ou appareil photo</Text>
                 </View>
               )}
@@ -132,7 +138,7 @@ export default function ChasseFormModal({ visible, mode, chasse, onClose, onSave
                 placeholder="30"
                 value={form.limit_user}
                 onChangeText={setField('limit_user')}
-                keyboardType="numeric"
+                keyboard={"numeric"}
                 icon="people-outline"
               />
 
@@ -143,10 +149,10 @@ export default function ChasseFormModal({ visible, mode, chasse, onClose, onSave
                   <View style={{ flex: 1 }}>
                     <Text style={s.label}>Date début</Text>
                     <TouchableOpacity style={s.dateInput} onPress={() => setShowStart(true)}>
-                      <Text style={{ color: form.date_start ? Colors.textPrimary : Colors.textMuted }}>
+                      <Text style={{ color: form.date_start ? Design.text.heading : Design.text.meta }}>
                         {form.date_start || 'Choisir'}
                       </Text>
-                      <Ionicons name="calendar-outline" size={18} color={Colors.gold} />
+                      <Ionicons name="calendar-outline" size={18} color={Design.text.accent} />
                     </TouchableOpacity>
                     {showStart && (
                       <DateTimePicker
@@ -162,10 +168,10 @@ export default function ChasseFormModal({ visible, mode, chasse, onClose, onSave
                   <View style={{ flex: 1 }}>
                     <Text style={s.label}>Date fin</Text>
                     <TouchableOpacity style={s.dateInput} onPress={() => setShowEnd(true)}>
-                      <Text style={{ color: form.date_end ? Colors.textPrimary : Colors.textMuted }}>
+                      <Text style={{ color: form.date_end ? Design.text.heading : Design.text.meta }}>
                         {form.date_end || 'Choisir'}
                       </Text>
-                      <Ionicons name="calendar-outline" size={18} color={Colors.gold} />
+                      <Ionicons name="calendar-outline" size={18} color={Design.text.accent} />
                     </TouchableOpacity>
                     {showEnd && (
                       <DateTimePicker
@@ -194,7 +200,7 @@ export default function ChasseFormModal({ visible, mode, chasse, onClose, onSave
                     style={[s.etatBtn, on && s.etatBtnActive]}
                     onPress={() => setForm(f => ({ ...f, etat: key }))}
                   >
-                    <Ionicons name={icon as any} size={18} color={on ? Colors.gold : Colors.textMuted} />
+                    <Ionicons name={icon as any} size={18} color={on ? Design.text.accent : Design.text.meta} />
                     <Text style={[s.etatLabel, on && s.etatLabelActive]}>{label}</Text>
                   </TouchableOpacity>
                 );
@@ -209,27 +215,27 @@ export default function ChasseFormModal({ visible, mode, chasse, onClose, onSave
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.bg },
+  safe: { flex: 1, backgroundColor: Design.bg.modal },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Sp.lg, paddingVertical: Sp.md,
-    borderBottomWidth: 1, borderBottomColor: Colors.border,
+    borderBottomWidth: 1, borderBottomColor: Design.border.default,
   },
   closeBtn: { padding: 4 },
-  title: { fontSize: 17, fontWeight: '700', color: Colors.textPrimary },
-  saveBtn: { backgroundColor: Colors.gold, borderRadius: R.sm, paddingHorizontal: Sp.md, paddingVertical: 7 },
-  saveBtnText: { color: Colors.black, fontWeight: '700', fontSize: 14 },
+  title: { fontSize: 17, fontWeight: '700', color: Design.text.heading },
+  saveBtn: { backgroundColor: Design.button.primary.bg, borderRadius: R.sm, paddingHorizontal: Sp.md, paddingVertical: 7 },
+  saveBtnText: { color: Design.text.onSolid, fontWeight: '700', fontSize: 14 },
   scroll: { padding: Sp.lg, paddingBottom: 60, gap: Sp.sm },
-  label: { fontSize: 12, fontWeight: '600', color: Colors.textSecondary, marginBottom: 4, marginTop: Sp.sm },
+  label: { fontSize: 12, fontWeight: '600', color: Design.text.label, marginBottom: 4, marginTop: Sp.sm },
   sectionLabel: {
-    fontSize: 10, fontWeight: '700', color: Colors.gold,
+    fontSize: 10, fontWeight: '700', color: Design.text.accent,
     letterSpacing: 1.5, textTransform: 'uppercase', marginTop: Sp.lg, marginBottom: Sp.sm,
   },
   imagePicker: {
-    borderWidth: 2, borderColor: Colors.border, borderStyle: 'dashed',
+    borderWidth: 2, borderColor: Design.border.default, borderStyle: 'dashed',
     borderRadius: R.lg, height: 160, overflow: 'hidden', marginBottom: Sp.sm,
   },
-  imagePickerErr: { borderColor: Colors.error },
+  imagePickerErr: { borderColor: Design.border.error },
   imagePreview: { width: '100%', height: '100%' },
   imageOverlay: {
     ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)',
@@ -237,22 +243,22 @@ const s = StyleSheet.create({
   },
   imageOverlayText: { color: '#fff', fontSize: 13, fontWeight: '600' },
   imagePlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  imagePlaceholderText: { color: Colors.textMuted, fontSize: 14 },
-  errText: { color: Colors.error, fontSize: 12, marginBottom: Sp.sm },
+  imagePlaceholderText: { color: Design.text.meta, fontSize: 14 },
+  errText: { color: Design.text.danger, fontSize: 12, marginBottom: Sp.sm },
   row2: { flexDirection: 'row', gap: Sp.sm },
   dateInput: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    borderWidth: 1, borderColor: Colors.border, borderRadius: R.md,
+    borderWidth: 1, borderColor: Design.border.default, borderRadius: R.md,
     paddingHorizontal: Sp.md, paddingVertical: Sp.sm, height: 44,
-    backgroundColor: Colors.bgCard,
+    backgroundColor: Design.bg.card,
   },
   etatRow: { flexDirection: 'row', gap: Sp.md, marginBottom: Sp.lg },
   etatBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, backgroundColor: Colors.bgElevated, borderRadius: R.md,
-    borderWidth: 1, borderColor: Colors.border, padding: Sp.md,
+    gap: 8, backgroundColor: Design.bg.elevated, borderRadius: R.md,
+    borderWidth: 1, borderColor: Design.border.default, padding: Sp.md,
   },
-  etatBtnActive: { backgroundColor: Colors.goldGlow, borderColor: Colors.gold },
-  etatLabel: { color: Colors.textMuted, fontSize: 14, fontWeight: '600' },
-  etatLabelActive: { color: Colors.gold },
+  etatBtnActive: { backgroundColor: Design.bg.gold, borderColor: Colors.gold },
+  etatLabel: { color: Design.text.meta, fontSize: 14, fontWeight: '600' },
+  etatLabelActive: { color: Design.text.accent },
 });

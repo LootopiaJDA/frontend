@@ -1,14 +1,14 @@
 import React, { useState, useCallback } from 'react';
 import {
     View, Text, StyleSheet, FlatList, Modal,
-    ActivityIndicator, TouchableOpacity,
-    SafeAreaView, ScrollView, Image,
+    ActivityIndicator, TouchableOpacity, ScrollView, Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { chasseService } from '../../services/api';
 import { Chasse, ChasseDetail } from '../../constants/types';
-import { Colors, Fonts, Sp, R } from '../../constants/theme';
+import { Colors, Design, Fonts, Sp, R } from '../../constants/theme';
 import PageHeader from '../../components/PageHeader';
 import StatusBadge from '../../components/StatusBadge';
 import ScreenBackground from '../../components/ScreenBackground';
@@ -25,8 +25,7 @@ export default function AdminChassesScreen() {
         try {
             const data = await chasseService.getAll();
             setChasses(data.allChasse ?? []);
-        } catch (err) {
-            console.log('Erreur chargement chasses admin:', err);
+        } catch {
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -52,9 +51,9 @@ export default function AdminChassesScreen() {
 
     const statusColor = (etat: string) => {
         if (etat === 'ACTIVE')    return '#4ecb8a';
-        if (etat === 'PENDING')   return Colors.warning;
-        if (etat === 'COMPLETED') return Colors.textMuted;
-        return Colors.textMuted;
+        if (etat === 'PENDING')   return Design.text.warning;
+        if (etat === 'COMPLETED') return Design.text.meta;
+        return Design.text.meta;
     };
 
     if (loading) {
@@ -87,7 +86,7 @@ export default function AdminChassesScreen() {
                             <Image source={{ uri: c.image }} style={st.cardImage} />
                         ) : (
                             <View style={[st.cardImage, st.cardImagePlaceholder]}>
-                                <Ionicons name="map-outline" size={24} color={Colors.textMuted} />
+                                <Ionicons name="map-outline" size={24} color={Design.text.meta} />
                             </View>
                         )}
 
@@ -98,7 +97,7 @@ export default function AdminChassesScreen() {
                             </View>
                             {c.localisation && (
                                 <View style={st.cardMeta}>
-                                    <Ionicons name="location-outline" size={12} color={Colors.textMuted} />
+                                    <Ionicons name="location-outline" size={12} color={Design.text.meta} />
                                     <Text style={st.cardMetaText} numberOfLines={1}>{c.localisation}</Text>
                                 </View>
                             )}
@@ -108,13 +107,13 @@ export default function AdminChassesScreen() {
                             </View>
                         </View>
 
-                        <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
+                        <Ionicons name="chevron-forward" size={16} color={Design.text.meta} />
                     </TouchableOpacity>
                 )}
                 ItemSeparatorComponent={() => <View style={{ height: Sp.sm }} />}
                 ListEmptyComponent={
                     <View style={st.empty}>
-                        <Ionicons name="map-outline" size={48} color={Colors.textMuted} />
+                        <Ionicons name="map-outline" size={48} color={Design.text.meta} />
                         <Text style={st.emptyText}>Aucune chasse active</Text>
                     </View>
                 }
@@ -132,7 +131,7 @@ export default function AdminChassesScreen() {
                         {/* Header */}
                         <View style={st.modalHeader}>
                             <TouchableOpacity onPress={() => setSelected(null)} style={st.modalClose}>
-                                <Ionicons name="close" size={22} color={Colors.textSecondary} />
+                                <Ionicons name="close" size={22} color={Design.text.label} />
                             </TouchableOpacity>
                             <Text style={st.modalTitle}>Détail chasse</Text>
                             <View style={{ width: 36 }} />
@@ -144,7 +143,7 @@ export default function AdminChassesScreen() {
                                 <Image source={{ uri: selected.image }} style={st.modalCover} />
                             ) : (
                                 <View style={[st.modalCover, st.modalCoverEmpty]}>
-                                    <Ionicons name="map-outline" size={48} color={Colors.textMuted} />
+                                    <Ionicons name="map-outline" size={48} color={Design.text.meta} />
                                 </View>
                             )}
 
@@ -225,14 +224,6 @@ export default function AdminChassesScreen() {
                                     <Text style={st.noEtapesText}>Aucune étape configurée</Text>
                                 </View>
                             )}
-
-                            {/* Info suppression */}
-                            <View style={st.infoBox}>
-                                <Ionicons name="information-circle-outline" size={16} color={Colors.textMuted} />
-                                <Text style={st.infoBoxText}>
-                                    La suppression d'une chasse est réservée au partenaire propriétaire.
-                                </Text>
-                            </View>
                         </ScrollView>
                     </SafeAreaView>
                 )}
@@ -246,7 +237,7 @@ function InfoRow({ icon, label, value, last = false }: {
 }) {
     return (
         <View style={[ir.row, !last && ir.border]}>
-            <Ionicons name={icon as any} size={15} color={Colors.textMuted} />
+            <Ionicons name={icon as any} size={15} color={Design.text.meta} />
             <Text style={ir.label}>{label}</Text>
             <Text style={ir.value} numberOfLines={1}>{value}</Text>
         </View>
@@ -255,9 +246,9 @@ function InfoRow({ icon, label, value, last = false }: {
 
 const ir = StyleSheet.create({
     row:   { flexDirection: 'row', alignItems: 'center', gap: Sp.md, paddingVertical: 11 },
-    border:{ borderBottomWidth: 1, borderBottomColor: Colors.borderWarm },
-    label: { fontFamily: Fonts.title, fontSize: 11, color: Colors.textMuted, width: 70, letterSpacing: 0.5 },
-    value: { fontFamily: Fonts.title, flex: 1, fontSize: 12, color: Colors.textPrimary, textAlign: 'right' },
+    border:{ borderBottomWidth: 1, borderBottomColor: Design.border.warm },
+    label: { fontFamily: Fonts.title, fontSize: 11, color: Design.text.meta, width: 70, letterSpacing: 0.5 },
+    value: { fontFamily: Fonts.title, flex: 1, fontSize: 12, color: Design.text.heading, textAlign: 'right' },
 });
 
 const st = StyleSheet.create({
@@ -267,85 +258,78 @@ const st = StyleSheet.create({
 
     card: {
         flexDirection: 'row', alignItems: 'center',
-        backgroundColor: Colors.bgCard,
-        borderRadius: R.lg, borderWidth: 1, borderColor: Colors.borderWarm,
+        backgroundColor: Design.bg.card,
+        borderRadius: R.lg, borderWidth: 1, borderColor: Design.border.warm,
         overflow: 'hidden', gap: Sp.md, paddingRight: Sp.md,
     },
     cardImage: { width: 80, height: 80 },
     cardImagePlaceholder: {
-        backgroundColor: Colors.bgElevated,
+        backgroundColor: Design.bg.elevated,
         alignItems: 'center', justifyContent: 'center',
     },
     cardBody:     { flex: 1, paddingVertical: Sp.sm, gap: 4 },
     cardTop:      { flexDirection: 'row', alignItems: 'center', gap: Sp.sm },
-    cardName:     { fontFamily: Fonts.title, flex: 1, fontSize: 13, color: Colors.textPrimary },
+    cardName:     { fontFamily: Fonts.title, flex: 1, fontSize: 13, color: Design.text.heading },
     statusDot:    { width: 8, height: 8, borderRadius: 4 },
     cardMeta:     { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    cardMetaText: { fontFamily: Fonts.title, fontSize: 10, color: Colors.textMuted, flex: 1 },
+    cardMetaText: { fontFamily: Fonts.title, fontSize: 10, color: Design.text.meta, flex: 1 },
     cardFooter:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 },
-    cardId:       { fontFamily: Fonts.title, fontSize: 9, color: Colors.textMuted },
+    cardId:       { fontFamily: Fonts.title, fontSize: 9, color: Design.text.meta },
 
     empty:     { alignItems: 'center', gap: Sp.md, paddingTop: 80 },
-    emptyText: { fontFamily: Fonts.title, fontSize: 14, color: Colors.textMuted },
+    emptyText: { fontFamily: Fonts.title, fontSize: 14, color: Design.text.meta },
 
     // Modal
-    modalSafe:   { flex: 1, backgroundColor: Colors.bg },
+    modalSafe:   { flex: 1, backgroundColor: Design.bg.screen },
     modalHeader: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         paddingHorizontal: Sp.lg, paddingVertical: Sp.md,
-        borderBottomWidth: 1, borderBottomColor: Colors.borderWarm,
+        borderBottomWidth: 1, borderBottomColor: Design.border.warm,
     },
     modalClose:  { padding: 4 },
-    modalTitle:  { fontFamily: Fonts.title, fontSize: 15, color: Colors.textPrimary, letterSpacing: 0.5 },
+    modalTitle:  { fontFamily: Fonts.title, fontSize: 15, color: Design.text.heading, letterSpacing: 0.5 },
     modalScroll: { paddingBottom: 60 },
 
     modalCover:      { width: '100%', height: 200 },
-    modalCoverEmpty: { backgroundColor: Colors.bgCard, alignItems: 'center', justifyContent: 'center' },
+    modalCoverEmpty: { backgroundColor: Design.bg.card, alignItems: 'center', justifyContent: 'center' },
 
     modalHero:    { padding: Sp.lg, gap: Sp.sm },
-    modalName:    { fontFamily: Fonts.display, fontSize: 20, color: Colors.textPrimary, letterSpacing: 1 },
+    modalName:    { fontFamily: Fonts.display, fontSize: 20, color: Design.text.heading, letterSpacing: 1 },
 
     modalSection: {
-        fontFamily: Fonts.title, fontSize: 9, color: Colors.gold,
+        fontFamily: Fonts.title, fontSize: 9, color: Design.text.accent,
         letterSpacing: 2, textTransform: 'uppercase',
         marginHorizontal: Sp.lg, marginTop: Sp.md, marginBottom: Sp.sm,
     },
     infoCard: {
-        backgroundColor: Colors.bgCard, borderRadius: R.lg,
-        borderWidth: 1, borderColor: Colors.borderWarm,
+        backgroundColor: Design.bg.card, borderRadius: R.lg,
+        borderWidth: 1, borderColor: Design.border.warm,
         paddingHorizontal: Sp.md, marginHorizontal: Sp.lg,
     },
 
     detailLoading:     { flexDirection: 'row', alignItems: 'center', gap: Sp.md, marginHorizontal: Sp.lg, padding: Sp.md },
-    detailLoadingText: { fontFamily: Fonts.title, color: Colors.textMuted, fontSize: 12 },
+    detailLoadingText: { fontFamily: Fonts.title, color: Design.text.meta, fontSize: 12 },
 
     etapesCard: {
-        backgroundColor: Colors.bgCard, borderRadius: R.lg,
-        borderWidth: 1, borderColor: Colors.borderWarm,
+        backgroundColor: Design.bg.card, borderRadius: R.lg,
+        borderWidth: 1, borderColor: Design.border.warm,
         marginHorizontal: Sp.lg, overflow: 'hidden',
     },
     etapeRow:    { flexDirection: 'row', gap: Sp.md, padding: Sp.md },
-    etapeBorder: { borderBottomWidth: 1, borderBottomColor: Colors.borderWarm },
+    etapeBorder: { borderBottomWidth: 1, borderBottomColor: Design.border.warm },
     etapeNum:    {
         width: 28, height: 28, borderRadius: 14,
-        backgroundColor: Colors.goldGlow, borderWidth: 1, borderColor: Colors.gold + '55',
+        backgroundColor: Design.bg.gold, borderWidth: 1, borderColor: Colors.gold + '55',
         alignItems: 'center', justifyContent: 'center', flexShrink: 0,
     },
-    etapeNumText: { fontFamily: Fonts.display, fontSize: 12, color: Colors.gold },
+    etapeNumText: { fontFamily: Fonts.display, fontSize: 12, color: Design.text.accent },
     etapeInfo:    { flex: 1, gap: 2 },
-    etapeName:    { fontFamily: Fonts.title, fontSize: 12, color: Colors.textPrimary },
-    etapeAddr:    { fontFamily: Fonts.title, fontSize: 10, color: Colors.textMuted },
-    etapeDesc:    { fontFamily: Fonts.title, fontSize: 10, color: Colors.textSecondary, lineHeight: 16 },
-    etapeRayon:   { fontFamily: Fonts.title, fontSize: 9, color: Colors.gold },
+    etapeName:    { fontFamily: Fonts.title, fontSize: 12, color: Design.text.heading },
+    etapeAddr:    { fontFamily: Fonts.title, fontSize: 10, color: Design.text.meta },
+    etapeDesc:    { fontFamily: Fonts.title, fontSize: 10, color: Design.text.label, lineHeight: 16 },
+    etapeRayon:   { fontFamily: Fonts.title, fontSize: 9, color: Design.text.accent },
 
-    noEtapes:     { backgroundColor: Colors.bgCard, borderRadius: R.md, padding: Sp.lg, alignItems: 'center', borderWidth: 1, borderColor: Colors.borderWarm, marginHorizontal: Sp.lg },
-    noEtapesText: { fontFamily: Fonts.title, color: Colors.textMuted, fontSize: 12 },
+    noEtapes:     { backgroundColor: Design.bg.card, borderRadius: R.md, padding: Sp.lg, alignItems: 'center', borderWidth: 1, borderColor: Design.border.warm, marginHorizontal: Sp.lg },
+    noEtapesText: { fontFamily: Fonts.title, color: Design.text.meta, fontSize: 12 },
 
-    infoBox: {
-        flexDirection: 'row', alignItems: 'flex-start', gap: Sp.sm,
-        backgroundColor: Colors.bgElevated, borderRadius: R.md, padding: Sp.md,
-        borderWidth: 1, borderColor: Colors.borderWarm,
-        margin: Sp.lg,
-    },
-    infoBoxText: { fontFamily: Fonts.title, flex: 1, color: Colors.textMuted, fontSize: 12, lineHeight: 18 },
 });

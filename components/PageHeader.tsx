@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Fonts, Sp, R } from '../constants/theme';
+import { Design, Fonts, Sp, R } from '../constants/theme';
 
 interface Props {
   title: string;
@@ -18,7 +18,7 @@ export default function PageHeader({ title, subtitle, back, right }: Props) {
       <View style={styles.left}>
         {back && (
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
+            <Ionicons name="chevron-back" size={20} color={Design.text.heading} />
           </TouchableOpacity>
         )}
         <View>
@@ -40,24 +40,20 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: Sp.md,
   },
-  left: { flexDirection: 'row', alignItems: 'center', gap: Sp.sm, flex: 1 },
+  left:    { flexDirection: 'row', alignItems: 'center', gap: Sp.sm, flex: 1 },
   backBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: R.sm,
-    backgroundColor: Colors.bgElevated,
-    borderWidth: 1,
-    borderColor: Colors.borderWarm,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 38, height: 38, borderRadius: R.sm,
+    backgroundColor: Design.avatar.bg,
+    borderWidth: 1, borderColor: Design.border.warm,
+    alignItems: 'center', justifyContent: 'center',
   },
   subtitle: {
     fontFamily: Fonts.title,
-    color: Colors.amber,
-    fontSize: 10,
+    color: Design.text.warm,
+    fontSize: 15,
     letterSpacing: 2,
     textTransform: 'uppercase',
     marginBottom: 2,
   },
-  title: { fontFamily: Fonts.title, color: Colors.textPrimary, fontSize: 22, letterSpacing: 1 },
+  title: { fontFamily: Fonts.title, color: Design.text.heading, fontSize: 30, letterSpacing: 1 },
 });

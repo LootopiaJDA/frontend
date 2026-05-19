@@ -24,6 +24,6 @@ export default function ScreenBackground({ children, style }: Props) {
 const st = StyleSheet.create({
   root:       { flex: 1, backgroundColor: Colors.bg },
   mapBg:      { position: 'absolute', width: '100%', height: '100%' },
-  mapOverlay: { position: 'absolute', width: '100%', height: '100%', backgroundColor: 'rgba(10,7,0,0.70)' },
+  mapOverlay: { position: 'absolute', width: '100%', height: '100%', backgroundColor: 'rgba(10,7,0,0.30)' },
   texture:    { position: 'absolute', width: '100%', height: '100%', opacity: 0.032 },
 });

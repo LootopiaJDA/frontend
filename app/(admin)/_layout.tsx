@@ -1,65 +1,20 @@
-import { Tabs, Redirect } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/theme';
-import LoadingScreen from '../../components/LoadingScreen';
-import { useRoleGuard } from '../../hooks/useRoleGuard';
+import RoleTabLayout from '../../components/RoleTabLayout';
+
+const TABS = [
+    { name: 'dashboard', title: 'Dashboard', icon: require('../../assets/images/dashboard.png') },
+    { name: 'users', title: 'Utilisateurs', icon: require('../../assets/images/plus.png') },
+    { name: 'chasses', title: 'Chasses', icon: require('../../assets/images/chasse.png') },
+    { name: 'profil', title: 'Profil', icon: require('../../assets/images/profil.png') },
+];
 
 export default function AdminLayout() {
-    const { status, user } = useRoleGuard();
-
-    if (status === 'loading') return <LoadingScreen />;
-    if (status === 'unauthenticated') return <Redirect href="/(auth)/login" />;
-    if (user!.role !== 'ADMIN') return <Redirect href="/(app)/chasses" />;
-
     return (
-        <Tabs
-            screenOptions={{
-                headerShown: false,
-                tabBarActiveTintColor: Colors.error,
-                tabBarInactiveTintColor: Colors.textMuted,
-                tabBarStyle: {
-                    backgroundColor: Colors.bgCard,
-                    borderTopColor: Colors.border,
-                    height: 90,
-                },
-            }}
-        >
-            <Tabs.Screen
-                name="dashboard"
-                options={{
-                    title: 'Dashboard',
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="grid-outline" size={size} color={color} />
-                    ),
-                }}
-            />
-            <Tabs.Screen
-                name="users"
-                options={{
-                    title: 'Utilisateurs',
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="people-outline" size={size} color={color} />
-                    ),
-                }}
-            />
-            <Tabs.Screen
-                name="chasses"
-                options={{
-                    title: 'Chasses',
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="map-outline" size={size} color={color} />
-                    ),
-                }}
-            />
-            <Tabs.Screen
-                name="profil"
-                options={{
-                    title: 'Profil',
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="person-outline" size={size} color={color} />
-                    ),
-                }}
-            />
-        </Tabs>
+        <RoleTabLayout
+            allowedRole="ADMIN"
+            redirectTo="/(app)/chasses"
+            accentColor={Colors.error}
+            tabs={TABS}
+        />
     );
 }

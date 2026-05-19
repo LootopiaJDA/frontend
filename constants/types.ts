@@ -102,3 +102,17 @@ export interface UserChasseEtape {
   reached_at: string;
   etape?: Etape;
 }
+
+export interface ScoreBoard {
+  id_score: number;
+  id_user: number;
+  id_chasse: number;
+  score: number;
+  created_at: string;
+  updated_at: string;
+  user?: {
+    id_user: number;
+    username: string;
+    userchasses?: Array<{ id_chasse: number; statut: string }>;
+  };
+}

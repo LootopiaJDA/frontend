@@ -1,15 +1,15 @@
 import React, { useState, useCallback } from 'react';
 import {
     View, Text, StyleSheet, FlatList, Modal,
-    ActivityIndicator, TouchableOpacity, Alert,
-    SafeAreaView, ScrollView,
+    ActivityIndicator, TouchableOpacity, Alert, ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { userService, partenaireService, adminService } from '../../services/api';
 import { Partenaire } from '../../constants/types';
 import { User } from '../../constants/types';
-import { Colors, Fonts, Sp, R } from '../../constants/theme';
+import { Colors, Design, Fonts, Sp, R } from '../../constants/theme';
 import PageHeader from '../../components/PageHeader';
 import StatusBadge from '../../components/StatusBadge';
 import ScreenBackground from '../../components/ScreenBackground';
@@ -19,6 +19,7 @@ export default function UsersScreen() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [selected, setSelected] = useState<User | null>(null);
+    const [validating, setValidating] = useState(false);
 
     const load = useCallback(async () => {
         try {
@@ -38,8 +39,7 @@ export default function UsersScreen() {
             });
 
             setUsers(merged.filter((u: User) => u.role !== 'ADMIN'));
-        } catch (err) {
-            console.log('Erreur chargement users:', err);
+        } catch {
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -58,21 +58,31 @@ export default function UsersScreen() {
                 {
                     text: 'Activer',
                     onPress: async () => {
+                        setValidating(true);
                         try {
                             await adminService.validatePartenaire(user.partener!.id_partenaire, 'ACTIVE');
                             setSelected(null);
                             await load();
-                        } catch (e: any) { Alert.alert('Erreur', e.message); }
+                        } catch (e: any) {
+                            Alert.alert('Erreur', e.message);
+                        } finally {
+                            setValidating(false);
+                        }
                     },
                 },
                 {
                     text: 'Rejeter', style: 'destructive',
                     onPress: async () => {
+                        setValidating(true);
                         try {
                             await adminService.validatePartenaire(user.partener!.id_partenaire, 'INACTIVE');
                             setSelected(null);
                             await load();
-                        } catch (e: any) { Alert.alert('Erreur', e.message); }
+                        } catch (e: any) {
+                            Alert.alert('Erreur', e.message);
+                        } finally {
+                            setValidating(false);
+                        }
                     },
                 },
             ]
@@ -97,7 +107,7 @@ export default function UsersScreen() {
 
             {enAttente.length > 0 && (
                 <View style={st.alertBanner}>
-                    <Ionicons name="hourglass-outline" size={16} color={Colors.warning} />
+                    <Ionicons name="hourglass-outline" size={16} color={Design.text.warning} />
                     <Text style={st.alertText}>
                         {enAttente.length} partenaire{enAttente.length > 1 ? 's' : ''} en attente de validation
                     </Text>
@@ -140,7 +150,7 @@ export default function UsersScreen() {
                                 )}
                             </View>
 
-                            <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
+                            <Ionicons name="chevron-forward" size={16} color={Design.text.meta} />
                         </TouchableOpacity>
                     );
                 }}
@@ -158,7 +168,7 @@ export default function UsersScreen() {
                         </View>
                         <View style={st.summaryDivider} />
                         <View style={st.summaryItem}>
-                            <Text style={[st.summaryVal, enAttente.length > 0 && { color: Colors.warning }]}>
+                            <Text style={[st.summaryVal, enAttente.length > 0 && { color: Design.text.warning }]}>
                                 {enAttente.length}
                             </Text>
                             <Text style={st.summaryLabel}>En attente</Text>
@@ -167,7 +177,7 @@ export default function UsersScreen() {
                 }
                 ListEmptyComponent={
                     <View style={st.empty}>
-                        <Ionicons name="people-outline" size={48} color={Colors.textMuted} />
+                        <Ionicons name="people-outline" size={48} color={Design.text.meta} />
                         <Text style={st.emptyText}>Aucun utilisateur</Text>
                     </View>
                 }
@@ -185,7 +195,7 @@ export default function UsersScreen() {
                         {/* Header modal */}
                         <View style={st.modalHeader}>
                             <TouchableOpacity onPress={() => setSelected(null)} style={st.modalClose}>
-                                <Ionicons name="close" size={22} color={Colors.textSecondary} />
+                                <Ionicons name="close" size={22} color={Design.text.label} />
                             </TouchableOpacity>
                             <Text style={st.modalTitle}>Détail utilisateur</Text>
                             <View style={{ width: 36 }} />
@@ -237,13 +247,19 @@ export default function UsersScreen() {
                                 <>
                                     <Text style={st.modalSection}>Actions</Text>
                                     <View style={st.actionsCol}>
-                                        <TouchableOpacity
-                                            style={st.btnValidate}
+                                                        <TouchableOpacity
+                                            style={[st.btnValidate, validating && { opacity: 0.6 }]}
                                             onPress={() => handleValidatePartner(selected)}
                                             activeOpacity={0.8}
+                                            disabled={validating}
                                         >
-                                            <Ionicons name="shield-checkmark-outline" size={18} color="#fff" />
-                                            <Text style={st.btnValidateText}>Valider / Rejeter le partenaire</Text>
+                                            {validating
+                                                ? <ActivityIndicator size="small" color="#fff" />
+                                                : <Ionicons name="shield-checkmark-outline" size={18} color="#fff" />
+                                            }
+                                            <Text style={st.btnValidateText}>
+                                                {validating ? 'En cours...' : 'Valider / Rejeter le partenaire'}
+                                            </Text>
                                         </TouchableOpacity>
                                     </View>
                                 </>
@@ -261,7 +277,7 @@ function InfoRow({ icon, label, value, last = false }: {
 }) {
     return (
         <View style={[ir.row, !last && ir.border]}>
-            <Ionicons name={icon as any} size={16} color={Colors.textMuted} />
+            <Ionicons name={icon as any} size={16} color={Design.text.meta} />
             <Text style={ir.label}>{label}</Text>
             <Text style={ir.value} numberOfLines={1}>{value}</Text>
         </View>
@@ -270,9 +286,9 @@ function InfoRow({ icon, label, value, last = false }: {
 
 const ir = StyleSheet.create({
     row:   { flexDirection: 'row', alignItems: 'center', gap: Sp.md, paddingVertical: 12 },
-    border:{ borderBottomWidth: 1, borderBottomColor: Colors.borderWarm },
-    label: { fontFamily: Fonts.title, fontSize: 11, color: Colors.textMuted, width: 80, letterSpacing: 0.5 },
-    value: { fontFamily: Fonts.title, flex: 1, fontSize: 12, color: Colors.textPrimary, textAlign: 'right' },
+    border:{ borderBottomWidth: 1, borderBottomColor: Design.border.warm },
+    label: { fontFamily: Fonts.title, fontSize: 11, color: Design.text.meta, width: 80, letterSpacing: 0.5 },
+    value: { fontFamily: Fonts.title, flex: 1, fontSize: 12, color: Design.text.heading, textAlign: 'right' },
 });
 
 const st = StyleSheet.create({
@@ -282,79 +298,79 @@ const st = StyleSheet.create({
 
     alertBanner: {
         flexDirection: 'row', alignItems: 'center', gap: Sp.sm,
-        backgroundColor: Colors.warningBg, borderBottomWidth: 1, borderBottomColor: Colors.warning + '44',
+        backgroundColor: Design.bg.warning, borderBottomWidth: 1, borderBottomColor: Colors.warning + '44',
         paddingHorizontal: Sp.lg, paddingVertical: Sp.sm,
     },
-    alertText: { fontFamily: Fonts.title, fontSize: 12, color: Colors.warning },
+    alertText: { fontFamily: Fonts.title, fontSize: 12, color: Design.text.warning },
 
     summary: {
-        flexDirection: 'row', backgroundColor: Colors.bgCard,
-        borderRadius: R.lg, borderWidth: 1, borderColor: Colors.borderWarm,
+        flexDirection: 'row', backgroundColor: Design.bg.card,
+        borderRadius: R.lg, borderWidth: 1, borderColor: Design.border.warm,
         marginBottom: Sp.md, overflow: 'hidden',
     },
     summaryItem:    { flex: 1, alignItems: 'center', paddingVertical: Sp.md, gap: 4 },
-    summaryDivider: { width: 1, backgroundColor: Colors.borderWarm },
-    summaryVal:     { fontFamily: Fonts.display, fontSize: 20, color: Colors.gold },
-    summaryLabel:   { fontFamily: Fonts.title,   fontSize: 10, color: Colors.textMuted },
+    summaryDivider: { width: 1, backgroundColor: Design.border.warm },
+    summaryVal:     { fontFamily: Fonts.display, fontSize: 20, color: Design.text.accent },
+    summaryLabel:   { fontFamily: Fonts.title,   fontSize: 10, color: Design.text.meta },
 
     card: {
         flexDirection: 'row', alignItems: 'center',
-        backgroundColor: Colors.bgCard,
-        borderRadius: R.lg, borderWidth: 1, borderColor: Colors.borderWarm,
+        backgroundColor: Design.bg.card,
+        borderRadius: R.lg, borderWidth: 1, borderColor: Design.border.warm,
         padding: Sp.md, gap: Sp.md,
     },
-    cardPending: { borderColor: Colors.warning, backgroundColor: Colors.warningBg },
+    cardPending: { borderColor: Colors.warning, backgroundColor: Design.bg.warning },
     cardTop:  { flexDirection: 'row', alignItems: 'center', gap: Sp.sm },
     cardBody: { flex: 1, gap: 3 },
     pendingDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.warning },
 
     avatar: {
         width: 44, height: 44, borderRadius: 14,
-        backgroundColor: Colors.bgElevated,
+        backgroundColor: Design.bg.elevated,
         alignItems: 'center', justifyContent: 'center', flexShrink: 0,
     },
-    avatarPending: { backgroundColor: Colors.warningBg, borderWidth: 1, borderColor: Colors.warning },
-    avatarText: { fontFamily: Fonts.display, fontSize: 14, color: Colors.gold },
+    avatarPending: { backgroundColor: Design.bg.warning, borderWidth: 1, borderColor: Colors.warning },
+    avatarText: { fontFamily: Fonts.display, fontSize: 14, color: Design.text.accent },
 
-    username:  { fontFamily: Fonts.title, fontSize: 13, color: Colors.textPrimary },
-    email:     { fontFamily: Fonts.title, fontSize: 11, color: Colors.textMuted },
+    username:  { fontFamily: Fonts.title, fontSize: 13, color: Design.text.heading },
+    email:     { fontFamily: Fonts.title, fontSize: 11, color: Design.text.meta },
     badgeRow:  { flexDirection: 'row', gap: Sp.xs, flexWrap: 'wrap', marginTop: 2 },
-    company:   { fontFamily: Fonts.title, fontSize: 10, color: Colors.amber, marginTop: 2 },
+    company:   { fontFamily: Fonts.title, fontSize: 10, color: Design.text.warm, marginTop: 2 },
 
     empty:     { alignItems: 'center', gap: Sp.md, paddingTop: 80 },
-    emptyText: { fontFamily: Fonts.title, fontSize: 14, color: Colors.textMuted },
+    emptyText: { fontFamily: Fonts.title, fontSize: 14, color: Design.text.meta },
 
     // Modal
-    modalSafe:       { flex: 1, backgroundColor: Colors.bg },
+    modalSafe:       { flex: 1, backgroundColor: Design.bg.screen },
     modalHeader:     {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         paddingHorizontal: Sp.lg, paddingVertical: Sp.md,
-        borderBottomWidth: 1, borderBottomColor: Colors.borderWarm,
+        borderBottomWidth: 1, borderBottomColor: Design.border.warm,
     },
     modalClose:      { padding: 4 },
-    modalTitle:      { fontFamily: Fonts.title, fontSize: 15, color: Colors.textPrimary, letterSpacing: 0.5 },
+    modalTitle:      { fontFamily: Fonts.title, fontSize: 15, color: Design.text.heading, letterSpacing: 0.5 },
     modalScroll:     { padding: Sp.lg, paddingBottom: 60, gap: Sp.md },
 
     modalHero:       { alignItems: 'center', paddingVertical: Sp.lg, gap: Sp.sm },
     modalAvatar:     {
         width: 72, height: 72, borderRadius: 22,
-        backgroundColor: Colors.bgElevated,
-        borderWidth: 2, borderColor: Colors.borderWarm,
+        backgroundColor: Design.bg.elevated,
+        borderWidth: 2, borderColor: Design.border.warm,
         alignItems: 'center', justifyContent: 'center',
     },
-    modalAvatarPending: { borderColor: Colors.warning, backgroundColor: Colors.warningBg },
-    modalAvatarText: { fontFamily: Fonts.display, fontSize: 24, color: Colors.gold },
-    modalUsername:   { fontFamily: Fonts.display, fontSize: 18, color: Colors.textPrimary, letterSpacing: 1 },
-    modalEmail:      { fontFamily: Fonts.title,   fontSize: 12, color: Colors.textMuted },
+    modalAvatarPending: { borderColor: Colors.warning, backgroundColor: Design.bg.warning },
+    modalAvatarText: { fontFamily: Fonts.display, fontSize: 24, color: Design.text.accent },
+    modalUsername:   { fontFamily: Fonts.display, fontSize: 18, color: Design.text.heading, letterSpacing: 1 },
+    modalEmail:      { fontFamily: Fonts.title,   fontSize: 12, color: Design.text.meta },
     modalBadgeRow:   { flexDirection: 'row', gap: Sp.sm, marginTop: Sp.xs },
 
     modalSection: {
-        fontFamily: Fonts.title, fontSize: 9, color: Colors.gold,
+        fontFamily: Fonts.title, fontSize: 9, color: Design.text.accent,
         letterSpacing: 2, textTransform: 'uppercase', marginTop: Sp.sm,
     },
     infoCard: {
-        backgroundColor: Colors.bgCard, borderRadius: R.lg,
-        borderWidth: 1, borderColor: Colors.borderWarm,
+        backgroundColor: Design.bg.card, borderRadius: R.lg,
+        borderWidth: 1, borderColor: Design.border.warm,
         paddingHorizontal: Sp.md,
     },
 
