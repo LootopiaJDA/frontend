@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
   Animated, SafeAreaView, ActivityIndicator,
+  ScrollView, Image, Dimensions,
 } from 'react-native';
 import MapView, { Marker, Circle, Polyline } from 'react-native-maps';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
@@ -11,6 +12,10 @@ import { Colors, Sp, R } from '@/constants/theme';
 import { useHuntTracker } from '@/hooks/useHuntTracker';
 import { useHuntStore } from '@/store/huntStore';
 import { chasseService, etapeService, scoreService } from '@/services/api';
+import { Etape } from '@/constants/types';
+
+const SCREEN_W = Dimensions.get('window').width;
+const PANEL_W  = SCREEN_W * 0.82;
 
 // ─── Score flottant +100 pts ──────────────────────────────────────────────────
 function FloatingPoints({ visible, onDone }: { visible: boolean; onDone: () => void }) {
@@ -128,6 +133,44 @@ const vc = StyleSheet.create({
   btnText: { fontSize: 15, fontWeight: '800', color: Colors.black },
 });
 
+// ─── Historique des indices validés ──────────────────────────────────────────
+function HistoryCard({ etape, index }: { etape: Etape; index: number }) {
+  return (
+    <View style={hc.card}>
+      <View style={hc.header}>
+        <View style={hc.badge}>
+          <Text style={hc.badgeText}>{index + 1}</Text>
+        </View>
+        <Text style={hc.name} numberOfLines={2}>{etape.name}</Text>
+      </View>
+      {etape.image ? (
+        <Image source={{ uri: etape.image }} style={hc.img} resizeMode="cover" />
+      ) : null}
+      {etape.description ? (
+        <Text style={hc.desc}>{etape.description}</Text>
+      ) : null}
+    </View>
+  );
+}
+
+const hc = StyleSheet.create({
+  card: {
+    backgroundColor: Colors.bgElevated,
+    borderRadius: R.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Sp.md,
+    gap: Sp.sm,
+    marginBottom: Sp.md,
+  },
+  header:    { flexDirection: 'row', alignItems: 'center', gap: Sp.sm },
+  badge:     { width: 28, height: 28, borderRadius: 14, backgroundColor: '#4ecb8a', alignItems: 'center', justifyContent: 'center' },
+  badgeText: { fontSize: 13, fontWeight: '800', color: '#fff' },
+  name:      { flex: 1, fontSize: 14, fontWeight: '700', color: Colors.textPrimary },
+  img:       { width: '100%', height: 120, borderRadius: R.md },
+  desc:      { fontSize: 13, color: Colors.textMuted, lineHeight: 20 },
+});
+
 // ─── Écran carte ──────────────────────────────────────────────────────────────
 export default function MapScreen() {
   const params = useLocalSearchParams<{ chasseId?: string }>();
@@ -142,6 +185,8 @@ export default function MapScreen() {
   const [showFloatingPts, setShowFloatingPts]     = useState(false);
 
   const digPanelY = useRef(new Animated.Value(220)).current;
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const historyX = useRef(new Animated.Value(PANEL_W)).current;
 
   // ─── Résolution de la chasse active + progression ───────────────────────────
   useFocusEffect(useCallback(() => {
@@ -198,16 +243,27 @@ export default function MapScreen() {
     }
   }, [tracker.completed]);
 
+  const openHistory = useCallback(() => {
+    setHistoryOpen(true);
+    Animated.spring(historyX, { toValue: 0, useNativeDriver: true, tension: 70, friction: 12 }).start();
+  }, []);
+
+  const closeHistory = useCallback(() => {
+    Animated.timing(historyX, { toValue: PANEL_W, duration: 250, useNativeDriver: true }).start(() => setHistoryOpen(false));
+  }, []);
+
+  const completedEtapes = tracker.etapes.slice(0, tracker.currentIndex);
+
   const handleLaunchAR = () => {
     if (!tracker.currentEtape || !activeChasseId) return;
     router.push({
       pathname: '/(app)/ar-view',
       params: {
-        chasseId: String(activeChasseId),
-        etapeId: String(tracker.currentEtape.id_etape),
-        etapeName: tracker.currentEtape.name ?? `Étape ${tracker.currentIndex + 1}`,
-        lat: tracker.currentEtape.lat,
-        lng: tracker.currentEtape.long,
+        chasseId:    String(activeChasseId),
+        etapeName:   tracker.currentEtape.name ?? `Étape ${tracker.currentIndex + 1}`,
+        lat:         tracker.currentEtape.lat,
+        lng:         tracker.currentEtape.long,
+        description: tracker.currentEtape.description ?? '',
       },
     });
   };
@@ -339,8 +395,8 @@ export default function MapScreen() {
           onPress={handleLaunchAR}
           activeOpacity={0.85}
         >
-          <Ionicons name="cube-outline" size={20} color={Colors.black} />
-          <Text style={st.arBtnText}>Lancer la Réalité Augmentée</Text>
+          <Ionicons name="search" size={20} color={Colors.black} />
+          <Text style={st.arBtnText}>Indice trouvé !</Text>
         </TouchableOpacity>
       </Animated.View>
 
@@ -362,6 +418,36 @@ export default function MapScreen() {
           }}
         />
       )}
+
+      {/* ─── FAB historique ─────────────────────────────────────────────────── */}
+      {tracker.currentIndex > 0 && (
+        <TouchableOpacity style={st.historyFab} onPress={openHistory} activeOpacity={0.85}>
+          <Ionicons name="time-outline" size={18} color={Colors.gold} />
+          <Text style={st.historyFabText}>Indices</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* ─── Backdrop historique ─────────────────────────────────────────────── */}
+      {historyOpen && (
+        <TouchableOpacity style={st.historyBackdrop} activeOpacity={1} onPress={closeHistory} />
+      )}
+
+      {/* ─── Panel historique glissant ───────────────────────────────────────── */}
+      <Animated.View style={[st.historyPanel, { transform: [{ translateX: historyX }] }]} pointerEvents={historyOpen ? 'auto' : 'none'}>
+        <SafeAreaView style={{ flex: 1 }}>
+          <View style={st.historyHeader}>
+            <Text style={st.historyTitle}>Indices validés</Text>
+            <TouchableOpacity onPress={closeHistory} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Ionicons name="close" size={22} color={Colors.textPrimary} />
+            </TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={{ padding: Sp.md, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+            {completedEtapes.map((etape, i) => (
+              <HistoryCard key={etape.id_etape} etape={etape} index={i} />
+            ))}
+          </ScrollView>
+        </SafeAreaView>
+      </Animated.View>
     </View>
   );
 }
@@ -425,4 +511,35 @@ const st = StyleSheet.create({
     paddingHorizontal: 28, paddingVertical: 14, marginTop: 4,
   },
   arBtnText: { fontSize: 15, fontWeight: '800', color: Colors.black },
+
+  historyFab: {
+    position: 'absolute', top: 110, right: Sp.md,
+    backgroundColor: Colors.bg + 'EE',
+    borderRadius: R.full, borderWidth: 1, borderColor: Colors.gold + '55',
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: Sp.sm + 4, paddingVertical: Sp.sm,
+    elevation: 8,
+    shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 2 },
+  },
+  historyFabText: { fontSize: 13, fontWeight: '700', color: Colors.gold },
+
+  historyBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    zIndex: 40,
+  },
+  historyPanel: {
+    position: 'absolute', top: 0, right: 0, bottom: 0,
+    width: PANEL_W,
+    backgroundColor: Colors.bg,
+    borderLeftWidth: 1, borderLeftColor: Colors.border,
+    zIndex: 50, elevation: 16,
+    shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: -4, height: 0 },
+  },
+  historyHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: Sp.md, paddingVertical: Sp.md,
+    borderBottomWidth: 1, borderBottomColor: Colors.border,
+  },
+  historyTitle: { fontSize: 17, fontWeight: '800', color: Colors.textPrimary },
 });

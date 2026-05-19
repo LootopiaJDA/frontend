@@ -117,7 +117,7 @@ export function useHuntTracker(chasseId: number, completedEtapeIds: number[] = [
     );
     const rounded = Math.round(dist);
     setDistance(rounded);
-    setIsInRadius(dist <= (etape.rayon ?? 30));
+    setIsInRadius(dist <= (etape.rayon ?? 3));
   }, [position, etapes, currentIndex]);
 
   const advanceOnly = useCallback(() => {
