@@ -50,6 +50,7 @@ export interface Etape {
 // Réponse brute de GET /chasse/{id}
 export interface ChasseDetail {
   name: string;
+  description?: string | null;
   localisation?: string | null;
   etat: string;
   image?: string | null;
@@ -110,9 +111,15 @@ export interface ScoreBoard {
   score: number;
   created_at: string;
   updated_at: string;
+  durationMs?: number | null;
   user?: {
     id_user: number;
     username: string;
-    userchasses?: Array<{ id_chasse: number; statut: string }>;
+    userchasses?: Array<{
+      id_chasse: number;
+      statut: string;
+      started_at?: string;
+      completed_at?: string | null;
+    }>;
   };
 }

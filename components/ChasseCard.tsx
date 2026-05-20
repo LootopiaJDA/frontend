@@ -76,6 +76,15 @@ export default function ChasseCard({ chasse, onPress, userStatus }: Props) {
                   <Text style={s.metaText}>{dateStr}</Text>
                 </View>
               ) : null}
+              {(chasse.etapes?.length ?? 0) > 0 ? (
+                <View style={s.metaRow}>
+                  <Ionicons name="flag-outline" size={12} color={Colors.gold} />
+                  <Text style={s.metaTextGold}>
+                    {chasse.etapes!.length} étape{chasse.etapes!.length > 1 ? 's' : ''}{' · '}
+                    {chasse.etapes!.length * 100} pts
+                  </Text>
+                </View>
+              ) : null}
             </View>
 
             <View style={s.joinBtn}>
@@ -154,7 +163,8 @@ const s = StyleSheet.create({
 
   metaCol: { flex: 1, gap: 3 },
   metaRow: { flexDirection: "row", alignItems: "center", gap: 5 },
-  metaText: { fontSize: 12, color: "#C4A46B", flex: 1 },
+  metaText:     { fontSize: 12, color: "#C4A46B", flex: 1 },
+  metaTextGold: { fontSize: 12, color: Colors.gold, flex: 1, fontWeight: '700' },
 
   joinBtn: {
     flexDirection: "row", alignItems: "center", gap: 6,

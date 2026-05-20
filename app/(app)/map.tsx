@@ -331,7 +331,6 @@ export default function MapScreen() {
       setPendingValidation(false);
       const validated = tracker.currentEtape;
       etapeService.validate(activeChasseId, validated.id_etape).catch(() => {});
-      scoreService.increment(activeChasseId);
       const isLastStep = tracker.currentIndex === tracker.etapes.length - 1;
       addPoints(100);
       tracker.advanceOnly();
@@ -481,14 +480,6 @@ export default function MapScreen() {
         })}
       </MapView>
 
-      {/* ─── Bouton retour ──────────────────────────────────────────────────── */}
-      <SafeAreaView style={st.backWrap} pointerEvents="box-none">
-        <TouchableOpacity style={st.backBtn} onPress={handleBack} activeOpacity={0.85}>
-          <Ionicons name="chevron-back" size={18} color={Colors.textPrimary} />
-          <Text style={st.backBtnLabel}>Retour</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-
       {/* ─── HUD ────────────────────────────────────────────────────────────── */}
       {currentEtape && (
         <SafeAreaView style={st.hudWrap} pointerEvents="none">
@@ -516,6 +507,14 @@ export default function MapScreen() {
           </View>
         </SafeAreaView>
       )}
+
+   {/* ─── Bouton retour ──────────────────────────────────────────────────── */}
+        <SafeAreaView style={st.backWrap} pointerEvents="box-none">
+          <TouchableOpacity style={st.backBtn} onPress={handleBack} activeOpacity={0.85}>
+            <Ionicons name="chevron-back" size={18} color={Colors.textPrimary} />
+            <Text style={st.backBtnLabel}>Retour</Text>
+          </TouchableOpacity>
+        </SafeAreaView>
 
       {/* ─── Panel Creuser → Lancer AR ──────────────────────────────────────── */}
       <Animated.View
@@ -628,7 +627,7 @@ const st = StyleSheet.create({
   emptyBtn:   { marginTop: Sp.sm, backgroundColor: Colors.gold, paddingHorizontal: 24, paddingVertical: 12, borderRadius: R.full },
   emptyBtnText: { fontWeight: '700', color: Colors.black, fontSize: 14 },
 
-  backWrap: { position: 'absolute', top: 0, left: 0, zIndex: 30 },
+  backWrap: { position: 'absolute', top: 80, left: 0, zIndex: 30 },
   backBtn: {
     margin: Sp.md,
     flexDirection: 'row', alignItems: 'center', gap: 5,

@@ -32,7 +32,8 @@ export const EP = {
   ETAPE_DELETE:    (chasseId: number, etapeId: number) => `/etape/${chasseId}/${etapeId}`,
   ETAPE_VALIDATE:  (chasseId: number, etapeId: number) => `/etape/${chasseId}/${etapeId}/validateEtape`,
   // Scores
-  SCORES:        '/scores',
-  SCORE_CREATE:  (chasseId: number) => `/scores/${chasseId}`,
-  SCORE_UPDATE:  (chasseId: number) => `/scores/${chasseId}`,
+  SCORES:           '/scores',
+  SCORE_BY_CHASSE:  (chasseId: number) => `/scores/${chasseId}`,
+  SCORE_CREATE:     (chasseId: number) => `/scores/${chasseId}`,
+  SCORE_UPDATE:     (chasseId: number) => `/scores/${chasseId}`,
 };

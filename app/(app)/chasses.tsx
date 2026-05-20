@@ -171,7 +171,7 @@ export default function ChassesScreen() {
 
     return (
         <ScreenBackground style={st.safe}>
-            <PageHeader title="Chasses" subtitle={`${filtered.length} disponibles`} />
+            <PageHeader title="Chasses au Trésor" subtitle={`${filtered.length} aventure${filtered.length !== 1 ? 's' : ''} disponible${filtered.length !== 1 ? 's' : ''}`} />
 
             {/* ── Barre recherche + tri ── */}
             <View style={st.bar}>
@@ -179,7 +179,7 @@ export default function ChassesScreen() {
                     <Ionicons name="search-outline" size={16} color={Colors.textMuted} />
                     <TextInput
                         style={st.searchInput}
-                        placeholder="Rechercher nom de la chasse..."
+                        placeholder="Chercher une aventure..."
                         placeholderTextColor={Colors.textMuted}
                         value={search}
                         onChangeText={setSearch}
@@ -248,10 +248,10 @@ export default function ChassesScreen() {
                 ListEmptyComponent={
                     <View style={st.empty}>
                         <Text style={st.emptyTitle}>
-                            {search ? 'Aucun résultat' : cityFilter ? `Aucune chasse à ${cityFilter}` : 'Aucune chasse disponible'}
+                            {search ? 'Pas de butin trouvé' : cityFilter ? `Aucune aventure à ${cityFilter}` : 'Aucune aventure en vue'}
                         </Text>
                         <Text style={st.emptySub}>
-                            {search ? 'Essaie un autre mot-clé' : cityFilter ? 'Essaie une autre ville' : 'Les aventures arrivent bientôt...'}
+                            {search ? 'Essaie un autre mot-clé' : cityFilter ? 'Essaie une autre ville ou élargis ta recherche' : 'Les cartes aux trésors arrivent bientôt...'}
                         </Text>
                         {(search || cityFilter) ? (
                             <TouchableOpacity onPress={() => { setSearch(''); clearCity(); }}>
