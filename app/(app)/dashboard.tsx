@@ -5,13 +5,18 @@ import {
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import LottieView from 'lottie-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { chasseService } from '@/services/api';
 import { Chasse } from '@/constants/types';
 import { Colors, Design, Fonts, Sp, R } from '@/constants/theme';
 import ScreenBackground from '@/components/ScreenBackground';
 
-const BOUSSOLE = require('../../assets/images/boussole.png');
+import BoussoleSvg from '../../assets/images/boussole.svg';
+
+const LOUPE  = require('../../assets/images/loupe.png');
+const CARTE  = require('../../assets/images/carte.png');
+const COFFRE = require('../../assets/images/coffre.png');
 
 function HuntRow({ chasse, onPress }: { chasse: Chasse; onPress: () => void }) {
     return (
@@ -20,7 +25,7 @@ function HuntRow({ chasse, onPress }: { chasse: Chasse; onPress: () => void }) {
                 <Image source={{ uri: chasse.image }} style={hr.thumb} />
             ) : (
                 <View style={[hr.thumb, hr.thumbFallback]}>
-                    <Ionicons name="map-outline" size={18} color={Design.text.accent} />
+                    <Image source={COFFRE} style={{ width: 28, height: 28, opacity: 0.6 }} resizeMode="contain" />
                 </View>
             )}
             <View style={hr.info}>
@@ -29,7 +34,7 @@ function HuntRow({ chasse, onPress }: { chasse: Chasse; onPress: () => void }) {
                     ? <Text style={hr.meta} numberOfLines={1}>{chasse.localisation}</Text>
                     : null}
             </View>
-            <Ionicons name="chevron-forward" size={16} color={Design.text.meta} />
+            <Ionicons name="chevron-forward" size={14} color={Colors.gold + '88'} />
         </TouchableOpacity>
     );
 }
@@ -46,15 +51,15 @@ const hr = StyleSheet.create({
         gap: Sp.md,
         paddingRight: Sp.md,
     },
-    thumb: { width: 56, height: 56 },
+    thumb: { width: 60, height: 60 },
     thumbFallback: {
-        backgroundColor: Design.bg.elevated,
+        backgroundColor: '#0D0905',
         alignItems: 'center',
         justifyContent: 'center',
     },
     info:  { flex: 1, paddingVertical: Sp.sm },
-    name:  { fontFamily: Fonts.title, fontSize: 13, color: Design.text.heading },
-    meta:  { fontFamily: Fonts.title, fontSize: 10, color: Design.text.meta, marginTop: 3 },
+    name:  { fontFamily: Fonts.title,   fontSize: 13, color: Design.text.heading, letterSpacing: 0.3 },
+    meta:  { fontFamily: Fonts.title,   fontSize: 10, color: Colors.parchment,    marginTop: 3 },
 });
 
 export default function DashboardJoueurScreen() {
@@ -79,7 +84,7 @@ export default function DashboardJoueurScreen() {
 
     if (!user) return null;
 
-    const initials      = user.username.slice(0, 2).toUpperCase();
+    const initials       = user.username.slice(0, 2).toUpperCase();
     const chassesActives = allChasses.filter(c => c.etat === 'ACTIVE');
 
     return (
@@ -98,9 +103,8 @@ export default function DashboardJoueurScreen() {
                 {/* ── Header ── */}
                 <View style={st.header}>
                     <View>
-                        <Text style={st.name}>
-                            <Text style={st.nameAccent}>{user.username}</Text> 👋
-                        </Text>
+                        <Text style={st.greeting}>BIENVENUE</Text>
+                        <Text style={st.name}>{user.username}</Text>
                     </View>
                     <TouchableOpacity
                         style={st.avatar}
@@ -112,13 +116,21 @@ export default function DashboardJoueurScreen() {
                     </TouchableOpacity>
                 </View>
 
+                {/* ── Hero ── */}
                 <View style={st.heroBanner}>
+                    <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+                        <LottieView
+                            source={require('../../assets/animations/starburstanimation.json')}
+                            autoPlay
+                            loop
+                            style={{ flex: 1, opacity: 0.12 }}
+                        />
+                    </View>
                     <View style={st.heroLeft}>
-                        <Text style={st.heroTitle}>Prêt pour{'\n'}l'aventure ?</Text>
+                        <Text style={st.heroTagline}>LA QUÊTE COMMENCE</Text>
+                        <Text style={st.heroTitle}>L'aventure{'\n'}vous attend</Text>
                     </View>
-                    <View style={st.heroIcon}>
-                        <Image source={BOUSSOLE} style={st.boussoleImg} resizeMode="cover" />
-                    </View>
+                    <BoussoleSvg width={72} height={72} opacity={0.85} />
                 </View>
 
                 {/* ── Actions rapides ── */}
@@ -128,22 +140,18 @@ export default function DashboardJoueurScreen() {
                         onPress={() => router.push('/(app)/chasses')}
                         activeOpacity={0.75}
                     >
-                        <View style={[st.quickIcon, { backgroundColor: Design.bg.gold }]}>
-                            <Ionicons name="search-outline" size={22} color={Design.text.accent} />
-                        </View>
+                        <Image source={LOUPE} style={st.quickImg} resizeMode="contain" />
                         <Text style={st.quickLabel}>Explorer</Text>
                         <Text style={st.quickSub}>Toutes les chasses</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={[st.quickCard, { borderColor: '#4FC3F744' }]}
+                        style={[st.quickCard, { borderColor: Colors.parchment + '33' }]}
                         onPress={() => router.push('/(app)/map')}
                         activeOpacity={0.75}
                     >
-                        <View style={[st.quickIcon, { backgroundColor: 'rgba(79,195,247,0.12)' }]}>
-                            <Ionicons name="navigate-outline" size={22} color="#4FC3F7" />
-                        </View>
-                        <Text style={st.quickLabel}>Ma carte</Text>
+                        <Image source={CARTE} style={st.quickImg} resizeMode="contain" />
+                        <Text style={st.quickLabel}>Ma Carte</Text>
                         <Text style={st.quickSub}>Chasse en cours</Text>
                     </TouchableOpacity>
                 </View>
@@ -153,14 +161,20 @@ export default function DashboardJoueurScreen() {
                     <ActivityIndicator color={Colors.gold} style={{ marginTop: 40 }} />
                 ) : chassesActives.length === 0 ? (
                     <View style={st.empty}>
-                        <Ionicons name="map-outline" size={44} color={Design.text.meta} />
-                        <Text style={st.emptyTitle}>Aucune chasse disponible</Text>
-                        <Text style={st.emptySub}>Revenez bientôt pour de nouvelles aventures</Text>
+                        <Image source={COFFRE} style={st.emptyImg} resizeMode="contain" />
+                        <Text style={st.emptyTitle}>Aucun trésor en vue</Text>
+                        <Text style={st.emptySub}>Les cartes aux trésors arrivent bientôt...</Text>
                     </View>
                 ) : (
                     <>
                         <View style={st.sectionHd}>
-                            <Text style={st.sectionTitle}> {chassesActives.length}  Disponibles maintenant</Text>
+                            <View style={st.sectionLine} />
+                            <Text style={st.sectionTitle}>
+                                TRÉSORS · {chassesActives.length}
+                            </Text>
+                            <View style={st.sectionLine} />
+                        </View>
+                        <View style={st.moreWrap}>
                             <TouchableOpacity onPress={() => router.push('/(app)/chasses')}>
                                 <Text style={st.sectionAction}>Voir tout →</Text>
                             </TouchableOpacity>
@@ -188,40 +202,39 @@ const st = StyleSheet.create({
     safe:   { flex: 1 },
     scroll: { paddingBottom: 60 },
 
-    header:     {
+    header: {
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
         paddingHorizontal: Sp.lg, paddingTop: Sp.xxl, paddingBottom: Sp.sm,
     },
-    greeting:   { fontFamily: Fonts.title, fontSize: 11, color: Design.text.meta, letterSpacing: 1 },
-    name:       { fontFamily: Fonts.display, fontSize: 20, color: Design.text.heading, marginTop: 2, letterSpacing: 0.5 },
-    nameAccent: { color: Design.text.accent },
+    greeting: {
+        fontFamily: Fonts.title, fontSize: 9, color: Colors.parchment,
+        letterSpacing: 3, marginBottom: 2,
+    },
+    name: { fontFamily: Fonts.display, fontSize: 22, color: Design.text.heading, letterSpacing: 1 },
 
     avatar: {
-        width: 46, height: 46, borderRadius: 15,
+        width: 46, height: 46, borderRadius: 14,
         backgroundColor: Design.bg.elevated,
-        borderWidth: 2, borderColor: Colors.gold + '33',
+        borderWidth: 1.5, borderColor: Colors.gold + '44',
         alignItems: 'center', justifyContent: 'center',
     },
-    avatarText: { fontFamily: Fonts.display, fontSize: 14, color: Design.text.accent },
+    avatarText: { fontFamily: Fonts.display, fontSize: 14, color: Colors.gold },
     avatarDot:  {
-        position: 'absolute', top: -2, right: -2,
+        position: 'absolute', top: -3, right: -3,
         width: 12, height: 12, borderRadius: 6,
-        backgroundColor: '#4ecb8a', borderWidth: 2, borderColor: Design.bg.screen,
+        backgroundColor: Colors.success, borderWidth: 2, borderColor: '#0A0700',
     },
 
     heroBanner: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         marginHorizontal: Sp.lg, marginVertical: Sp.md,
         backgroundColor: Design.bg.card,
-        borderRadius: R.xl, borderWidth: 1, borderColor: Design.border.warm,
-        padding: Sp.lg,
-        overflow: 'hidden',
+        borderRadius: R.xl, borderWidth: 1, borderColor: Colors.gold + '30',
+        padding: Sp.lg, overflow: 'hidden',
     },
     heroLeft:    { flex: 1, gap: 6 },
+    heroTagline: { fontFamily: Fonts.title, fontSize: 9, color: Colors.parchment, letterSpacing: 3 },
     heroTitle:   { fontFamily: Fonts.display, fontSize: 20, color: Design.text.heading, lineHeight: 26, letterSpacing: 0.5 },
-    heroSub:     { fontFamily: Fonts.title,   fontSize: 12, color: Design.text.warm },
-    heroIcon:    { width: 64, height: 64, borderRadius: 32, overflow: 'hidden', borderWidth: 1.5, borderColor: Colors.gold + '55' },
-    boussoleImg: { width: '100%', height: '100%' },
 
     quickRow: {
         flexDirection: 'row', gap: Sp.md,
@@ -230,26 +243,25 @@ const st = StyleSheet.create({
     quickCard: {
         flex: 1, backgroundColor: Design.bg.card,
         borderRadius: R.xl, borderWidth: 1,
-        padding: Sp.md, gap: 6,
+        padding: Sp.md, gap: 4, alignItems: 'flex-start',
     },
-    quickIcon:  {
-        width: 44, height: 44, borderRadius: R.md,
-        alignItems: 'center', justifyContent: 'center',
-        marginBottom: 4,
-    },
-    quickLabel: { fontFamily: Fonts.title,   fontSize: 13, color: Design.text.heading },
-    quickSub:   { fontFamily: Fonts.title,   fontSize: 10, color: Design.text.meta },
+    quickImg:   { width: 40, height: 40, marginBottom: 4, opacity: 0.9 },
+    quickLabel: { fontFamily: Fonts.title,   fontSize: 13, color: Design.text.heading, letterSpacing: 0.3 },
+    quickSub:   { fontFamily: Fonts.title,   fontSize: 9,  color: Colors.parchment, letterSpacing: 0.5 },
 
-    sectionHd:     {
-        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-        paddingHorizontal: Sp.lg, marginBottom: Sp.sm,
+    sectionHd: {
+        flexDirection: 'row', alignItems: 'center', gap: Sp.md,
+        paddingHorizontal: Sp.lg, marginBottom: Sp.xs,
     },
-    sectionTitle:  { fontFamily: Fonts.title, fontSize: 10, color: Design.text.label, textTransform: 'uppercase', letterSpacing: 1.5 },
-    sectionAction: { fontFamily: Fonts.title, fontSize: 11, color: Design.text.accent },
+    sectionLine:   { flex: 1, height: 1, backgroundColor: Colors.gold + '30' },
+    sectionTitle:  { fontFamily: Fonts.title, fontSize: 9, color: Colors.gold, letterSpacing: 2 },
+    moreWrap:      { paddingHorizontal: Sp.lg, marginBottom: Sp.sm, alignItems: 'flex-end' },
+    sectionAction: { fontFamily: Fonts.title, fontSize: 11, color: Colors.gold },
 
     huntList: { paddingHorizontal: Sp.lg, gap: Sp.sm },
 
-    empty:      { alignItems: 'center', gap: Sp.sm, paddingVertical: Sp.xl, paddingHorizontal: Sp.xl },
-    emptyTitle: { fontFamily: Fonts.title, fontSize: 14, color: Design.text.label },
-    emptySub:   { fontFamily: Fonts.title, fontSize: 12, color: Design.text.meta, textAlign: 'center', lineHeight: 20 },
+    empty:      { alignItems: 'center', gap: Sp.md, paddingVertical: Sp.xl, paddingHorizontal: Sp.xl },
+    emptyImg:   { width: 90, height: 90, opacity: 0.55, marginBottom: Sp.sm },
+    emptyTitle: { fontFamily: Fonts.display, fontSize: 16, color: Design.text.label, letterSpacing: 0.5 },
+    emptySub:   { fontFamily: Fonts.title,   fontSize: 11, color: Colors.parchment, textAlign: 'center', lineHeight: 18 },
 });

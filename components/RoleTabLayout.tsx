@@ -79,8 +79,9 @@ export default function RoleTabLayout({
                 tabBarActiveTintColor: accentColor,
                 tabBarInactiveTintColor: Colors.textMuted,
                 tabBarStyle: {
-                    backgroundColor: '#0B0907',
-                    borderTopColor: '#2A2118',
+                    backgroundColor: '#0A0700',
+                    borderTopWidth: 1,
+                    borderTopColor: Colors.gold + '40',
                     height: tabBarHeight,
                     paddingBottom: 8,
                     paddingTop: 8,
@@ -92,9 +93,10 @@ export default function RoleTabLayout({
                     gap: 4,
                 },
                 tabBarLabelStyle: {
-                    fontSize: 10,
+                    fontSize: 9,
                     marginTop: 2,
-                    fontWeight: '600',
+                    fontFamily: 'Cinzel_700Bold',
+                    letterSpacing: 0.8,
                 },
             }}
         >

@@ -34,7 +34,7 @@ export const Colors = {
 
   textPrimary:   '#FFF6E5',
   textSecondary: '#E2D3B0',
-  textTertiary: '#e10c0c',
+  textTertiary: '#C8A96E',
   textMuted:     '#B8A98A',
 
   statusActive:  '#4ecb8a',
@@ -57,7 +57,7 @@ export const Design = {
     label:     Colors.textSecondary,  // labels formulaires, sous-titres section
     meta:      Colors.textSecondary,      // IDs, timestamps, métadonnées
     accent:    Colors.gold,           // liens, or, mises en valeur
-    warm:      Colors.textTertiary,          // noms société, accents chauds
+    warm:      Colors.parchment,              // noms société, accents chauds
     danger:    Colors.error,
     success:   Colors.success,
     warning:   Colors.warning,
@@ -94,14 +94,14 @@ export const Design = {
 
   // ── Input ─────────────────────────────────────────────────────────────────
   input: {
-    bg:          Colors.bgInput,
+    bg:          '#1A1208',
     border:      Colors.border,
     borderFocus: Colors.gold,
     borderError: Colors.error,
-    text:        Colors.black,        // texte saisi (sur fond clair)
-    placeholder: Colors.textMuted,
-    label:       Colors.textSecondary,
-    icon:        Colors.textMuted,
+    text:        Colors.textPrimary,
+    placeholder: '#7A6A4A',
+    label:       Colors.parchment,
+    icon:        Colors.parchment,
     iconFocus:   Colors.gold,
   },
 

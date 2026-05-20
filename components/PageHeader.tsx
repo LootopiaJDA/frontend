@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Design, Fonts, Sp, R } from '../constants/theme';
+import { Colors, Design, Fonts, Sp, R } from '../constants/theme';
 
 interface Props {
   title: string;
@@ -15,45 +15,70 @@ export default function PageHeader({ title, subtitle, back, right }: Props) {
   const router = useRouter();
   return (
     <View style={styles.wrap}>
-      <View style={styles.left}>
-        {back && (
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={20} color={Design.text.heading} />
-          </TouchableOpacity>
-        )}
-        <View>
-          {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
-          <Text style={styles.title}>{title}</Text>
+      <View style={styles.row}>
+        <View style={styles.left}>
+          {back && (
+            <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+              <Ionicons name="chevron-back" size={20} color={Design.text.heading} />
+            </TouchableOpacity>
+          )}
+          <View style={styles.textBlock}>
+            {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+            <Text style={styles.title}>{title}</Text>
+          </View>
         </View>
+        {right && <View>{right}</View>}
       </View>
-      {right && <View>{right}</View>}
+
+      {/* Décoration dorée */}
+      <View style={styles.divider}>
+        <View style={styles.divLine} />
+        <View style={styles.divGem} />
+        <View style={styles.divLine} />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: Sp.lg,
     paddingTop: 60,
     paddingBottom: Sp.md,
+    gap: Sp.sm,
   },
-  left:    { flexDirection: 'row', alignItems: 'center', gap: Sp.sm, flex: 1 },
+  row:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  left:      { flexDirection: 'row', alignItems: 'center', gap: Sp.sm, flex: 1 },
+  textBlock: { flex: 1 },
+
   backBtn: {
     width: 38, height: 38, borderRadius: R.sm,
     backgroundColor: Design.avatar.bg,
     borderWidth: 1, borderColor: Design.border.warm,
     alignItems: 'center', justifyContent: 'center',
   },
+
   subtitle: {
     fontFamily: Fonts.title,
     color: Design.text.warm,
-    fontSize: 15,
-    letterSpacing: 2,
+    fontSize: 10,
+    letterSpacing: 3,
     textTransform: 'uppercase',
-    marginBottom: 2,
+    marginBottom: 3,
   },
-  title: { fontFamily: Fonts.title, color: Design.text.heading, fontSize: 30, letterSpacing: 1 },
+  title: {
+    fontFamily: Fonts.display,
+    color: Design.text.heading,
+    fontSize: 26,
+    letterSpacing: 1,
+    lineHeight: 32,
+  },
+
+  divider: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  divLine: { flex: 1, height: 1, backgroundColor: Colors.gold + '30' },
+  divGem:  {
+    width: 6, height: 6, borderRadius: 1,
+    backgroundColor: Colors.gold + '55',
+    transform: [{ rotate: '45deg' }],
+  },
 });
