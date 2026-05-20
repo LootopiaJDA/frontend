@@ -15,6 +15,16 @@ import { useAuth } from '../../../context/AuthContext';
 
 const MAP_BG = require('../../../assets/images/parchemin-tresor.png');
 
+function formatDuration(ms: number): string {
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
 // ─── Podium ───────────────────────────────────────────────────────────────────
 interface PodiumProps {
   scores: ScoreBoard[];
@@ -28,10 +38,8 @@ function PodiumSection({ scores, currentUserId }: PodiumProps) {
     { color: '#CD7F32', bg: '#CD7F3222', rank: '3ème' },
   ];
 
-  // Top 3 : uniquement les joueurs ayant COMPLETED cette chasse
-  const ranked   = scores
-    .filter(s => s.user?.userchasses?.some(uc => uc.id_chasse === s.id_chasse && uc.statut === 'COMPLETED'))
-    .slice(0, 3);
+  // Top 3 : joueurs ayant au moins 1 point (GET /scores ne retourne pas les relations user)
+  const ranked = scores.filter(s => s.score > 0).slice(0, 3);
   // Entrée du joueur courant (même si score=0)
   const myEntry  = currentUserId ? scores.find(s => s.id_user === currentUserId) : null;
   const myInTop3 = ranked.some(s => s.id_user === currentUserId);
@@ -83,6 +91,9 @@ function PodiumSection({ scores, currentUserId }: PodiumProps) {
                   <Text style={pd.playerName}>
                     {isMe ? 'Vous' : (s.user?.username ?? `Joueur #${s.id_user}`)}
                   </Text>
+                  {s.durationMs != null && (
+                    <Text style={pd.playerTime}>⏱ {formatDuration(s.durationMs)}</Text>
+                  )}
                   {isMe && <Text style={pd.playerYouTag}>· votre score</Text>}
                 </View>
                 <View style={pd.scoreWrap}>
@@ -134,6 +145,7 @@ const pd = StyleSheet.create({
   myScoreLabel: { fontSize: 13, color: Colors.gold, fontWeight: '700' },
   myScoreVal:   { fontSize: 14, color: Colors.gold, fontWeight: '900' },
   myScoreHint:  { fontSize: 11, color: Colors.textMuted, flex: 1 },
+  playerTime:   { fontSize: 10, color: Colors.textMuted, marginTop: 1 },
   playerYouTag: { fontSize: 10, color: Colors.gold, fontWeight: '700' },
   empty:       {
     backgroundColor: Colors.bgCard, borderRadius: R.lg, padding: Sp.lg,
@@ -177,20 +189,17 @@ export default function ChasseDetailScreen() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [detail, meData, allScores] = await Promise.all([
+      const [detail, meData, chasseScores] = await Promise.all([
         chasseService.getById(chasseId),
         chasseService.getMe().catch(() => ({ chasses: [] })),
-        scoreService.getAll().catch(() => [] as ScoreBoard[]),
+        scoreService.getByChasse(chasseId).catch(() => [] as ScoreBoard[]),
       ]);
       setChasse(detail);
       const uc = meData.chasses ?? [];
       setAlreadyCompleted(uc.some(u => u.id_chasse === chasseId && u.statut === 'COMPLETED'));
       setAlreadyJoined(uc.some(u => u.id_chasse === chasseId && u.statut === 'IN_PROGRESS'));
       setHasOtherActive(uc.some(u => u.id_chasse !== chasseId && u.statut === 'IN_PROGRESS'));
-      const chasseScores = (allScores as ScoreBoard[])
-        .filter(s => s.id_chasse === chasseId)
-        .sort((a, b) => b.score - a.score);
-      setScores(chasseScores);
+      setScores(chasseScores as ScoreBoard[]);
     } catch {
       /* silencieux */
     } finally {
@@ -216,12 +225,12 @@ export default function ChasseDetailScreen() {
 
   const handleReplay = () => {
     Alert.alert(
-      'Rejouer la chasse',
-      'Voulez-vous rejouer cette chasse depuis le début ? Votre score précédent sera remis à zéro.',
+      'Repartir à l\'aventure',
+      'Voulez-vous repartir à l\'aventure depuis le début ? Votre score précédent sera remis à zéro.',
       [
         { text: 'Annuler', style: 'cancel' },
         {
-          text: 'Rejouer',
+          text: 'Repartir',
           onPress: async () => {
             setJoining(true);
             try {
@@ -242,12 +251,12 @@ export default function ChasseDetailScreen() {
 
   const handleLeave = () => {
     Alert.alert(
-      'Se désinscrire',
-      'Voulez-vous vous désinscrire de cette chasse ? Votre progression sera perdue et vous pourrez vous réinscrire plus tard.',
+      'Abandonner la quête',
+      'Voulez-vous abandonner cette quête ? Votre progression sera perdue et vous pourrez la reprendre plus tard.',
       [
         { text: 'Annuler', style: 'cancel' },
         {
-          text: 'Se désinscrire',
+          text: 'Abandonner',
           style: 'destructive',
           onPress: async () => {
             try {
@@ -282,8 +291,9 @@ export default function ChasseDetailScreen() {
     );
   }
 
-  const etapes   = chasse.etape ?? [];
-  const isActive = chasse.etat === 'ACTIVE';
+  const etapes    = chasse.etape ?? [];
+  const isActive  = chasse.etat === 'ACTIVE';
+  const totalPts  = etapes.length * 100;
 
   return (
     <ImageBackground source={MAP_BG} style={st.root} imageStyle={{ opacity: 0.22 }} resizeMode="cover">
@@ -319,16 +329,25 @@ export default function ChasseDetailScreen() {
               {alreadyCompleted ? (
                 <View style={[st.badge, { borderColor: Colors.gold }]}>
                   <Ionicons name="trophy" size={12} color={Colors.gold} />
-                  <Text style={[st.badgeText, { color: Colors.gold }]}>Terminée</Text>
+                  <Text style={[st.badgeText, { color: Colors.gold }]}>Complétée</Text>
                 </View>
               ) : alreadyJoined ? (
                 <View style={[st.badge, { borderColor: Colors.success }]}>
-                  <Ionicons name="checkmark-circle" size={12} color={Colors.success} />
-                  <Text style={[st.badgeText, { color: Colors.success }]}>Inscrit</Text>
+                  <Ionicons name="compass" size={12} color={Colors.success} />
+                  <Text style={[st.badgeText, { color: Colors.success }]}>Quête en cours</Text>
                 </View>
               ) : null}
             </View>
             <Text style={st.coverTitle}>{chasse.name}</Text>
+            {etapes.length > 0 && (
+              <View style={st.coverMeta}>
+                <Ionicons name="flag-outline" size={12} color={Colors.parchment} />
+                <Text style={st.coverMetaText}>{etapes.length} étape{etapes.length > 1 ? 's' : ''}</Text>
+                <Text style={st.coverMetaSep}>·</Text>
+                <Ionicons name="star-outline" size={12} color={Colors.parchment} />
+                <Text style={st.coverMetaText}>{totalPts} pts à gagner</Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -362,14 +381,39 @@ export default function ChasseDetailScreen() {
             </View>
           )}
 
-          {/* ── Podium & Points ── */}
-          <PodiumSection scores={scores} currentUserId={user?.id_user} />
+          {/* ── Récit de l'aventure ── */}
+          {chasse.description ? (
+            <>
+              <View style={st.sectionHeader}>
+                <View style={st.sectionLine} />
+                <Text style={st.sectionTitle}>RÉCIT</Text>
+                <View style={st.sectionLine} />
+              </View>
+              <View style={st.descCard}>
+                <Ionicons name="book-outline" size={18} color={Colors.parchment} style={{ marginTop: 2 }} />
+                <Text style={st.descText}>{chasse.description}</Text>
+              </View>
+            </>
+          ) : null}
+
+          {/* ── Briefing quête en cours ── */}
+          {alreadyJoined && (
+            <View style={st.briefingCard}>
+              <Ionicons name="compass" size={22} color={Colors.gold} />
+              <View style={{ flex: 1 }}>
+                <Text style={st.briefingTitle}>Quête en cours</Text>
+                <Text style={st.briefingText}>
+                  La carte est tracée. Approchez-vous de chaque lieu mystérieux pour valider vos étapes et récupérer le trésor.
+                </Text>
+              </View>
+            </View>
+          )}
 
           {/* ── Étapes ── */}
           <View style={st.sectionHeader}>
             <View style={st.sectionLine} />
             <Text style={st.sectionTitle}>
-              PARCOURS · {etapes.length} ÉTAPE{etapes.length !== 1 ? 'S' : ''}
+              LA QUÊTE · {etapes.length} ÉTAPE{etapes.length !== 1 ? 'S' : ''}{totalPts > 0 ? ` · ${totalPts} PTS` : ''}
             </Text>
             <View style={st.sectionLine} />
           </View>
@@ -394,12 +438,10 @@ export default function ChasseDetailScreen() {
                         <Text style={st.etapePtsText}>+100 pts</Text>
                       </View>
                     </View>
-                    {etape.address ? (
-                      <View style={st.etapeAddrRow}>
-                        <Ionicons name="location-outline" size={12} color={Colors.gold} />
-                        <Text style={st.etapeAddr}>{etape.address}</Text>
-                      </View>
-                    ) : null}
+                    <View style={st.etapeAddrRow}>
+                      <Ionicons name="lock-closed-outline" size={12} color={Colors.textMuted} />
+                      <Text style={st.etapeAddrSecret}>Localisation secrète</Text>
+                    </View>
                     {etape.description ? (
                       <Text style={st.etapeDesc} numberOfLines={3}>{etape.description}</Text>
                     ) : null}
@@ -409,6 +451,9 @@ export default function ChasseDetailScreen() {
             </View>
           )}
 
+          {/* ── Classement ── */}
+          <PodiumSection scores={scores} currentUserId={user?.id_user} />
+
           {/* ── CTA ── */}
           <View style={st.cta}>
             {alreadyCompleted ? (
@@ -416,45 +461,45 @@ export default function ChasseDetailScreen() {
                 <View style={st.completedBanner}>
                   <Ionicons name="trophy" size={20} color={Colors.gold} />
                   <View style={{ flex: 1 }}>
-                    <Text style={st.completedTitle}>Chasse terminée !</Text>
-                    <Text style={st.completedSub}>Vous avez déjà complété cette chasse.</Text>
+                    <Text style={st.completedTitle}>Quête accomplie !</Text>
+                    <Text style={st.completedSub}>Vous avez déjà complété cette aventure.</Text>
                   </View>
                 </View>
                 {hasOtherActive ? (
                   <View style={st.warningBanner}>
                     <Ionicons name="warning-outline" size={18} color={Colors.warning} />
                     <Text style={st.warningText}>
-                      {"Terminez votre chasse en cours avant de rejouer celle-ci."}
+                      {"Terminez votre quête en cours avant de repartir à l'aventure."}
                     </Text>
                   </View>
                 ) : (
-                  <Btn label="Rejouer la chasse" onPress={handleReplay} loading={joining} />
+                  <Btn label="Repartir à l'aventure" onPress={handleReplay} loading={joining} />
                 )}
               </View>
             ) : !isActive ? (
               <View style={st.infoBanner}>
                 <Ionicons name="time-outline" size={18} color={Colors.parchment} />
-                <Text style={st.infoBannerText}>{"Cette chasse n'est pas encore active"}</Text>
+                <Text style={st.infoBannerText}>{"Cette aventure n'est pas encore disponible"}</Text>
               </View>
             ) : alreadyJoined ? (
               <View style={st.ctaCol}>
-                <Btn label="Jouer sur la carte" onPress={handlePlay} />
+                <Btn label="Ouvrir la carte" onPress={handlePlay} />
                 <TouchableOpacity style={st.leaveBtn} onPress={handleLeave} activeOpacity={0.8}>
                   <Ionicons name="exit-outline" size={16} color={Colors.error} />
-                  <Text style={st.leaveBtnText}>Se désinscrire</Text>
+                  <Text style={st.leaveBtnText}>Abandonner la quête</Text>
                 </TouchableOpacity>
               </View>
             ) : hasOtherActive ? (
               <View style={st.warningBanner}>
                 <Ionicons name="warning-outline" size={18} color={Colors.warning} />
                 <Text style={st.warningText}>
-                  {"Vous avez déjà une chasse en cours. Terminez-la avant d'en rejoindre une autre."}
+                  {"Vous avez déjà une quête en cours. Terminez-la avant de partir à une nouvelle aventure."}
                 </Text>
               </View>
             ) : (
               <View style={st.ctaRow}>
                 <View style={{ flex: 1 }}>
-                  <Btn label="Rejoindre la chasse" onPress={handleJoin} loading={joining} />
+                  <Btn label="Partir à l'aventure" onPress={handleJoin} loading={joining} />
                 </View>
               </View>
             )}
@@ -503,6 +548,11 @@ const st = StyleSheet.create({
     fontSize: 28, fontWeight: '900', color: Colors.textPrimary,
     lineHeight: 34, letterSpacing: 0.3,
   },
+  coverMeta: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap',
+  },
+  coverMetaText: { fontSize: 12, color: Colors.parchment },
+  coverMetaSep:  { fontSize: 12, color: Colors.textMuted },
   badgeRow: { flexDirection: 'row', gap: Sp.sm, flexWrap: 'wrap' },
   badge: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
@@ -567,9 +617,29 @@ const st = StyleSheet.create({
     borderWidth: 1, borderColor: Colors.gold + '44',
   },
   etapePtsText: { fontSize: 10, color: Colors.gold, fontWeight: '800' },
-  etapeAddrRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  etapeAddr:    { fontSize: 12, color: Colors.parchment, flex: 1 },
-  etapeDesc:    { fontSize: 13, color: Colors.textSecondary, lineHeight: 19 },
+  etapeAddrRow:    { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  etapeAddr:       { fontSize: 12, color: Colors.parchment, flex: 1 },
+  etapeAddrSecret: { fontSize: 12, color: Colors.textMuted, flex: 1, fontStyle: 'italic' },
+  etapeDesc:       { fontSize: 13, color: Colors.textSecondary, lineHeight: 19 },
+
+  // Description récit
+  descCard: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: Sp.md,
+    backgroundColor: Colors.bgCard, borderRadius: R.lg,
+    borderWidth: 1, borderColor: Colors.borderWarm,
+    padding: Sp.md,
+  },
+  descText: { flex: 1, fontSize: 14, color: Colors.parchment, lineHeight: 22, fontStyle: 'italic' },
+
+  // Briefing quête en cours
+  briefingCard: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: Sp.md,
+    backgroundColor: Colors.goldGlow, borderRadius: R.lg,
+    borderWidth: 1, borderColor: Colors.gold + '55',
+    padding: Sp.md,
+  },
+  briefingTitle: { fontSize: 14, fontWeight: '800', color: Colors.gold, marginBottom: 4 },
+  briefingText:  { fontSize: 13, color: Colors.parchment, lineHeight: 19 },
 
   cta: {},
 

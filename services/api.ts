@@ -76,6 +76,7 @@ export const adminService = {
 
 export const scoreService = {
   getAll: (): Promise<ScoreBoard[]> => req(EP.SCORES),
+  getByChasse: (chasseId: number): Promise<ScoreBoard[]> => req(EP.SCORE_BY_CHASSE(chasseId)),
   create: (chasseId: number) => req(EP.SCORE_CREATE(chasseId), { method: 'POST' }).catch(() => {}),
   increment: (chasseId: number) => req(EP.SCORE_UPDATE(chasseId), { method: 'PATCH' }).catch(() => {}),
 };

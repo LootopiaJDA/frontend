@@ -12,17 +12,32 @@ import ScreenBackground from '@/components/ScreenBackground';
 import { chasseService, scoreService } from '@/services/api';
 import { UserChasse, ScoreBoard } from '@/constants/types';
 
+function formatDuration(ms: number): string {
+    const totalSec = Math.floor(ms / 1000);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+}
+
 interface PlayerStats {
     completed: number;
     inProgress: number;
     totalPoints: number;
 }
 
+interface CompletedHuntDisplay extends UserChasse {
+    huntScore: number;
+    durationMs: number | null;
+}
+
 export default function ProfilJoueurScreen() {
     const { user, logout } = useAuth();
     const router = useRouter();
     const [stats, setStats] = useState<PlayerStats>({ completed: 0, inProgress: 0, totalPoints: 0 });
-    const [completedHunts, setCompletedHunts] = useState<UserChasse[]>([]);
+    const [completedHunts, setCompletedHunts] = useState<CompletedHuntDisplay[]>([]);
 
     useEffect(() => {
         if (!user) return;
@@ -38,12 +53,18 @@ export default function ProfilJoueurScreen() {
 
             let completed = 0;
             let inProgress = 0;
-            const done: UserChasse[] = [];
+            const done: CompletedHuntDisplay[] = [];
 
             chasses.forEach(uc => {
                 if (uc.statut === 'COMPLETED') {
                     completed++;
-                    done.push(uc);
+                    const huntScore = (scores as ScoreBoard[]).find(
+                        s => s.id_chasse === uc.id_chasse
+                    )?.score ?? 0;
+                    const durationMs = uc.completed_at && uc.started_at
+                        ? new Date(uc.completed_at).getTime() - new Date(uc.started_at).getTime()
+                        : null;
+                    done.push({ ...uc, huntScore, durationMs });
                 } else if (uc.statut === 'IN_PROGRESS') {
                     inProgress++;
                 }
@@ -142,6 +163,14 @@ export default function ProfilJoueurScreen() {
                                         <Text style={st.huntName} numberOfLines={1}>
                                             {uc.chasse?.name ?? `Chasse #${uc.id_chasse}`}
                                         </Text>
+                                        <View style={st.huntMeta}>
+                                            {uc.huntScore > 0 && (
+                                                <Text style={st.huntScore}>{uc.huntScore} pts</Text>
+                                            )}
+                                            {uc.durationMs != null && (
+                                                <Text style={st.huntTime}>⏱ {formatDuration(uc.durationMs)}</Text>
+                                            )}
+                                        </View>
                                         {uc.completed_at && (
                                             <Text style={st.huntDate}>
                                                 Terminée le {new Date(uc.completed_at).toLocaleDateString('fr-FR', {
@@ -250,7 +279,10 @@ const st = StyleSheet.create({
     },
     huntInfo:  { flex: 1 },
     huntName:  { fontFamily: Fonts.title, fontSize: 13, color: Design.text.heading },
-    huntDate:  { fontFamily: Fonts.title, fontSize: 10, color: Design.text.meta, marginTop: 2 },
+    huntMeta:  { flexDirection: 'row', alignItems: 'center', gap: Sp.sm, marginTop: 2 },
+    huntScore: { fontFamily: Fonts.display, fontSize: 11, color: Colors.gold },
+    huntTime:  { fontFamily: Fonts.title, fontSize: 10, color: Design.text.meta },
+    huntDate:  { fontFamily: Fonts.title, fontSize: 10, color: Design.text.meta, marginTop: 1 },
     huntBadge: { paddingLeft: Sp.sm },
 
     menuCard:   {
